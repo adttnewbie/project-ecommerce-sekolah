@@ -50,7 +50,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $this->authenticatedUserPayload($request),
             ],
             'adminHeader' => fn () => $this->adminHeader($request),
             'buyerHeader' => fn () => $this->buyerHeader($request),
@@ -61,6 +61,32 @@ class HandleInertiaRequests extends Middleware
                 'error' => $request->session()->get('error'),
                 'receipt_url' => $request->session()->get('receipt_url'),
             ],
+        ];
+    }
+
+    /**
+     * Build the authenticated user payload shared with the frontend.
+     *
+     * Only a fixed allow-list of fields is shared instead of the whole model,
+     * so attributes that are not explicitly requested never reach the client
+     * (defense in depth on top of the model's hidden attributes).
+     *
+     * @return array{id: int, name: string, email: string, role: string, avatar: null}|null
+     */
+    private function authenticatedUserPayload(Request $request): ?array
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return null;
+        }
+
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role->value,
+            'avatar' => null,
         ];
     }
 

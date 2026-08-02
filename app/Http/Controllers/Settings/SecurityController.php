@@ -27,6 +27,7 @@ class SecurityController extends Controller
                     ->select(['id', 'name', 'credential', 'created_at', 'last_used_at'])
                     ->latest()
                     ->get()
+                    ->makeHidden(['credential_id', 'credential'])
                     ->map(fn ($passkey) => [
                         'id' => $passkey->id,
                         'name' => $passkey->name,

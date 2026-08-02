@@ -186,7 +186,7 @@ class BuyerOrderController extends Controller
     }
 
     /**
-     * @return array{id: int, name: string}
+     * @return array{id: int|null, name: string|null}
      */
     private function ownerPayload(OrderItem $item): array
     {
@@ -194,6 +194,10 @@ class BuyerOrderController extends Controller
             return ['id' => $item->product->seller->id, 'name' => $item->product->seller->name];
         }
 
-        return ['id' => $item->product->upJurusan->id, 'name' => $item->product->upJurusan->name];
+        if ($item->product->upJurusan) {
+            return ['id' => $item->product->upJurusan->id, 'name' => $item->product->upJurusan->name];
+        }
+
+        return ['id' => null, 'name' => null];
     }
 }

@@ -91,7 +91,7 @@ class BuyerCatalogController extends Controller
     }
 
     /**
-     * @return array{id: int, name: string, type: string}
+     * @return array{id: int|null, name: string|null, type: string|null}
      */
     private function ownerPayload(Product $product): array
     {
@@ -103,10 +103,18 @@ class BuyerCatalogController extends Controller
             ];
         }
 
+        if ($product->seller) {
+            return [
+                'id' => $product->seller->id,
+                'name' => $product->seller->name,
+                'type' => 'seller',
+            ];
+        }
+
         return [
-            'id' => $product->seller->id,
-            'name' => $product->seller->name,
-            'type' => 'seller',
+            'id' => null,
+            'name' => null,
+            'type' => null,
         ];
     }
 }

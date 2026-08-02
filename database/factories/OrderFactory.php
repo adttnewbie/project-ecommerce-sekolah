@@ -18,7 +18,7 @@ class OrderFactory extends Factory
     public function definition(): array
     {
         return [
-            'code' => TransactionCode::make(),
+            'code' => TransactionCode::unique(fn (string $code): bool => Order::query()->where('code', $code)->exists()),
             'user_id' => User::factory(),
             'status' => OrderStatus::Open,
             'total_price' => 0,

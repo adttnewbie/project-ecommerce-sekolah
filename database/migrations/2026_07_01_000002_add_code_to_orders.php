@@ -22,7 +22,7 @@ return new class extends Migration
             ->get(['id'])
             ->each(fn (object $order) => DB::table('orders')
                 ->where('id', $order->id)
-                ->update(['code' => TransactionCode::make()]));
+                ->update(['code' => TransactionCode::unique(fn (string $code): bool => DB::table('orders')->where('code', $code)->exists())]));
     }
 
     public function down(): void

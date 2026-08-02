@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Admin\SaveCategoryRequest;
 use App\Models\Category;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
 
 class AdminCategoryController extends Controller
 {
@@ -46,10 +48,7 @@ class AdminCategoryController extends Controller
 
     public function store(SaveCategoryRequest $request): RedirectResponse
     {
-        Category::query()->create([
-            'name' => $request->string('name')->toString(),
-            'slug' => $this->uniqueSlug($request->string('name')->toString()),
-        ]);
+        $this->createWithUniqueSlug($request->string('name')->toString());
 
         return to_route('admin.categories.index')
             ->with('success', 'Kategori berhasil ditambahkan.');
@@ -59,10 +58,7 @@ class AdminCategoryController extends Controller
     {
         $name = $request->string('name')->toString();
 
-        $category->update([
-            'name' => $name,
-            'slug' => $this->uniqueSlug($name, $category),
-        ]);
+        $this->updateWithUniqueSlug($category, $name);
 
         return to_route('admin.categories.index')
             ->with('success', 'Kategori berhasil diperbarui.');
@@ -105,5 +101,63 @@ class AdminCategoryController extends Controller
                 fn ($query) => $query->whereKeyNot($ignoredCategory->getKey()),
             )
             ->exists();
+    }
+
+    /**
+     * Create a category with a unique slug.
+     *
+     * The slug is computed from the name, then the row is inserted. When a
+     * concurrent request wins the race for the same slug, the unique index
+     * rejects the insert; the violation is caught and the slug is recomputed
+     * so the create succeeds with the next available suffix.
+     */
+    private function createWithUniqueSlug(string $name): Category
+    {
+        for ($attempt = 1; $attempt <= 5; $attempt++) {
+            try {
+                return Category::query()->create([
+                    'name' => $name,
+                    'slug' => $this->uniqueSlug($name),
+                ]);
+            } catch (QueryException $exception) {
+                if (! $this->isUniqueConstraintViolation($exception)) {
+                    throw $exception;
+                }
+            }
+        }
+
+        throw new RuntimeException('Unable to create a category with a unique slug.');
+    }
+
+    /**
+     * Update a category, keeping its slug unique.
+     *
+     * Same retry semantics as {@see self::createWithUniqueSlug()}: a slug
+     * stolen by a concurrent request is detected through the unique index
+     * and the update is retried with the next available suffix.
+     */
+    private function updateWithUniqueSlug(Category $category, string $name): Category
+    {
+        for ($attempt = 1; $attempt <= 5; $attempt++) {
+            try {
+                $category->update([
+                    'name' => $name,
+                    'slug' => $this->uniqueSlug($name, $category),
+                ]);
+
+                return $category;
+            } catch (QueryException $exception) {
+                if (! $this->isUniqueConstraintViolation($exception)) {
+                    throw $exception;
+                }
+            }
+        }
+
+        throw new RuntimeException('Unable to update the category with a unique slug.');
+    }
+
+    private function isUniqueConstraintViolation(QueryException $exception): bool
+    {
+        return (string) $exception->getCode() === '23000';
     }
 }

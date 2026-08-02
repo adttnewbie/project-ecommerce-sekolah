@@ -617,6 +617,6 @@ class PicketUpJurusanConsignmentController extends Controller
 
     private function posSaleCode(): string
     {
-        return TransactionCode::make();
+        return TransactionCode::unique(fn (string $code): bool => UpJurusanPosSale::query()->where('code', $code)->exists());
     }
 }

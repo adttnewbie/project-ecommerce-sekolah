@@ -162,7 +162,7 @@ class CartController extends Controller
     }
 
     /**
-     * @return array{id: int, name: string}
+     * @return array{id: int|null, name: string|null}
      */
     private function ownerPayload(Product $product): array
     {
@@ -170,6 +170,10 @@ class CartController extends Controller
             return ['id' => $product->seller->id, 'name' => $product->seller->name];
         }
 
-        return ['id' => $product->upJurusan->id, 'name' => $product->upJurusan->name];
+        if ($product->upJurusan) {
+            return ['id' => $product->upJurusan->id, 'name' => $product->upJurusan->name];
+        }
+
+        return ['id' => null, 'name' => null];
     }
 }

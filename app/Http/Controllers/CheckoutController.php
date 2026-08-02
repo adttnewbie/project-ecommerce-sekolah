@@ -91,7 +91,7 @@ class CheckoutController extends Controller
 
         $order = DB::transaction(function () use ($user, $validated, $selectedIds) {
             $order = Order::query()->create([
-                'code' => TransactionCode::make(),
+                'code' => TransactionCode::unique(fn (string $code): bool => Order::query()->where('code', $code)->exists()),
                 'user_id' => $user->id,
                 'status' => OrderStatus::Open,
                 'payment_status' => PaymentStatus::Unpaid,
@@ -362,7 +362,7 @@ class CheckoutController extends Controller
     }
 
     /**
-     * @return array{id: int, name: string}
+     * @return array{id: int|null, name: string|null}
      */
     private function ownerPayload(Product $product): array
     {
@@ -370,6 +370,10 @@ class CheckoutController extends Controller
             return ['id' => $product->seller->id, 'name' => $product->seller->name];
         }
 
-        return ['id' => $product->upJurusan->id, 'name' => $product->upJurusan->name];
+        if ($product->upJurusan) {
+            return ['id' => $product->upJurusan->id, 'name' => $product->upJurusan->name];
+        }
+
+        return ['id' => null, 'name' => null];
     }
 }
