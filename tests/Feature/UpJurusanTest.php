@@ -1442,8 +1442,8 @@ test('admin jurusan can view scoped daily transaction report', function () {
             ->where('summary.pickets', 1)
             ->where('summary.items_sold', 4)
             ->where('summary.gross_amount', 80000)
-            ->has('reports', 1)
-            ->where('reports.0.up_jurusan_name', $ownUp->name),
+            ->has('reports.data', 1)
+            ->where('reports.data.0.up_jurusan_name', $ownUp->name),
         );
 
     $this->actingAs($adminJurusan)

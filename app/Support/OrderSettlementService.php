@@ -30,7 +30,7 @@ class OrderSettlementService
                 'order_status_changed',
                 null,
                 [
-                    'old_status' => $old instanceof OrderStatus ? $old->value : (string) $old,
+                    'old_status' => $old->value,
                     'new_status' => $status->value,
                 ],
             );
@@ -108,10 +108,6 @@ class OrderSettlementService
         $status = $order->relationLoaded('items')
             ? self::deriveStatus($order->items)
             : $order->status;
-
-        if (! $status instanceof OrderStatus) {
-            $status = OrderStatus::fromStorage((string) $status);
-        }
 
         return [
             'code' => $status->value,

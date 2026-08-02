@@ -56,7 +56,10 @@ type PendingProduct = {
 };
 
 type AdminProductModerationProps = {
-    products: PendingProduct[];
+    products: {
+        data: PendingProduct[];
+        total: number;
+    };
 };
 
 const formatRupiah = (value: number) =>
@@ -82,7 +85,7 @@ export default function AdminProductModeration({
                                     Admin Center
                                 </Badge>
                                 <Badge className="rounded-[6px] bg-amber-50 text-amber-700">
-                                    {products.length} pending
+                                    {products.total} pending
                                 </Badge>
                             </div>
                             <h1 className="text-2xl font-semibold text-slate-950">
@@ -96,7 +99,7 @@ export default function AdminProductModeration({
                     </section>
 
                     <section className="grid grid-cols-1 gap-4">
-                        {products.length === 0 && (
+                        {products.data.length === 0 && (
                             <Card className="rounded-[8px] border border-slate-100 bg-white shadow-sm">
                                 <CardContent className="p-8 text-center text-sm text-slate-500">
                                     Tidak ada produk pending.
@@ -104,7 +107,7 @@ export default function AdminProductModeration({
                             </Card>
                         )}
 
-                        {products.map((product) => (
+                        {products.data.map((product) => (
                             <Card
                                 key={product.id}
                                 className="gap-0 rounded-[8px] border border-slate-100 bg-white py-0 shadow-sm"

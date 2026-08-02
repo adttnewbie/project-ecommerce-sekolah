@@ -127,6 +127,13 @@ class Product extends Model
             return $this->stock;
         }
 
+        if ($this->relationLoaded('upJurusanConsignments')) {
+            return (int) $this->upJurusanConsignments->reduce(
+                fn (int $carry, UpJurusanConsignment $consignment): int => $carry + $consignment->received_quantity - $consignment->sold_quantity,
+                0,
+            );
+        }
+
         return (int) $this->upJurusanConsignments()
             ->selectRaw('COALESCE(SUM(received_quantity - sold_quantity), 0) as available')
             ->value('available');

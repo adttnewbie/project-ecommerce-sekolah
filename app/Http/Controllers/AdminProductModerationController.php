@@ -7,42 +7,47 @@ use App\Enums\ProductStatus;
 use App\Http\Requests\Admin\RejectProductRequest;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AdminProductModerationController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $validated = $request->validate([
+            'page' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $products = Product::query()
+            ->with(['category:id,name,slug', 'seller:id,name,email'])
+            ->where('status', ProductStatus::Pending)
+            ->where('sales_method', ProductSalesMethod::SelfManaged)
+            ->whereNotNull('seller_id')
+            ->oldest()
+            ->paginate(10)
+            ->withQueryString();
+
         return Inertia::render('admin/products/moderation', [
-            'products' => Product::query()
-                ->with(['category:id,name,slug', 'seller:id,name,email'])
-                ->where('status', ProductStatus::Pending)
-                ->where('sales_method', ProductSalesMethod::SelfManaged)
-                ->whereNotNull('seller_id')
-                ->oldest()
-                ->get(['id', 'seller_id', 'category_id', 'name', 'slug', 'description', 'price', 'stock', 'status', 'created_at'])
-                ->map(fn (Product $product) => [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'slug' => $product->slug,
-                    'description' => $product->description,
-                    'price' => $product->price,
-                    'stock' => $product->stock,
-                    'submitted_at' => $product->created_at?->diffForHumans() ?? '-',
-                    'seller' => [
-                        'id' => $product->seller->id,
-                        'name' => $product->seller->name,
-                        'email' => $product->seller->email,
-                    ],
-                    'category' => [
-                        'id' => $product->category->id,
-                        'name' => $product->category->name,
-                        'slug' => $product->category->slug,
-                    ],
-                ])
-                ->values()
-                ->all(),
+            'products' => $products->through(fn (Product $product) => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'slug' => $product->slug,
+                'description' => $product->description,
+                'price' => $product->price,
+                'stock' => $product->stock,
+                'submitted_at' => $product->created_at?->diffForHumans() ?? '-',
+                'seller' => [
+                    'id' => $product->seller->id,
+                    'name' => $product->seller->name,
+                    'email' => $product->seller->email,
+                ],
+                'category' => [
+                    'id' => $product->category->id,
+                    'name' => $product->category->name,
+                    'slug' => $product->category->slug,
+                ],
+            ]),
         ]);
     }
 

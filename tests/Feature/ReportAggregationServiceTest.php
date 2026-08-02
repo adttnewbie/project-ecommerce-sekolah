@@ -19,7 +19,7 @@ test('pos report aggregates only pos_sale movements for picket', function () {
 
     $up = UpJurusan::factory()->create();
     $picket = User::factory()->create(['role' => UserRole::PicketOfficer, 'up_jurusan_id' => $up->id]);
-    $otherPicket = User::factory()->create(['role' => UserRole::PicketOfficer, 'up_jurusan_id' => $up->id]);
+    $otherActor = User::factory()->create(['role' => UserRole::Buyer]);
     $seller = User::factory()->create(['role' => UserRole::Seller]);
     $product = Product::factory()->for($seller, 'seller')->approved()->create(['price' => 3000]);
     $consignment = UpJurusanConsignment::factory()->create([
@@ -45,7 +45,7 @@ test('pos report aggregates only pos_sale movements for picket', function () {
     ]);
     UpJurusanStockMovement::query()->create([
         'up_jurusan_consignment_id' => $consignment->id,
-        'user_id' => $otherPicket->id,
+        'user_id' => $otherActor->id,
         'type' => 'out',
         'source' => StockMovementSource::PosSale,
         'quantity' => 1,
@@ -56,8 +56,8 @@ test('pos report aggregates only pos_sale movements for picket', function () {
 
     $summary = ReportAggregationService::picketDailyOpenSummary($up->id, $picket->id, '2026-06-25');
 
-    // POS lines filtered by picket actor; other picket POS excluded from this picket open report items count for POS
-    // but online is UP-wide. Here only POS: picket sees own 2 units; other picket's POS is still UP-day sales for submit.
+    // POS lines filtered by picket actor; another actor's POS is excluded from this picket's
+    // open report items and totals. Only the picket's own 2 units count.
     expect($summary['total_sold'])->toBe(2)
         ->and($summary['total_revenue'])->toBe(6000)
         ->and($summary['items'])->toHaveCount(1)

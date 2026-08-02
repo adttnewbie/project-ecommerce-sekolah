@@ -226,6 +226,160 @@ test('expire unpaid orders command skips paid items', function () {
         ->and($order->fresh()->status)->toBe(OrderStatus::Open);
 });
 
+test('buyer cancels only pending item when order mixes pending and completed items', function () {
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create(['stock' => 5]);
+    $order = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Open,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    $pendingItem = OrderItem::factory()->for($order)->for($product)->create([
+        'quantity' => 2,
+        'status' => OrderItemStatus::Pending,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    $completedItem = OrderItem::factory()->for($order)->for($product)->create([
+        'quantity' => 1,
+        'status' => OrderItemStatus::Completed,
+        'payment_status' => PaymentStatus::Paid,
+    ]);
+    $product->update(['stock' => 3]);
+
+    $this->actingAs($buyer)
+        ->post(route('orders.cancel', $order), [
+            'cancel_reason' => 'Batalkan yang belum selesai',
+        ])
+        ->assertRedirect(route('orders.show', $order))
+        ->assertSessionHas('success');
+
+    expect($pendingItem->fresh()->status)->toBe(OrderItemStatus::Cancelled)
+        ->and($pendingItem->fresh()->cancel_reason)->toBe('Batalkan yang belum selesai')
+        ->and($completedItem->fresh()->status)->toBe(OrderItemStatus::Completed)
+        ->and($product->fresh()->stock)->toBe(5)
+        ->and($order->fresh()->status)->toBe(OrderStatus::Completed)
+        ->and($order->fresh()->cancelled_at)->toBeNull();
+});
+
+test('buyer cancels only pending item when order mixes pending and paid items', function () {
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create(['stock' => 5]);
+    $order = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Open,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    $pendingItem = OrderItem::factory()->for($order)->for($product)->create([
+        'quantity' => 2,
+        'status' => OrderItemStatus::Pending,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    $paidItem = OrderItem::factory()->for($order)->for($product)->create([
+        'quantity' => 1,
+        'status' => OrderItemStatus::Pending,
+        'payment_status' => PaymentStatus::Paid,
+    ]);
+    $product->update(['stock' => 3]);
+
+    $this->actingAs($buyer)
+        ->post(route('orders.cancel', $order), [
+            'cancel_reason' => 'Batalkan yang belum dibayar',
+        ])
+        ->assertRedirect(route('orders.show', $order))
+        ->assertSessionHas('success');
+
+    expect($pendingItem->fresh()->status)->toBe(OrderItemStatus::Cancelled)
+        ->and($pendingItem->fresh()->cancel_reason)->toBe('Batalkan yang belum dibayar')
+        ->and($paidItem->fresh()->status)->toBe(OrderItemStatus::Pending)
+        ->and($paidItem->fresh()->payment_status)->toBe(PaymentStatus::Paid)
+        ->and($product->fresh()->stock)->toBe(5)
+        ->and($order->fresh()->status)->toBe(OrderStatus::Paid)
+        ->and($order->fresh()->cancelled_at)->toBeNull();
+});
+
+test('buyer cancelling an order with only cancellable items cancels the whole order', function () {
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create(['stock' => 3]);
+    $order = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Open,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    $itemA = OrderItem::factory()->for($order)->for($product)->create([
+        'quantity' => 1,
+        'status' => OrderItemStatus::Pending,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    $itemB = OrderItem::factory()->for($order)->for($product)->create([
+        'quantity' => 2,
+        'status' => OrderItemStatus::Pending,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    $product->update(['stock' => 0]);
+
+    $this->actingAs($buyer)
+        ->post(route('orders.cancel', $order), [
+            'cancel_reason' => 'Batalkan seluruh pesanan',
+        ])
+        ->assertRedirect(route('orders.show', $order))
+        ->assertSessionHas('success');
+
+    expect($itemA->fresh()->status)->toBe(OrderItemStatus::Cancelled)
+        ->and($itemB->fresh()->status)->toBe(OrderItemStatus::Cancelled)
+        ->and($product->fresh()->stock)->toBe(3)
+        ->and($order->fresh()->status)->toBe(OrderStatus::Cancelled)
+        ->and($order->fresh()->cancelled_at)->not->toBeNull()
+        ->and($order->fresh()->cancel_reason)->toBe('Batalkan seluruh pesanan');
+});
+
+test('buyer cannot cancel an order that is already fully cancelled', function () {
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create(['stock' => 2]);
+    $order = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Cancelled,
+        'payment_status' => PaymentStatus::Unpaid,
+        'cancelled_at' => now(),
+    ]);
+    OrderItem::factory()->for($order)->for($product)->create([
+        'quantity' => 2,
+        'status' => OrderItemStatus::Cancelled,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    $product->update(['stock' => 4]);
+
+    $this->actingAs($buyer)
+        ->from(route('orders.show', $order))
+        ->post(route('orders.cancel', $order))
+        ->assertRedirect(route('orders.show', $order))
+        ->assertSessionHasErrors('order');
+
+    expect($order->fresh()->status)->toBe(OrderStatus::Cancelled)
+        ->and($product->fresh()->stock)->toBe(4);
+});
+
+test('buyer cannot cancel an order that only has completed items', function () {
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create(['stock' => 1]);
+    $order = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Completed,
+        'payment_status' => PaymentStatus::Paid,
+    ]);
+    $item = OrderItem::factory()->for($order)->for($product)->create([
+        'status' => OrderItemStatus::Completed,
+        'payment_status' => PaymentStatus::Paid,
+    ]);
+
+    $this->actingAs($buyer)
+        ->from(route('orders.show', $order))
+        ->post(route('orders.cancel', $order))
+        ->assertRedirect(route('orders.show', $order))
+        ->assertSessionHasErrors('order');
+
+    expect($item->fresh()->status)->toBe(OrderItemStatus::Completed);
+});
+
 test('pre-order cancel does not change product stock', function () {
     $buyer = User::factory()->create(['role' => UserRole::Buyer]);
     $seller = User::factory()->create(['role' => UserRole::Seller]);

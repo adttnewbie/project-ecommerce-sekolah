@@ -30,7 +30,9 @@ type Props = {
         items_sold: number;
         gross_amount: number;
     };
-    reports: DailyReport[];
+    reports: {
+        data: DailyReport[];
+    };
 };
 
 type SummaryProps = {
@@ -56,7 +58,9 @@ type ReportSummaryProps = {
 
 type ReportsSectionProps = {
     date: string;
-    reports: DailyReport[];
+    reports: {
+        data: DailyReport[];
+    };
 };
 
 type DateTimeProps = {
@@ -172,7 +176,7 @@ function ReportsSection({ date, reports }: ReportsSectionProps) {
                 </span>
             </div>
 
-            {reports.length === 0 ? (
+            {reports.data.length === 0 ? (
                 <EmptyState
                     title="Belum ada laporan masuk."
                     description={`Picket belum mengirim laporan pada ${date}.`}
@@ -190,7 +194,7 @@ function ReportsSection({ date, reports }: ReportsSectionProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {reports.map((report) => (
+                        {reports.data.map((report) => (
                             <TableRow
                                 key={report.id}
                                 className="hover:bg-blue-50/50"

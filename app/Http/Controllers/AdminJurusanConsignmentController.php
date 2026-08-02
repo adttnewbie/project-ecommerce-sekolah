@@ -3,14 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\UpJurusanConsignment;
-use App\Models\UpJurusanPayout;
 use App\Models\User;
+use App\Support\ConsignmentPayoutService;
 use App\Support\ConsignmentTransitionService;
 use App\Support\MoneyCalculationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,25 +19,29 @@ class AdminJurusanConsignmentController extends Controller
     {
         /** @var User $adminJurusan */
         $adminJurusan = $request->user();
+        $validated = $request->validate([
+            'page' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $consignments = UpJurusanConsignment::query()
+            ->with(['seller:id,name', 'product:id,name', 'upJurusan:id,name,admin_jurusan_id'])
+            ->whereHas('upJurusan', fn ($query) => $query->where('admin_jurusan_id', $adminJurusan->id))
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('admin-jurusan/consignments/index', [
-            'consignments' => UpJurusanConsignment::query()
-                ->with(['seller:id,name', 'product:id,name', 'upJurusan:id,name,admin_jurusan_id'])
-                ->whereHas('upJurusan', fn ($query) => $query->where('admin_jurusan_id', $adminJurusan->id))
-                ->latest()
-                ->get()
-                ->map(fn (UpJurusanConsignment $consignment) => [
-                    'id' => $consignment->id,
-                    'seller_name' => $consignment->seller->name,
-                    'product_name' => $consignment->product->name,
-                    'up_jurusan_name' => $consignment->upJurusan->name,
-                    'requested_quantity' => $consignment->requested_quantity,
-                    'status' => [
-                        'code' => $consignment->status->value,
-                        'label' => $consignment->status->label(),
-                    ],
-                ])
-                ->all(),
+            'consignments' => $consignments->through(fn (UpJurusanConsignment $consignment) => [
+                'id' => $consignment->id,
+                'seller_name' => $consignment->seller->name,
+                'product_name' => $consignment->product->name,
+                'up_jurusan_name' => $consignment->upJurusan->name,
+                'requested_quantity' => $consignment->requested_quantity,
+                'status' => [
+                    'code' => $consignment->status->value,
+                    'label' => $consignment->status->label(),
+                ],
+            ]),
         ]);
     }
 
@@ -158,21 +161,13 @@ class AdminJurusanConsignmentController extends Controller
             'amount' => ['required', 'integer', 'min:1'],
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
-        $unpaidAmount = MoneyCalculationService::unpaidSellerAmount($consignment->id);
 
-        if ((int) $validated['amount'] > $unpaidAmount) {
-            throw ValidationException::withMessages([
-                'amount' => 'Jumlah pencairan melebihi saldo seller.',
-            ]);
-        }
-
-        UpJurusanPayout::query()->create([
-            'up_jurusan_consignment_id' => $consignment->id,
-            'seller_id' => $consignment->seller_id,
-            'user_id' => $adminJurusan->id,
-            'amount' => (int) $validated['amount'],
-            'note' => $validated['note'] ?? null,
-        ]);
+        ConsignmentPayoutService::execute(
+            $consignment,
+            $adminJurusan,
+            (int) $validated['amount'],
+            $validated['note'] ?? null,
+        );
 
         return to_route('admin-jurusan.consignments.show', $consignment)
             ->with('success', 'Pencairan seller berhasil dicatat.');

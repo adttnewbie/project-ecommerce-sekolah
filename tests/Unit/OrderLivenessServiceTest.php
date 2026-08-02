@@ -10,8 +10,9 @@ use App\Models\Product;
 use App\Models\User;
 use App\Support\OrderLivenessService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 test('filter values include required admin buckets', function () {
     expect(OrderLivenessService::filterValues())

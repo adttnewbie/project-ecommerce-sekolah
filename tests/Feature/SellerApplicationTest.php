@@ -63,8 +63,8 @@ test('admin can approve seller application and promote buyer to seller', functio
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/seller-applications/index')
-            ->has('sellerApplications', 1)
-            ->where('sellerApplications.0.id', $application->id)
+            ->has('sellerApplications.data', 1)
+            ->where('sellerApplications.data.0.id', $application->id)
         );
 
     $this->actingAs($admin)

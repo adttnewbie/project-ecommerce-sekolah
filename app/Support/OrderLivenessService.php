@@ -3,7 +3,6 @@
 namespace App\Support;
 
 use App\Enums\OrderItemStatus;
-use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Models\Order;
@@ -21,6 +20,9 @@ class OrderLivenessService
 
     public const int SENT_IDLE_HOURS = 72;
 
+    /** @var \WeakMap<Order, list<string>>|null */
+    private static ?\WeakMap $stuckReasonsCache = null;
+
     /**
      * @return list<string>
      */
@@ -29,6 +31,9 @@ class OrderLivenessService
         return ['active', 'expired', 'stuck', 'requires_action'];
     }
 
+    /**
+     * @return Builder<Order>
+     */
     public static function unpaidExpiredQuery(?CarbonInterface $now = null): Builder
     {
         $now ??= now();
@@ -56,6 +61,9 @@ class OrderLivenessService
             });
     }
 
+    /**
+     * @return Builder<Order>
+     */
     public static function stuckFulfillmentQuery(?CarbonInterface $now = null): Builder
     {
         $now ??= now();
@@ -87,6 +95,9 @@ class OrderLivenessService
             });
     }
 
+    /**
+     * @return Builder<Order>
+     */
     public static function stuckSentQuery(?CarbonInterface $now = null): Builder
     {
         $now ??= now();
@@ -109,6 +120,9 @@ class OrderLivenessService
             });
     }
 
+    /**
+     * @return Builder<Order>
+     */
     public static function stuckQuery(?CarbonInterface $now = null): Builder
     {
         $now ??= now();
@@ -120,6 +134,9 @@ class OrderLivenessService
             });
     }
 
+    /**
+     * @return Builder<Order>
+     */
     public static function requiresActionQuery(?CarbonInterface $now = null): Builder
     {
         $now ??= now();
@@ -132,6 +149,9 @@ class OrderLivenessService
             });
     }
 
+    /**
+     * @return Builder<Order>
+     */
     public static function activeQuery(): Builder
     {
         return Order::query()
@@ -139,6 +159,10 @@ class OrderLivenessService
             ->where('requires_manual_review', false);
     }
 
+    /**
+     * @param  Builder<Order>  $query
+     * @return Builder<Order>
+     */
     public static function applyFilter(Builder $query, ?string $filter, ?CarbonInterface $now = null): Builder
     {
         $now ??= now();
@@ -159,6 +183,11 @@ class OrderLivenessService
     public static function stuckReasonsFor(Order $order, ?CarbonInterface $now = null): array
     {
         $now ??= now();
+
+        if (isset(self::stuckReasonsCache()[$order])) {
+            return self::stuckReasonsCache()[$order];
+        }
+
         $order->loadMissing('items');
         $reasons = [];
 
@@ -178,7 +207,18 @@ class OrderLivenessService
             $reasons[] = 'manual_review';
         }
 
-        return array_values(array_unique($reasons));
+        $result = array_values(array_unique($reasons));
+        self::stuckReasonsCache()[$order] = $result;
+
+        return $result;
+    }
+
+    /**
+     * @return \WeakMap<Order, list<string>>
+     */
+    private static function stuckReasonsCache(): \WeakMap
+    {
+        return self::$stuckReasonsCache ??= new \WeakMap;
     }
 
     public static function livenessLabel(Order $order, ?CarbonInterface $now = null): string
@@ -299,7 +339,7 @@ class OrderLivenessService
             ]);
         }
 
-        DB::transaction(function () use ($order, $actor, $reason) {
+        DB::transaction(function () use ($order, $reason) {
             /** @var Order $current */
             $current = Order::query()
                 ->with('items')

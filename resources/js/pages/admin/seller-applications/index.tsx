@@ -29,7 +29,10 @@ type SellerApplication = {
 };
 
 type Props = {
-    sellerApplications: SellerApplication[];
+    sellerApplications: {
+        data: SellerApplication[];
+        total: number;
+    };
 };
 
 const formatDate = (value: string | null) =>
@@ -50,7 +53,7 @@ export default function AdminSellerApplicationsIndex({
                     <section>
                         <Badge className="mb-2 rounded-[6px] bg-emerald-50 text-emerald-700">
                             <Store className="size-3.5" />{' '}
-                            {sellerApplications.length} pengajuan
+                            {sellerApplications.total} pengajuan
                         </Badge>
                         <h1 className="text-2xl font-semibold text-slate-950">
                             Pengajuan Seller
@@ -93,7 +96,7 @@ export default function AdminSellerApplicationsIndex({
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {sellerApplications.length === 0 && (
+                                        {sellerApplications.data.length === 0 && (
                                             <TableRow>
                                                 <TableCell
                                                     colSpan={5}
@@ -103,7 +106,7 @@ export default function AdminSellerApplicationsIndex({
                                                 </TableCell>
                                             </TableRow>
                                         )}
-                                        {sellerApplications.map(
+                                        {sellerApplications.data.map(
                                             (application) => (
                                                 <TableRow key={application.id}>
                                                     <TableCell className="px-5">

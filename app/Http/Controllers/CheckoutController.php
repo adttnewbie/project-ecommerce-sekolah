@@ -67,7 +67,7 @@ class CheckoutController extends Controller
             'summary' => [
                 'total_items' => $items->sum('quantity'),
                 'total_price' => $items->sum('subtotal'),
-                'has_invalid_items' => $items->contains(fn (array $item) => ($item['is_valid'] ?? true) === false),
+                'has_invalid_items' => $items->contains(fn (array $item) => $item['is_valid'] === false),
             ],
         ]);
     }
@@ -180,7 +180,7 @@ class CheckoutController extends Controller
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array{id: int, source: 'buy_now', quantity: int, subtotal: int, is_valid: bool, invalid_reasons: list<string>, product: array<string, mixed>}
      */
     private function buyNowItemPayload(Request $request): array
     {
@@ -196,12 +196,15 @@ class CheckoutController extends Controller
         abort_unless($product->status === ProductStatus::Approved, 404);
 
         $quantity = max(1, (int) $request->integer('quantity', 1));
+        $invalidReasons = PreOrderRules::invalidReasons($product, $quantity);
 
         return [
             'id' => $product->id,
             'source' => 'buy_now',
             'quantity' => $quantity,
             'subtotal' => $quantity * $product->price,
+            'is_valid' => $invalidReasons === [],
+            'invalid_reasons' => $invalidReasons,
             'product' => $this->productPayload($product),
         ];
     }

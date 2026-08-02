@@ -305,7 +305,7 @@ class ConsignmentTransitionService
             $actor,
             [
                 'from_status' => $from->value,
-                'to_status' => $status instanceof UpJurusanConsignmentStatus ? $status->value : (string) $status,
+                'to_status' => $status->value,
                 'quantity' => $quantity,
             ],
         );

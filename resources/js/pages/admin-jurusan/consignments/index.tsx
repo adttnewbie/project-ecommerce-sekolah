@@ -15,13 +15,16 @@ import { Textarea } from '@/components/ui/textarea';
 
 type Props = {
     consignments: {
-        id: number;
-        seller_name: string;
-        product_name: string;
-        up_jurusan_name: string;
-        requested_quantity: number;
-        status: { code: string; label: string };
-    }[];
+        data: {
+            id: number;
+            seller_name: string;
+            product_name: string;
+            up_jurusan_name: string;
+            requested_quantity: number;
+            status: { code: string; label: string };
+        }[];
+        total: number;
+    };
 };
 
 export default function AdminJurusanConsignments({ consignments }: Props) {
@@ -50,7 +53,7 @@ export default function AdminJurusanConsignments({ consignments }: Props) {
                                 Total request
                             </p>
                             <p className="mt-1 text-2xl font-semibold text-slate-950 tabular-nums">
-                                {consignments.length}
+                                {consignments.total}
                             </p>
                         </div>
                     </div>
@@ -70,7 +73,7 @@ export default function AdminJurusanConsignments({ consignments }: Props) {
                 )}
 
                 <div className="overflow-hidden rounded-[8px] border border-slate-200 bg-white shadow-sm">
-                    {consignments.length > 0 && (
+                    {consignments.data.length > 0 && (
                         <div className="hidden grid-cols-[1.4fr_1fr_1fr_auto] gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-medium text-slate-500 uppercase md:grid">
                             <span>Produk</span>
                             <span>UP Jurusan</span>
@@ -78,7 +81,7 @@ export default function AdminJurusanConsignments({ consignments }: Props) {
                             <span className="text-right">Aksi</span>
                         </div>
                     )}
-                    {consignments.length === 0 && (
+                    {consignments.data.length === 0 && (
                         <div className="grid place-items-center p-10 text-center">
                             <span className="grid size-12 place-items-center rounded-[8px] bg-slate-100 text-slate-500">
                                 <Inbox className="size-6" />
@@ -92,7 +95,7 @@ export default function AdminJurusanConsignments({ consignments }: Props) {
                             </p>
                         </div>
                     )}
-                    {consignments.map((item) => (
+                    {consignments.data.map((item) => (
                         <div
                             key={item.id}
                             className="grid gap-3 border-b border-slate-100 p-4 text-sm last:border-b-0 md:grid-cols-[1.4fr_1fr_1fr_auto] md:items-center"
@@ -147,7 +150,7 @@ export default function AdminJurusanConsignments({ consignments }: Props) {
 function RejectConsignmentDialog({
     item,
 }: {
-    item: Props['consignments'][number];
+    item: Props['consignments']['data'][number];
 }) {
     return (
         <AlertDialog>

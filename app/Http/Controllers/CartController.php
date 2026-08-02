@@ -21,7 +21,12 @@ class CartController extends Controller
         $user = $request->user();
 
         $items = CartItem::query()
-            ->with(['product.category:id,name,slug', 'product.seller:id,name', 'product.upJurusan:id,name'])
+            ->with([
+                'product.category:id,name,slug',
+                'product.seller:id,name',
+                'product.upJurusan:id,name',
+                'product.upJurusanConsignments:id,product_id,received_quantity,sold_quantity',
+            ])
             ->where('user_id', $user->id)
             ->latest()
             ->get()

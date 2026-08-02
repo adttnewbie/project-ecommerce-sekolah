@@ -39,17 +39,22 @@ class OrderItemCancellation
         DB::transaction(function () use ($order, $actor, $reason, $force) {
             /** @var Order $current */
             $current = Order::query()
-                ->with('items:id,order_id,status')
+                ->with(['items:id,order_id,status,payment_status', 'items.order:id,user_id'])
                 ->lockForUpdate()
                 ->findOrFail($order->id);
 
             $cancellableIds = $current->items
-                ->filter(fn (OrderItem $item) => $item->status !== OrderItemStatus::Cancelled)
+                ->filter(fn (OrderItem $item) => self::prohibitedCancellationReason($item, $actor, $force) === null)
                 ->pluck('id');
 
             if ($cancellableIds->isEmpty()) {
+                $allCancelled = $current->items
+                    ->every(fn (OrderItem $item) => $item->status === OrderItemStatus::Cancelled);
+
                 throw ValidationException::withMessages([
-                    'order' => 'Pesanan ini sudah dibatalkan.',
+                    'order' => $allCancelled
+                        ? 'Pesanan ini sudah dibatalkan.'
+                        : 'Tidak ada item yang dapat dibatalkan.',
                 ]);
             }
 
@@ -139,98 +144,91 @@ class OrderItemCancellation
 
     public static function assertCanCancel(OrderItem $item, User $actor, bool $force = false): void
     {
-        if ($item->status === OrderItemStatus::Cancelled) {
+        $prohibitedReason = self::prohibitedCancellationReason($item, $actor, $force);
+
+        if ($prohibitedReason !== null) {
             throw ValidationException::withMessages([
-                'order' => 'Item pesanan sudah dibatalkan.',
+                'order' => $prohibitedReason,
             ]);
+        }
+    }
+
+    /**
+     * Single source of truth for item cancellability. Returns the message that
+     * would block cancellation, or null when the item may be cancelled.
+     */
+    private static function prohibitedCancellationReason(OrderItem $item, User $actor, bool $force): ?string
+    {
+        if ($item->status === OrderItemStatus::Cancelled) {
+            return 'Item pesanan sudah dibatalkan.';
         }
 
         if ($item->status === OrderItemStatus::Completed) {
-            throw ValidationException::withMessages([
-                'order' => 'Item yang sudah selesai tidak dapat dibatalkan.',
-            ]);
+            return 'Item yang sudah selesai tidak dapat dibatalkan.';
         }
 
         if ($force) {
-            if ($actor->role !== UserRole::Admin) {
-                throw ValidationException::withMessages([
-                    'order' => 'Hanya admin yang dapat memaksa pembatalan item ini.',
-                ]);
-            }
-
-            return;
+            return $actor->role === UserRole::Admin
+                ? null
+                : 'Hanya admin yang dapat memaksa pembatalan item ini.';
         }
 
         if (
             $item->payment_status === PaymentStatus::Paid
             && $item->status === OrderItemStatus::Sent
         ) {
-            throw ValidationException::withMessages([
-                'order' => 'Item yang sudah dibayar dan dikirim hanya dapat dibatalkan oleh admin.',
-            ]);
+            return 'Item yang sudah dibayar dan dikirim hanya dapat dibatalkan oleh admin.';
         }
 
-        match ($actor->role) {
-            UserRole::Buyer => self::assertBuyerCanCancel($item, $actor),
-            UserRole::Seller => self::assertSellerCanCancel($item, $actor),
-            UserRole::PicketOfficer => self::assertPicketCanCancel($item, $actor),
+        return match ($actor->role) {
+            UserRole::Buyer => self::buyerProhibitedCancellationReason($item, $actor),
+            UserRole::Seller => self::sellerProhibitedCancellationReason($item, $actor),
+            UserRole::PicketOfficer => self::picketProhibitedCancellationReason($item, $actor),
             UserRole::Admin => null,
-            default => throw ValidationException::withMessages([
-                'order' => 'Anda tidak berwenang membatalkan item pesanan ini.',
-            ]),
+            default => 'Anda tidak berwenang membatalkan item pesanan ini.',
         };
     }
 
-    private static function assertBuyerCanCancel(OrderItem $item, User $actor): void
+    private static function buyerProhibitedCancellationReason(OrderItem $item, User $actor): ?string
     {
         if ($item->order->user_id !== $actor->id) {
-            throw ValidationException::withMessages([
-                'order' => 'Anda tidak berwenang membatalkan pesanan ini.',
-            ]);
+            return 'Anda tidak berwenang membatalkan pesanan ini.';
         }
 
         if ($item->payment_status === PaymentStatus::Paid) {
-            throw ValidationException::withMessages([
-                'order' => 'Item yang sudah dibayar tidak dapat dibatalkan oleh pembeli.',
-            ]);
+            return 'Item yang sudah dibayar tidak dapat dibatalkan oleh pembeli.';
         }
+
+        return null;
     }
 
-    private static function assertSellerCanCancel(OrderItem $item, User $actor): void
+    private static function sellerProhibitedCancellationReason(OrderItem $item, User $actor): ?string
     {
         if ($item->product->seller_id !== $actor->id) {
-            throw ValidationException::withMessages([
-                'order' => 'Anda tidak berwenang membatalkan item penjual lain.',
-            ]);
+            return 'Anda tidak berwenang membatalkan item penjual lain.';
         }
 
         if ($item->product->usesConsignmentStock()) {
-            throw ValidationException::withMessages([
-                'order' => 'Pembatalan produk titipan dikelola oleh picket officer UP Jurusan.',
-            ]);
+            return 'Pembatalan produk titipan dikelola oleh picket officer UP Jurusan.';
         }
 
         if ($item->payment_status === PaymentStatus::Paid && $item->status === OrderItemStatus::Sent) {
-            throw ValidationException::withMessages([
-                'order' => 'Item yang sudah dibayar dan dikirim hanya dapat dibatalkan oleh admin.',
-            ]);
+            return 'Item yang sudah dibayar dan dikirim hanya dapat dibatalkan oleh admin.';
         }
+
+        return null;
     }
 
-    private static function assertPicketCanCancel(OrderItem $item, User $actor): void
+    private static function picketProhibitedCancellationReason(OrderItem $item, User $actor): ?string
     {
         $product = $item->product;
 
         if (! $product->usesConsignmentStock()) {
-            throw ValidationException::withMessages([
-                'order' => 'Picket hanya dapat membatalkan item titipan UP Jurusan.',
-            ]);
+            return 'Picket hanya dapat membatalkan item titipan UP Jurusan.';
         }
 
         if ($actor->up_jurusan_id === null) {
-            throw ValidationException::withMessages([
-                'order' => 'Anda tidak berwenang membatalkan item di UP Jurusan ini.',
-            ]);
+            return 'Anda tidak berwenang membatalkan item di UP Jurusan ini.';
         }
 
         $assigned = $product->up_jurusan_id === $actor->up_jurusan_id
@@ -240,10 +238,10 @@ class OrderItemCancellation
                 ->exists();
 
         if (! $assigned) {
-            throw ValidationException::withMessages([
-                'order' => 'Anda tidak berwenang membatalkan item di UP Jurusan ini.',
-            ]);
+            return 'Anda tidak berwenang membatalkan item di UP Jurusan ini.';
         }
+
+        return null;
     }
 
     public static function restock(OrderItem $item, User $actor): void

@@ -1,11 +1,13 @@
 import { Link, router } from '@inertiajs/react';
 import { LogOut, Settings } from 'lucide-react';
+import { useState } from 'react';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { Spinner } from '@/components/ui/spinner';
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { logout } from '@/routes';
@@ -18,10 +20,24 @@ type Props = {
 
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
+    const [processing, setProcessing] = useState(false);
 
     const handleLogout = () => {
+        if (processing) {
+            return;
+        }
+
         cleanup();
         router.flushAll();
+
+        setProcessing(true);
+        router.post(
+            logout().url,
+            {},
+            {
+                onFinish: () => setProcessing(false),
+            },
+        );
     };
 
     return (
@@ -47,16 +63,20 @@ export function UserMenuContent({ user }: Props) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-                <Link
+                <button
+                    type="button"
                     className="block w-full cursor-pointer"
-                    href={logout()}
-                    as="button"
                     onClick={handleLogout}
+                    disabled={processing}
                     data-test="logout-button"
                 >
-                    <LogOut className="mr-2" />
-                    Log out
-                </Link>
+                    {processing ? (
+                        <Spinner className="mr-2" />
+                    ) : (
+                        <LogOut className="mr-2" />
+                    )}
+                    {processing ? 'Logout...' : 'Log out'}
+                </button>
             </DropdownMenuItem>
         </>
     );

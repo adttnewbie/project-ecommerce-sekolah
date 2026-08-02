@@ -57,10 +57,10 @@ test('admin can see pending products for moderation', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/products/moderation')
-            ->has('products', 1)
-            ->where('products.0.name', 'Produk Pending')
-            ->where('products.0.category.name', 'Alat Tulis')
-            ->where('products.0.seller.name', $seller->name),
+            ->has('products.data', 1)
+            ->where('products.data.0.name', 'Produk Pending')
+            ->where('products.data.0.category.name', 'Alat Tulis')
+            ->where('products.data.0.seller.name', $seller->name),
         );
 });
 

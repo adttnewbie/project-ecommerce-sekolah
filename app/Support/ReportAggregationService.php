@@ -17,6 +17,7 @@ class ReportAggregationService
      * Only type=out with sales sources; reverse/correction excluded.
      *
      * @param  list<string>|null  $sources
+     * @return Builder<UpJurusanStockMovement>
      */
     public static function upSalesMovementsQuery(
         int $upJurusanId,
@@ -42,6 +43,7 @@ class ReportAggregationService
     }
 
     /**
+     * @param  iterable<UpJurusanStockMovement>  $movements
      * @return array{total_sold: int, total_revenue: int, commission_amount: int, seller_amount: int}
      */
     public static function summarizeMovements(iterable $movements): array
@@ -58,6 +60,8 @@ class ReportAggregationService
 
     /**
      * UP revenue for a day: UP-owned gross + consignment commission (net UP share).
+     *
+     * @param  iterable<UpJurusanStockMovement>  $movements
      */
     public static function upRevenueFromMovements(iterable $movements): int
     {
@@ -192,7 +196,7 @@ class ReportAggregationService
 
                 return [
                     'day' => $date->translatedFormat('D'),
-                    'revenue' => self::upRevenueFromMovements($byDate->get($key, collect())),
+                    'revenue' => self::upRevenueFromMovements($byDate->get($key) ?? []),
                 ];
             })
             ->values()
@@ -256,6 +260,9 @@ class ReportAggregationService
         return $withSaleId + $withoutSaleId;
     }
 
+    /**
+     * @return Builder<UpJurusanStockMovement>
+     */
     private static function sellerPosSalesMovementsQuery(
         int $sellerId,
         CarbonInterface $from,
@@ -292,28 +299,35 @@ class ReportAggregationService
     {
         return $movements
             ->groupBy(fn (UpJurusanStockMovement $m) => $m->up_jurusan_pos_sale_id ?? 'm-'.$m->id)
-            ->map(function (Collection $group) {
-                /** @var UpJurusanStockMovement $first */
-                $first = $group->first();
-                $sale = $first->posSale;
-                $summary = self::summarizeMovements($group);
-
-                return [
-                    'id' => $sale?->id ?? $first->id,
-                    'code' => $sale?->code ?? 'POS-'.$first->id,
-                    'receipt_url' => $sale
-                        ? route('picket.pos.receipt', $sale, absolute: false)
-                        : '#',
-                    'sold_at' => ($sale?->created_at ?? $first->created_at)?->toIso8601String(),
-                    'total_quantity' => $summary['total_sold'],
-                    'total_amount' => $summary['total_revenue'],
-                    'commission_amount' => $summary['commission_amount'],
-                    'seller_amount' => $summary['seller_amount'],
-                    'channel' => StockMovementSource::PosSale->value,
-                    'products' => self::productLines($group),
-                ];
-            })
+            ->map(fn (Collection $group) => self::posTransactionRow($group))
             ->values();
+    }
+
+    /**
+     * @param  Collection<int, UpJurusanStockMovement>  $group
+     * @return array<string, mixed>
+     */
+    private static function posTransactionRow(Collection $group): array
+    {
+        /** @var UpJurusanStockMovement $first */
+        $first = $group->first();
+        $sale = $first->posSale;
+        $summary = self::summarizeMovements($group);
+
+        return [
+            'id' => $sale->id ?? $first->id,
+            'code' => $sale->code ?? 'POS-'.$first->id,
+            'receipt_url' => $sale
+                ? route('picket.pos.receipt', $sale, absolute: false)
+                : '#',
+            'sold_at' => ($sale->created_at ?? $first->created_at)?->toIso8601String(),
+            'total_quantity' => $summary['total_sold'],
+            'total_amount' => $summary['total_revenue'],
+            'commission_amount' => $summary['commission_amount'],
+            'seller_amount' => $summary['seller_amount'],
+            'channel' => StockMovementSource::PosSale->value,
+            'products' => self::productLines($group),
+        ];
     }
 
     /**
@@ -324,26 +338,33 @@ class ReportAggregationService
     {
         return $movements
             ->groupBy(fn (UpJurusanStockMovement $m) => $m->order_id ?? 'm-'.$m->id)
-            ->map(function (Collection $group) {
-                /** @var UpJurusanStockMovement $first */
-                $first = $group->first();
-                $order = $first->order;
-                $summary = self::summarizeMovements($group);
-
-                return [
-                    'id' => $order?->id ?? $first->id,
-                    'code' => $order?->code ?? 'ORD-'.$first->id,
-                    'receipt_url' => '#',
-                    'sold_at' => $first->created_at?->toIso8601String(),
-                    'total_quantity' => $summary['total_sold'],
-                    'total_amount' => $summary['total_revenue'],
-                    'commission_amount' => $summary['commission_amount'],
-                    'seller_amount' => $summary['seller_amount'],
-                    'channel' => StockMovementSource::OnlineOrder->value,
-                    'products' => self::productLines($group),
-                ];
-            })
+            ->map(fn (Collection $group) => self::onlineTransactionRow($group))
             ->values();
+    }
+
+    /**
+     * @param  Collection<int, UpJurusanStockMovement>  $group
+     * @return array<string, mixed>
+     */
+    private static function onlineTransactionRow(Collection $group): array
+    {
+        /** @var UpJurusanStockMovement $first */
+        $first = $group->first();
+        $order = $first->order;
+        $summary = self::summarizeMovements($group);
+
+        return [
+            'id' => $order->id ?? $first->id,
+            'code' => $order->code ?? 'ORD-'.$first->id,
+            'receipt_url' => '#',
+            'sold_at' => $first->created_at?->toIso8601String(),
+            'total_quantity' => $summary['total_sold'],
+            'total_amount' => $summary['total_revenue'],
+            'commission_amount' => $summary['commission_amount'],
+            'seller_amount' => $summary['seller_amount'],
+            'channel' => StockMovementSource::OnlineOrder->value,
+            'products' => self::productLines($group),
+        ];
     }
 
     /**
@@ -359,7 +380,7 @@ class ReportAggregationService
                     : $movement->consignment?->product;
 
                 return [
-                    'product_name' => $product?->name ?? '-',
+                    'product_name' => $product->name ?? '-',
                     'source' => $movement->up_jurusan_consignment_id === null ? 'Produk UP' : 'Titipan Seller',
                     'quantity' => $movement->quantity,
                     'unit_price' => $movement->unit_price,

@@ -47,12 +47,12 @@ class OrderItem extends Model
     protected static function booted(): void
     {
         static::creating(function (OrderItem $item): void {
-            $item->status_changed_at ??= now();
+            $item->status_changed_at ??= Carbon::instance(now());
         });
 
         static::updating(function (OrderItem $item): void {
             if ($item->isDirty('status')) {
-                $item->status_changed_at = now();
+                $item->status_changed_at = Carbon::instance(now());
             }
         });
     }

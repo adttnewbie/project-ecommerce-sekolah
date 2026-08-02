@@ -13,8 +13,10 @@ use App\Models\UpJurusanConsignment;
 use App\Models\User;
 use App\Support\ActorLifecycle;
 use App\Support\ReportAggregationService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -156,30 +158,46 @@ class AdminJurusanUpJurusanController extends Controller
             'picket_id' => ['required', 'integer'],
         ]);
 
-        $picket = User::query()
-            ->whereKey($validated['picket_id'])
-            ->where('role', UserRole::PicketOfficer)
-            ->firstOrFail();
+        DB::transaction(function () use ($upJurusan, $validated) {
+            UpJurusan::query()
+                ->whereKey($upJurusan->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        if ($picket->up_jurusan_id !== null && $picket->up_jurusan_id !== $upJurusan->id) {
-            throw ValidationException::withMessages([
-                'picket_id' => 'Picket officer sudah ditugaskan ke UP Jurusan lain.',
-            ])->redirectTo(route('admin-jurusan.up-jurusan.index'));
-        }
+            /** @var User $picket */
+            $picket = User::query()
+                ->whereKey($validated['picket_id'])
+                ->where('role', UserRole::PicketOfficer)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $currentPicket = User::query()
-            ->where('role', UserRole::PicketOfficer)
-            ->where('up_jurusan_id', $upJurusan->id)
-            ->whereKeyNot($picket->id)
-            ->first();
+            if ($picket->up_jurusan_id !== null && $picket->up_jurusan_id !== $upJurusan->id) {
+                throw ValidationException::withMessages([
+                    'picket_id' => 'Picket officer sudah ditugaskan ke UP Jurusan lain.',
+                ])->redirectTo(route('admin-jurusan.up-jurusan.index'));
+            }
 
-        if ($currentPicket !== null) {
-            ActorLifecycle::assertCanReassignPicket($upJurusan);
-            $this->authorize('reassignPicket', $upJurusan);
-            $currentPicket->update(['up_jurusan_id' => null]);
-        }
+            $currentPicket = User::query()
+                ->where('role', UserRole::PicketOfficer)
+                ->where('up_jurusan_id', $upJurusan->id)
+                ->whereKeyNot($picket->id)
+                ->lockForUpdate()
+                ->first();
 
-        $picket->update(['up_jurusan_id' => $upJurusan->id]);
+            if ($currentPicket !== null) {
+                ActorLifecycle::assertCanReassignPicket($upJurusan);
+                $this->authorize('reassignPicket', $upJurusan);
+                $currentPicket->update(['up_jurusan_id' => null]);
+            }
+
+            try {
+                $picket->update(['up_jurusan_id' => $upJurusan->id]);
+            } catch (UniqueConstraintViolationException) {
+                throw ValidationException::withMessages([
+                    'picket_id' => 'UP Jurusan ini sudah memiliki picket officer.',
+                ])->redirectTo(route('admin-jurusan.up-jurusan.index'));
+            }
+        });
 
         return to_route('admin-jurusan.up-jurusan.index')
             ->with('success', 'Picket officer berhasil ditugaskan.');
@@ -247,13 +265,19 @@ class AdminJurusanUpJurusanController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        User::query()->create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'role' => UserRole::PicketOfficer,
-            'password' => $validated['password'],
-            'up_jurusan_id' => $upJurusan->id,
-        ]);
+        try {
+            User::query()->create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'role' => UserRole::PicketOfficer,
+                'password' => $validated['password'],
+                'up_jurusan_id' => $upJurusan->id,
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            throw ValidationException::withMessages([
+                'email' => 'UP Jurusan ini sudah memiliki satu picket officer.',
+            ])->redirectTo(route('admin-jurusan.picket-officer.create'));
+        }
 
         return to_route('admin-jurusan.picket-officer.create')
             ->with('success', 'Akun picket officer berhasil dibuat.');

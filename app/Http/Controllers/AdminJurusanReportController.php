@@ -23,31 +23,36 @@ class AdminJurusanReportController extends Controller
         $adminJurusan = $request->user();
         $validated = $request->validate([
             'date' => ['nullable', 'date_format:Y-m-d'],
+            'page' => ['nullable', 'integer', 'min:1'],
         ]);
         $date = $validated['date'] ?? now()->toDateString();
         $upJurusanIds = UpJurusan::query()
             ->where('admin_jurusan_id', $adminJurusan->id)
             ->pluck('id');
+        $allReports = UpJurusanDailyReport::query()
+            ->whereIn('up_jurusan_id', $upJurusanIds)
+            ->whereDate('report_date', $date)
+            ->get(['id', 'user_id', 'total_sold', 'total_revenue']);
         $dailyReports = UpJurusanDailyReport::query()
             ->with(['user:id,name', 'upJurusan:id,name'])
             ->whereIn('up_jurusan_id', $upJurusanIds)
             ->whereDate('report_date', $date)
             ->latest('submitted_at')
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('admin-jurusan/reports/index', [
             'filters' => ['date' => $date],
-            'summary' => ReportAggregationService::adminDailyReportsSummary($dailyReports),
+            'summary' => ReportAggregationService::adminDailyReportsSummary($allReports),
             'reports' => $dailyReports
-                ->map(fn (UpJurusanDailyReport $report) => [
+                ->through(fn (UpJurusanDailyReport $report) => [
                     'id' => $report->id,
                     'picket_name' => $report->user->name,
                     'up_jurusan_name' => $report->upJurusan->name,
                     'total_sold' => $report->total_sold,
                     'total_revenue' => $report->total_revenue,
                     'submitted_at' => $report->submitted_at->toIso8601String(),
-                ])
-                ->all(),
+                ]),
         ]);
     }
 

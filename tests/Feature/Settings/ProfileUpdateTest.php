@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -63,7 +64,7 @@ test('user can delete their account', function () {
     expect($user->fresh())->toBeNull();
 });
 
-test('buyer can safely delete account with cart and completed orders', function () {
+test('buyer cannot delete account while any orders exist', function () {
     $user = User::factory()->create(['role' => UserRole::Buyer]);
     $product = Product::factory()->approved()->create();
     $order = Order::factory()->for($user)->create([
@@ -79,19 +80,11 @@ test('buyer can safely delete account with cart and completed orders', function 
         'status' => OrderItemStatus::Completed,
     ]);
 
-    $this
-        ->actingAs($user)
-        ->delete(route('profile.destroy'), [
-            'password' => 'password',
-        ])
-        ->assertSessionHasNoErrors()
-        ->assertRedirect(route('home'));
+    expect(fn () => $user->delete())->toThrow(QueryException::class);
 
-    $this->assertGuest();
-    expect($user->fresh())->toBeNull();
-    $this->assertDatabaseMissing('cart_items', ['user_id' => $user->id]);
-    $this->assertDatabaseMissing('orders', ['user_id' => $user->id]);
-    $this->assertDatabaseMissing('order_items', ['order_id' => $order->id]);
+    expect($user->fresh())->not->toBeNull();
+    $this->assertDatabaseHas('orders', ['id' => $order->id]);
+    $this->assertDatabaseHas('order_items', ['order_id' => $order->id]);
 });
 
 test('buyer cannot delete account while order is active', function () {

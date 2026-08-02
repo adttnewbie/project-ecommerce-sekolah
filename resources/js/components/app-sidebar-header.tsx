@@ -12,6 +12,7 @@ import {
     X,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -508,6 +509,7 @@ function NotificationItem({
         router.delete('/notifications', {
             data: { key: notification.key },
             preserveScroll: true,
+            onError: () => toast.error('Notifikasi gagal dihapus.'),
         });
     };
 
