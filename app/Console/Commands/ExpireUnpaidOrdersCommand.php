@@ -5,25 +5,26 @@ namespace App\Console\Commands;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Support\OrderLivenessService;
+use App\Support\SystemActor;
 use Illuminate\Console\Command;
 
 class ExpireUnpaidOrdersCommand extends Command
 {
     protected $signature = 'orders:expire-unpaid';
 
-    protected $description = 'Cancel unpaid order items that passed the payment SLA and restock inventory';
+    protected $description = 'Cancel unpaid orders that passed the payment SLA and restock inventory';
 
     public function handle(): int
     {
-        $systemActor = User::query()
+        $existing = User::query()
             ->where('role', UserRole::Admin)
             ->orderBy('id')
             ->first();
 
-        if ($systemActor === null) {
-            $this->warn('No admin user available to attribute expiry cancellations.');
+        $systemActor = $existing ?? SystemActor::getOrCreate();
 
-            return self::FAILURE;
+        if ($existing === null) {
+            $this->warn('No admin user found; bootstrapped system actor to attribute expiry cancellations.');
         }
 
         $cancelled = OrderLivenessService::expireUnpaidOrders($systemActor);

@@ -1,5 +1,6 @@
-import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { Form, Head, Link, useForm } from '@inertiajs/react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import type { FormEvent } from 'react';
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -46,6 +47,16 @@ const formatRupiah = (value: number) =>
     }).format(value);
 
 export default function AdminJurusanConsignmentShow({ consignment }: Props) {
+    const payoutForm = useForm({
+        amount: '',
+        note: '',
+    });
+
+    const submitPayout = (e: FormEvent) => {
+        e.preventDefault();
+        payoutForm.post(`/admin-jurusan/consignments/${consignment.id}/payout`);
+    };
+
     return (
         <>
             <Head title={`Request ${consignment.product.name}`} />
@@ -145,6 +156,7 @@ export default function AdminJurusanConsignmentShow({ consignment }: Props) {
                                 <Form
                                     action={`/admin-jurusan/consignments/${consignment.id}/approve`}
                                     method="post"
+                                    disableWhileProcessing
                                     className="flex flex-wrap items-end gap-2"
                                 >
                                     <div className="grid gap-1">
@@ -181,9 +193,8 @@ export default function AdminJurusanConsignmentShow({ consignment }: Props) {
                             </div>
                         )}
                         {consignment.unpaid_amount > 0 && (
-                            <Form
-                                action={`/admin-jurusan/consignments/${consignment.id}/payout`}
-                                method="post"
+                            <form
+                                onSubmit={submitPayout}
                                 className="mt-5 grid gap-2 border-t border-slate-100 pt-4"
                             >
                                 <Input
@@ -191,17 +202,47 @@ export default function AdminJurusanConsignmentShow({ consignment }: Props) {
                                     type="number"
                                     min="1"
                                     max={consignment.unpaid_amount}
-                                    placeholder="Nominal cair ke seller"
+                                    placeholder="Minimum cair ke seller"
                                     required
+                                    value={payoutForm.data.amount}
+                                    onChange={(e) =>
+                                        payoutForm.setData(
+                                            'amount',
+                                            e.target.value,
+                                        )
+                                    }
+                                    disabled={payoutForm.processing}
                                 />
                                 <Input
                                     name="note"
                                     placeholder="Catatan pencairan"
+                                    value={payoutForm.data.note}
+                                    onChange={(e) =>
+                                        payoutForm.setData(
+                                            'note',
+                                            e.target.value,
+                                        )
+                                    }
+                                    disabled={payoutForm.processing}
                                 />
-                                <Button type="submit" variant="outline">
-                                    Catat pencairan
+                                <Button
+                                    type="submit"
+                                    variant="outline"
+                                    disabled={payoutForm.processing}
+                                >
+                                    {payoutForm.processing && (
+                                        <Loader2 className="animate-spin" />
+                                    )}
+                                    {payoutForm.processing
+                                        ? 'Memproses...'
+                                        : 'Catat pencairan'}
                                 </Button>
-                            </Form>
+                                {payoutForm.errors.amount && (
+                                    <p className="text-xs text-rose-600">
+                                        {payoutForm.errors.amount}
+                                    </p>
+                                )}
+                            </form>
                         )}
                     </div>
                 </section>
@@ -234,6 +275,7 @@ function RejectConsignmentDialog({
                 <Form
                     action={`/admin-jurusan/consignments/${consignment.id}/reject`}
                     method="post"
+                    disableWhileProcessing
                     className="space-y-4"
                 >
                     <Textarea

@@ -125,7 +125,9 @@ Route::middleware(['auth', EnsureUserIsAdminJurusan::class])
         Route::post('consignments/{consignment}/approve', [AdminJurusanConsignmentController::class, 'approve'])->name('consignments.approve');
         Route::post('consignments/{consignment}/reject', [AdminJurusanConsignmentController::class, 'reject'])->name('consignments.reject');
         Route::post('consignments/{consignment}/cancel', [AdminJurusanConsignmentController::class, 'cancel'])->name('consignments.cancel');
-        Route::post('consignments/{consignment}/payout', [AdminJurusanConsignmentController::class, 'payout'])->name('consignments.payout');
+        Route::post('consignments/{consignment}/payout', [AdminJurusanConsignmentController::class, 'payout'])
+            ->name('consignments.payout')
+            ->middleware('throttle:payout');
     });
 
 Route::middleware('auth')

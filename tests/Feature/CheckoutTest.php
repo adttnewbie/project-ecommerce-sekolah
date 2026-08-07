@@ -8,6 +8,7 @@ use App\Enums\ProductStatus;
 use App\Enums\UpJurusanConsignmentStatus;
 use App\Enums\UserRole;
 use App\Models\CartItem;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\UpJurusan;
 use App\Models\UpJurusanConsignment;
@@ -631,3 +632,64 @@ test('non buyer users cannot view payment confirmation', function (UserRole $rol
     UserRole::Seller,
     UserRole::PicketOfficer,
 ]);
+
+test('buyer is blocked from creating more than the unpaid-order limit', function () {
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    Order::factory()->count(5)->for($buyer, 'user')->create([
+        'status' => OrderStatus::Open,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+
+    $this->actingAs($buyer)
+        ->from(route('cart.index'))
+        ->post(route('checkout'))
+        ->assertSessionHasErrors('cart');
+
+    expect(Order::query()->where('user_id', $buyer->id)->count())->toBe(5);
+});
+
+test('buyer under the unpaid-order limit can still checkout', function () {
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    Order::factory()->count(4)->for($buyer, 'user')->create([
+        'status' => OrderStatus::Open,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    $product = Product::factory()
+        ->approved()
+        ->create(['name' => 'Pensil Kayu', 'slug' => 'pensil-kayu', 'price' => 1000, 'stock' => 5]);
+    CartItem::query()->create([
+        'user_id' => $buyer->id,
+        'product_id' => $product->id,
+        'quantity' => 1,
+    ]);
+
+    $this->actingAs($buyer)
+        ->from(route('cart.index'))
+        ->post(route('checkout'))
+        ->assertSessionHasNoErrors();
+
+    expect(Order::query()->where('user_id', $buyer->id)->count())->toBe(5);
+});
+
+test('cancelled and completed orders do not count toward the unpaid limit', function () {
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    Order::factory()->count(5)->for($buyer, 'user')->create([
+        'status' => OrderStatus::Cancelled,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    $product = Product::factory()
+        ->approved()
+        ->create(['name' => 'Kertas', 'slug' => 'kertas', 'price' => 2000, 'stock' => 5]);
+    CartItem::query()->create([
+        'user_id' => $buyer->id,
+        'product_id' => $product->id,
+        'quantity' => 1,
+    ]);
+
+    $this->actingAs($buyer)
+        ->from(route('cart.index'))
+        ->post(route('checkout'))
+        ->assertSessionHasNoErrors();
+
+    expect(Order::query()->where('user_id', $buyer->id)->count())->toBe(6);
+});

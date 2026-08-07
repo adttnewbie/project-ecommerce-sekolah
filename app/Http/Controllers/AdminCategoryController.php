@@ -123,6 +123,10 @@ class AdminCategoryController extends Controller
                 if (! $this->isUniqueConstraintViolation($exception)) {
                     throw $exception;
                 }
+
+                if ($attempt < 5) {
+                    usleep(random_int(0, 60_000));
+                }
             }
         }
 
@@ -149,6 +153,10 @@ class AdminCategoryController extends Controller
             } catch (QueryException $exception) {
                 if (! $this->isUniqueConstraintViolation($exception)) {
                     throw $exception;
+                }
+
+                if ($attempt < 5) {
+                    usleep(random_int(0, 60_000));
                 }
             }
         }

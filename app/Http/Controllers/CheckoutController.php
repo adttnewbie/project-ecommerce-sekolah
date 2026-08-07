@@ -20,15 +20,19 @@ use App\Support\MoneyCalculationService;
 use App\Support\OrderItemCancellation;
 use App\Support\PreOrderRules;
 use App\Support\TransactionCode;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
 
 class CheckoutController extends Controller
 {
+    private const MAX_UNPAID_ORDERS = 5;
+
     public function confirm(Request $request): Response
     {
         /** @var User $user */
@@ -89,69 +93,128 @@ class CheckoutController extends Controller
             'buy_now_quantity' => ['required_with:buy_now_product_id', 'nullable', 'integer', 'min:1'],
         ]);
 
-        $order = DB::transaction(function () use ($user, $validated, $selectedIds) {
-            $order = Order::query()->create([
-                'code' => TransactionCode::unique(fn (string $code): bool => Order::query()->where('code', $code)->exists()),
-                'user_id' => $user->id,
-                'status' => OrderStatus::Open,
-                'payment_status' => PaymentStatus::Unpaid,
-                'payment_method' => PaymentMethod::Cash,
-                'total_price' => 0,
-                'pickup_method' => $validated['pickup_method'],
-                'pickup_location' => $validated['pickup_method'] === 'delivery'
-                    ? $validated['pickup_location'] ?? null
-                    : null,
-                'expires_at' => now()->addHours(OrderItemCancellation::UNPAID_EXPIRY_HOURS),
-            ]);
-            $totalPrice = 0;
-
-            if (isset($validated['buy_now_product_id'])) {
-                $productId = (int) $validated['buy_now_product_id'];
-                $product = Product::query()
-                    ->lockForUpdate()
-                    ->findOrFail($productId);
-                $quantity = (int) $validated['buy_now_quantity'];
-
-                $totalPrice = $this->createOrderItem($order, $product, $quantity, $user);
-
-                $order->update(['total_price' => $totalPrice]);
-
-                return $order;
-            }
-
-            $cartItems = CartItem::query()
-                ->where('user_id', $user->id)
-                ->when($selectedIds !== [], fn ($query) => $query->whereIn('id', $selectedIds))
-                ->orderBy('id')
-                ->get();
-
-            if ($cartItems->isEmpty()) {
-                throw ValidationException::withMessages([
-                    'cart' => 'Cart masih kosong.',
-                ]);
-            }
-
-            foreach ($cartItems as $cartItem) {
-                $product = Product::query()
-                    ->lockForUpdate()
-                    ->findOrFail($cartItem->product_id);
-
-                $totalPrice += $this->createOrderItem($order, $product, $cartItem->quantity, $user);
-            }
-
-            $order->update([
-                'total_price' => $totalPrice,
-            ]);
-
-            CartItem::query()
-                ->where('user_id', $user->id)
-                ->when($selectedIds !== [], fn ($query) => $query->whereIn('id', $selectedIds))
-                ->delete();
-
-            return $order;
-        });
+        $order = $this->createOrderWithRetry($user, $validated, $selectedIds);
 
         return to_route('orders.show', $order)->with('success', 'Pesanan berhasil dibuat.');
+    }
+
+    /**
+     * Create the order inside a transaction, retrying when a concurrent
+     * request wins the transaction-code race and the orders.code unique
+     * index rejects the insert (SQLSTATE 23000). Each attempt runs in its own
+     * transaction, so any partial work rolls back before the retry.
+     *
+     * @param  array<string, mixed>  $validated
+     * @param  array<int, int>  $selectedIds
+     */
+    private function createOrderWithRetry(User $user, array $validated, array $selectedIds): Order
+    {
+        $maxAttempts = 3;
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                return DB::transaction(function () use ($user, $validated, $selectedIds) {
+                    // Serialize concurrent checkouts for the same buyer by
+                    // locking their user row; the unpaid-order limit is then
+                    // checked inside the same transaction so two parallel
+                    // requests can not both slip past the cap.
+                    User::query()->whereKey($user->id)->lockForUpdate()->first();
+
+                    $this->assertUnderUnpaidOrderLimit($user);
+
+                    $order = Order::query()->create([
+                        'code' => TransactionCode::unique(fn (string $code): bool => Order::query()->where('code', $code)->exists()),
+                        'user_id' => $user->id,
+                        'status' => OrderStatus::Open,
+                        'payment_status' => PaymentStatus::Unpaid,
+                        'payment_method' => PaymentMethod::Cash,
+                        'total_price' => 0,
+                        'pickup_method' => $validated['pickup_method'],
+                        'pickup_location' => $validated['pickup_method'] === 'delivery'
+                            ? $validated['pickup_location'] ?? null
+                            : null,
+                        'expires_at' => now()->addHours(OrderItemCancellation::UNPAID_EXPIRY_HOURS),
+                    ]);
+                    $totalPrice = 0;
+
+                    if (isset($validated['buy_now_product_id'])) {
+                        $productId = (int) $validated['buy_now_product_id'];
+                        $product = Product::query()
+                            ->lockForUpdate()
+                            ->findOrFail($productId);
+                        $quantity = (int) $validated['buy_now_quantity'];
+
+                        $totalPrice = $this->createOrderItem($order, $product, $quantity, $user);
+
+                        $order->update(['total_price' => $totalPrice]);
+
+                        return $order;
+                    }
+
+                    $cartItems = CartItem::query()
+                        ->where('user_id', $user->id)
+                        ->when($selectedIds !== [], fn ($query) => $query->whereIn('id', $selectedIds))
+                        ->orderBy('id')
+                        ->get();
+
+                    if ($cartItems->isEmpty()) {
+                        throw ValidationException::withMessages([
+                            'cart' => 'Cart masih kosong.',
+                        ]);
+                    }
+
+                    foreach ($cartItems as $cartItem) {
+                        $product = Product::query()
+                            ->lockForUpdate()
+                            ->findOrFail($cartItem->product_id);
+
+                        $totalPrice += $this->createOrderItem($order, $product, $cartItem->quantity, $user);
+                    }
+
+                    $order->update([
+                        'total_price' => $totalPrice,
+                    ]);
+
+                    CartItem::query()
+                        ->where('user_id', $user->id)
+                        ->when($selectedIds !== [], fn ($query) => $query->whereIn('id', $selectedIds))
+                        ->delete();
+
+                    return $order;
+                });
+            } catch (QueryException $exception) {
+                if (! $this->isUniqueConstraintViolation($exception) || $attempt === $maxAttempts) {
+                    throw $exception;
+                }
+
+                usleep(random_int(0, 60_000));
+            }
+        }
+
+        throw new RuntimeException('Unable to create the order after retrying code collisions.');
+    }
+
+    private function isUniqueConstraintViolation(QueryException $exception): bool
+    {
+        return (string) $exception->getCode() === '23000';
+    }
+
+    private function assertUnderUnpaidOrderLimit(User $user): void
+    {
+        $openUnpaidCount = Order::query()
+            ->where('user_id', $user->id)
+            ->where('payment_status', PaymentStatus::Unpaid)
+            ->whereNotIn('status', [
+                OrderStatus::Cancelled->value,
+                OrderStatus::Completed->value,
+            ])
+            ->count();
+
+        if ($openUnpaidCount >= self::MAX_UNPAID_ORDERS) {
+            throw ValidationException::withMessages([
+                'cart' => 'Kamu sudah memiliki terlalu banyak pesanan yang belum dibayar. Selesaikan atau batalkan pesanan lama sebelum membuat yang baru.',
+            ]);
+        }
     }
 
     /**

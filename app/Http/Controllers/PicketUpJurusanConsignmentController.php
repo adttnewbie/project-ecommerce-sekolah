@@ -305,7 +305,16 @@ class PicketUpJurusanConsignmentController extends Controller
                 'total_amount' => 0,
             ]);
             $saleId = $sale->id;
-            $totalAmount = $this->recordSale($picket, $consignment, $quantity, $sale);
+
+            /** @var UpJurusanConsignment $locked */
+            $locked = UpJurusanConsignment::query()
+                ->with('product:id,price')
+                ->whereKey($consignment->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $this->authorizePicket($picket, $locked);
+            $totalAmount = $this->recordSale($picket, $locked, $quantity, $sale);
 
             $sale->update(['total_amount' => $totalAmount]);
         });

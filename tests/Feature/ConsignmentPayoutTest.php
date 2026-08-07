@@ -189,3 +189,19 @@ test('payout locks the consignment row inside a transaction', function () {
 
     expect($hasLockingRead)->toBeTrue();
 });
+
+test('payout endpoint is rate limited to five requests per minute', function () {
+    [$admin, $consignment, $balance] = payoutFixture();
+
+    $this->actingAs($admin);
+
+    for ($i = 0; $i < 5; $i++) {
+        $this->post(route('admin-jurusan.consignments.payout', $consignment), [
+            'amount' => 1,
+        ]);
+    }
+
+    $this->post(route('admin-jurusan.consignments.payout', $consignment), [
+        'amount' => 1,
+    ])->assertStatus(429);
+});

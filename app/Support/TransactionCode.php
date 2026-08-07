@@ -32,6 +32,12 @@ class TransactionCode
             if (! $exists($code)) {
                 return $code;
             }
+
+            // Randomized jitter so concurrent processes that collide don't
+            // stay in lockstep and exhaust their attempts in the same tick.
+            if ($attempt < $attempts) {
+                usleep(random_int(0, 60_000));
+            }
         }
 
         throw new RuntimeException(

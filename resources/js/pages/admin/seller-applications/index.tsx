@@ -96,7 +96,8 @@ export default function AdminSellerApplicationsIndex({
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {sellerApplications.data.length === 0 && (
+                                        {sellerApplications.data.length ===
+                                            0 && (
                                             <TableRow>
                                                 <TableCell
                                                     colSpan={5}
