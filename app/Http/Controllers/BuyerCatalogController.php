@@ -6,12 +6,15 @@ use App\Enums\ProductFulfillmentType;
 use App\Enums\ProductStatus;
 use App\Models\Category;
 use App\Models\Product;
+use App\Traits\OwnerPayloadHelper;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class BuyerCatalogController extends Controller
 {
+    use OwnerPayloadHelper;
+
     public function __invoke(Request $request): Response
     {
         $search = trim((string) $request->query('search', ''));
@@ -78,7 +81,7 @@ class BuyerCatalogController extends Controller
                         'id' => $product->seller->id,
                         'name' => $product->seller->name,
                     ] : null,
-                    'owner' => $this->ownerPayload($product),
+                    'owner' => $this->catalogOwnerPayload($product),
                     'category' => [
                         'id' => $product->category->id,
                         'name' => $product->category->name,
@@ -93,28 +96,8 @@ class BuyerCatalogController extends Controller
     /**
      * @return array{id: int|null, name: string|null, type: string|null}
      */
-    private function ownerPayload(Product $product): array
+    private function catalogOwnerPayload(Product $product): array
     {
-        if ($product->upJurusan) {
-            return [
-                'id' => $product->upJurusan->id,
-                'name' => $product->upJurusan->name,
-                'type' => 'up_jurusan',
-            ];
-        }
-
-        if ($product->seller) {
-            return [
-                'id' => $product->seller->id,
-                'name' => $product->seller->name,
-                'type' => 'seller',
-            ];
-        }
-
-        return [
-            'id' => null,
-            'name' => null,
-            'type' => null,
-        ];
+        return $this->buyerOwnerPayload($product);
     }
 }

@@ -298,16 +298,29 @@ class OrderLivenessService
             ]);
         }
 
-        $order->update([
-            'requires_manual_review' => true,
-            'requires_manual_review_at' => now(),
-            'requires_manual_review_reason' => $reason ?? 'Ditandai butuh peninjauan manual',
-            'stuck_detected_at' => $order->stuck_detected_at ?? now(),
-            'stuck_reasons' => array_values(array_unique([
-                ...($order->stuck_reasons ?? []),
-                'manual_review',
-            ])),
-        ]);
+        DB::transaction(function () use ($order, $reason) {
+            /** @var Order $current */
+            $current = Order::query()
+                ->lockForUpdate()
+                ->findOrFail($order->id);
+
+            if ($current->status->isTerminal()) {
+                throw ValidationException::withMessages([
+                    'order' => 'Pesanan yang sudah selesai atau dibatalkan tidak dapat ditandai review manual.',
+                ]);
+            }
+
+            $current->update([
+                'requires_manual_review' => true,
+                'requires_manual_review_at' => now(),
+                'requires_manual_review_reason' => $reason ?? 'Ditandai butuh peninjauan manual',
+                'stuck_detected_at' => $current->stuck_detected_at ?? now(),
+                'stuck_reasons' => array_values(array_unique([
+                    ...($current->stuck_reasons ?? []),
+                    'manual_review',
+                ])),
+            ]);
+        });
     }
 
     public static function clearManualReview(Order $order, User $actor): void
@@ -390,14 +403,8 @@ class OrderLivenessService
             $actor,
             $reason ?? 'Force cancel oleh admin (liveness)',
             true,
+            true,
         );
-
-        $order->refresh()->update([
-            'requires_manual_review' => false,
-            'requires_manual_review_at' => null,
-            'stuck_detected_at' => null,
-            'stuck_reasons' => null,
-        ]);
     }
 
     /**

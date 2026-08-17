@@ -7,6 +7,7 @@ use App\Models\CartItem;
 use App\Models\Product;
 use App\Models\User;
 use App\Support\PreOrderRules;
+use App\Traits\OwnerPayloadHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -15,6 +16,8 @@ use Inertia\Response;
 
 class CartController extends Controller
 {
+    use OwnerPayloadHelper;
+
     public function index(Request $request): Response
     {
         /** @var User $user */
@@ -51,7 +54,7 @@ class CartController extends Controller
                         'pre_order_min_quantity' => $cartItem->product->pre_order_min_quantity,
                         'pre_order_note' => $cartItem->product->pre_order_note,
                         'image' => $cartItem->product->image,
-                        'seller' => $this->ownerPayload($cartItem->product),
+                        'seller' => $this->cartItemOwnerPayload($cartItem->product),
                         'category' => [
                             'id' => $cartItem->product->category->id,
                             'name' => $cartItem->product->category->name,
@@ -164,16 +167,8 @@ class CartController extends Controller
     /**
      * @return array{id: int|null, name: string|null}
      */
-    private function ownerPayload(Product $product): array
+    private function cartItemOwnerPayload(Product $product): array
     {
-        if ($product->seller) {
-            return ['id' => $product->seller->id, 'name' => $product->seller->name];
-        }
-
-        if ($product->upJurusan) {
-            return ['id' => $product->upJurusan->id, 'name' => $product->upJurusan->name];
-        }
-
-        return ['id' => null, 'name' => null];
+        return $this->sellerOwnerPayload($product);
     }
 }

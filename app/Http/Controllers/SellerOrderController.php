@@ -36,67 +36,89 @@ class SellerOrderController extends Controller
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $query = OrderItem::query()
-            ->with([
-                'order:id,code,user_id,created_at',
-                'order.user:id,name',
-                'product:id,name,slug,seller_id,sales_method',
-            ])
+        $search = $validated['q'] ?? null;
+        $status = $validated['status'] ?? null;
+        $perPage = 10;
+
+        $onlineKeys = OrderItem::query()
+            ->selectRaw('order_items.id')
+            ->selectRaw("'online' as source")
+            ->selectRaw('order_items.created_at')
             ->whereHas('product', fn ($q) => $q->where('seller_id', $seller->id));
 
-        if ($search = $validated['q'] ?? null) {
-            $query->where(function ($q) use ($search) {
+        $offlineKeys = UpJurusanStockMovement::query()
+            ->selectRaw('up_jurusan_stock_movements.id')
+            ->selectRaw("'offline' as source")
+            ->selectRaw('up_jurusan_stock_movements.created_at')
+            ->where('type', 'out')
+            ->whereHas('consignment', fn ($q) => $q->where('seller_id', $seller->id));
+
+        if ($search !== null) {
+            $onlineKeys->where(function ($q) use ($search) {
                 $q->orWhere('product_name', 'like', "%{$search}%")
                     ->orWhereHas('order.user', fn ($uq) => $uq->where('name', 'like', "%{$search}%"))
                     ->when(is_numeric($search), fn ($query) => $query->orWhere('order_id', (int) $search))
                     ->when(str_contains($search, '-'), fn ($query) => $query->orWhereHas('order', fn ($oq) => $oq->where('code', 'like', "%{$search}%")));
             });
+
+            $offlineKeys->where(function ($q) use ($search) {
+                $q->whereHas('consignment.product', fn ($pq) => $pq->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('posSale', fn ($sq) => $sq->where('code', 'like', "%{$search}%"))
+                    ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$search}%"));
+            });
         }
 
-        if ($status = $validated['status'] ?? null) {
-            $query->where('status', $status);
+        if ($status !== null && $status !== OrderItemStatus::Completed->value) {
+            $onlineKeys->where('status', $status);
+            $offlineKeys->whereRaw('0 = 1');
         }
 
-        $onlineItems = $query
-            ->latest('order_items.created_at')
-            ->get()
-            ->map(fn (OrderItem $item): array => $this->onlineOrderPayload($item));
+        $mergedKeys = $onlineKeys->unionAll($offlineKeys);
 
-        $offlineItems = UpJurusanStockMovement::query()
-            ->with([
-                'user:id,name',
-                'posSale:id,code',
-                'consignment.product:id,name,slug,seller_id',
-            ])
-            ->where('type', 'out')
-            ->whereHas('consignment', fn ($q) => $q->where('seller_id', $seller->id))
-            ->when($search ?? null, function ($q, string $search) {
-                $q->where(function ($q) use ($search) {
-                    $q->whereHas('consignment.product', fn ($pq) => $pq->where('name', 'like', "%{$search}%"))
-                        ->orWhereHas('posSale', fn ($sq) => $sq->where('code', 'like', "%{$search}%"))
-                        ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$search}%"));
-                });
-            })
-            ->latest()
-            ->get()
-            ->map(fn (UpJurusanStockMovement $movement): array => $this->offlineOrderPayload($movement));
+        $paginatedKeys = DB::query()
+            ->fromSub($mergedKeys, 'merged')
+            ->select('merged.id', 'merged.source', 'merged.created_at')
+            ->orderByDesc('merged.created_at')
+            ->paginate($perPage);
 
-        if (($validated['status'] ?? null) === null) {
-            $items = collect($onlineItems->all())
-                ->merge($offlineItems)
-                ->sortByDesc('created_at')
-                ->values();
-        } else {
-            $items = $onlineItems;
-        }
+        $pageRows = $paginatedKeys->getCollection();
 
-        $perPage = 10;
-        $page = Paginator::resolveCurrentPage();
+        $onlineIds = $pageRows->where('source', 'online')->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+        $offlineIds = $pageRows->where('source', 'offline')->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+
+        $onlineItems = $onlineIds === []
+            ? collect()
+            : OrderItem::query()
+                ->with([
+                    'order:id,code,user_id,created_at',
+                    'order.user:id,name',
+                    'product:id,name,slug,seller_id,sales_method',
+                ])
+                ->whereIn('id', $onlineIds)
+                ->get()
+                ->map(fn (OrderItem $item): array => $this->onlineOrderPayload($item));
+
+        $offlineItems = $offlineIds === []
+            ? collect()
+            : UpJurusanStockMovement::query()
+                ->with([
+                    'user:id,name',
+                    'posSale:id,code',
+                    'consignment.product:id,name,slug,seller_id',
+                ])
+                ->whereIn('id', $offlineIds)
+                ->get()
+                ->map(fn (UpJurusanStockMovement $movement): array => $this->offlineOrderPayload($movement));
+
+        $items = $onlineItems->concat($offlineItems)
+            ->sortByDesc('created_at')
+            ->values();
+
         $orderItems = new LengthAwarePaginator(
-            $items->forPage($page, $perPage)->values(),
-            $items->count(),
+            $items,
+            $paginatedKeys->total(),
             $perPage,
-            $page,
+            $paginatedKeys->currentPage(),
             [
                 'path' => Paginator::resolveCurrentPath(),
                 'query' => $request->query(),

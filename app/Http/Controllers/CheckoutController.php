@@ -20,6 +20,7 @@ use App\Support\MoneyCalculationService;
 use App\Support\OrderItemCancellation;
 use App\Support\PreOrderRules;
 use App\Support\TransactionCode;
+use App\Traits\OwnerPayloadHelper;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,6 +32,8 @@ use RuntimeException;
 
 class CheckoutController extends Controller
 {
+    use OwnerPayloadHelper;
+
     private const MAX_UNPAID_ORDERS = 5;
 
     public function confirm(Request $request): Response
@@ -135,13 +138,20 @@ class CheckoutController extends Controller
                             : null,
                         'expires_at' => now()->addHours(OrderItemCancellation::UNPAID_EXPIRY_HOURS),
                     ]);
+
                     $totalPrice = 0;
+                    $processedIds = [];
 
                     if (isset($validated['buy_now_product_id'])) {
                         $productId = (int) $validated['buy_now_product_id'];
                         $product = Product::query()
                             ->lockForUpdate()
-                            ->findOrFail($productId);
+                            ->find($productId);
+                        if ($product === null) {
+                            throw ValidationException::withMessages([
+                                'cart' => 'Produk yang dipilih sudah tidak tersedia.',
+                            ]);
+                        }
                         $quantity = (int) $validated['buy_now_quantity'];
 
                         $totalPrice = $this->createOrderItem($order, $product, $quantity, $user);
@@ -151,36 +161,42 @@ class CheckoutController extends Controller
                         return $order;
                     }
 
-                    $cartItems = CartItem::query()
-                        ->where('user_id', $user->id)
-                        ->when($selectedIds !== [], fn ($query) => $query->whereIn('id', $selectedIds))
-                        ->orderBy('id')
-                        ->get();
+                        $cartItems = CartItem::query()
+                            ->where('user_id', $user->id)
+                            ->when($selectedIds !== [], fn ($query) => $query->whereIn('id', $selectedIds))
+                            ->orderBy('id')
+                            ->get();
 
-                    if ($cartItems->isEmpty()) {
-                        throw ValidationException::withMessages([
-                            'cart' => 'Cart masih kosong.',
+                        if ($cartItems->isEmpty()) {
+                            throw ValidationException::withMessages([
+                                'cart' => 'Cart masih kosong.',
+                            ]);
+                        }
+
+                        foreach ($cartItems as $cartItem) {
+                            $product = Product::query()
+                                ->lockForUpdate()
+                                ->find($cartItem->product_id);
+                            if ($product === null) {
+                                throw ValidationException::withMessages([
+                                    'cart' => 'Salah satu produk di keranjang sudah tidak tersedia. Silakan periksa kembali keranjang Anda.',
+                                ]);
+                            }
+
+                            $totalPrice += $this->createOrderItem($order, $product, $cartItem->quantity, $user);
+                            $processedIds[] = $cartItem->id;
+                        }
+
+                        $order->update([
+                            'total_price' => $totalPrice,
                         ]);
-                    }
 
-                    foreach ($cartItems as $cartItem) {
-                        $product = Product::query()
-                            ->lockForUpdate()
-                            ->findOrFail($cartItem->product_id);
+                        CartItem::query()
+                            ->where('user_id', $user->id)
+                            ->whereIn('id', $processedIds)
+                            ->delete();
 
-                        $totalPrice += $this->createOrderItem($order, $product, $cartItem->quantity, $user);
-                    }
-
-                    $order->update([
-                        'total_price' => $totalPrice,
-                    ]);
-
-                    CartItem::query()
-                        ->where('user_id', $user->id)
-                        ->when($selectedIds !== [], fn ($query) => $query->whereIn('id', $selectedIds))
-                        ->delete();
-
-                    return $order;
+                        return $order;
                 });
             } catch (QueryException $exception) {
                 if (! $this->isUniqueConstraintViolation($exception) || $attempt === $maxAttempts) {
@@ -289,7 +305,7 @@ class CheckoutController extends Controller
             'pre_order_min_quantity' => $product->pre_order_min_quantity,
             'pre_order_note' => $product->pre_order_note,
             'image' => $product->image,
-            'seller' => $this->ownerPayload($product),
+            'seller' => $this->productOwnerPayload($product),
             'category' => [
                 'id' => $product->category->id,
                 'name' => $product->category->name,
@@ -427,16 +443,8 @@ class CheckoutController extends Controller
     /**
      * @return array{id: int|null, name: string|null}
      */
-    private function ownerPayload(Product $product): array
+    private function productOwnerPayload(Product $product): array
     {
-        if ($product->seller) {
-            return ['id' => $product->seller->id, 'name' => $product->seller->name];
-        }
-
-        if ($product->upJurusan) {
-            return ['id' => $product->upJurusan->id, 'name' => $product->upJurusan->name];
-        }
-
-        return ['id' => null, 'name' => null];
+        return $this->sellerOwnerPayload($product);
     }
 }

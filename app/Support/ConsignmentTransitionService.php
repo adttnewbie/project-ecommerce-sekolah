@@ -16,23 +16,28 @@ class ConsignmentTransitionService
      */
     public static function approve(UpJurusanConsignment $consignment, int $commissionRate, ?User $actor = null): void
     {
-        self::assertCanTransition($consignment, UpJurusanConsignmentStatus::Approved);
+        /** @var UpJurusanConsignment $current */
+        $current = UpJurusanConsignment::query()
+            ->lockForUpdate()
+            ->findOrFail($consignment->id);
+
+        self::assertCanTransition($current, UpJurusanConsignmentStatus::Approved);
         self::assertCommissionRate($commissionRate);
 
-        $from = $consignment->status;
+        $from = $current->status;
 
-        $consignment->update([
+        $current->update([
             'status' => UpJurusanConsignmentStatus::Approved,
             'commission_rate' => $commissionRate,
         ]);
-        $consignment->product()->update([
+        $current->product()->update([
             'status' => ProductStatus::Approved,
             'rejection_reason' => null,
         ]);
 
         DomainEventService::record(
             DomainEventService::AGGREGATE_CONSIGNMENT,
-            $consignment->id,
+            $current->id,
             'consignment_approved',
             $actor,
             [
@@ -47,28 +52,33 @@ class ConsignmentTransitionService
      */
     public static function reject(UpJurusanConsignment $consignment, string $reason, ?User $actor = null): void
     {
-        self::assertCanTransition($consignment, UpJurusanConsignmentStatus::Rejected);
+        /** @var UpJurusanConsignment $current */
+        $current = UpJurusanConsignment::query()
+            ->lockForUpdate()
+            ->findOrFail($consignment->id);
 
-        if ($consignment->sold_quantity > 0) {
+        self::assertCanTransition($current, UpJurusanConsignmentStatus::Rejected);
+
+        if ($current->sold_quantity > 0) {
             throw ValidationException::withMessages([
                 'status' => 'Konsinyasi yang sudah terjual tidak dapat ditolak.',
             ]);
         }
 
-        $from = $consignment->status;
+        $from = $current->status;
 
-        $consignment->update([
+        $current->update([
             'status' => UpJurusanConsignmentStatus::Rejected,
             'note' => $reason,
         ]);
-        $consignment->product()->update([
+        $current->product()->update([
             'status' => ProductStatus::Rejected,
             'rejection_reason' => $reason,
         ]);
 
         DomainEventService::record(
             DomainEventService::AGGREGATE_CONSIGNMENT,
-            $consignment->id,
+            $current->id,
             'consignment_rejected',
             $actor,
             [
@@ -83,30 +93,35 @@ class ConsignmentTransitionService
      */
     public static function cancel(UpJurusanConsignment $consignment, ?string $reason = null, ?User $actor = null): void
     {
-        self::assertCanTransition($consignment, UpJurusanConsignmentStatus::Cancelled);
+        /** @var UpJurusanConsignment $current */
+        $current = UpJurusanConsignment::query()
+            ->lockForUpdate()
+            ->findOrFail($consignment->id);
 
-        if ($consignment->sold_quantity > 0) {
+        self::assertCanTransition($current, UpJurusanConsignmentStatus::Cancelled);
+
+        if ($current->sold_quantity > 0) {
             throw ValidationException::withMessages([
                 'status' => 'Konsinyasi yang sudah terjual tidak dapat dibatalkan.',
             ]);
         }
 
-        if ($consignment->received_quantity > 0) {
+        if ($current->received_quantity > 0) {
             throw ValidationException::withMessages([
                 'status' => 'Konsinyasi yang sudah diterima tidak dapat dibatalkan.',
             ]);
         }
 
-        $from = $consignment->status;
+        $from = $current->status;
 
-        $consignment->update([
+        $current->update([
             'status' => UpJurusanConsignmentStatus::Cancelled,
-            'note' => $reason ?? $consignment->note,
+            'note' => $reason ?? $current->note,
         ]);
 
         DomainEventService::record(
             DomainEventService::AGGREGATE_CONSIGNMENT,
-            $consignment->id,
+            $current->id,
             'consignment_cancelled',
             $actor,
             [
@@ -122,35 +137,40 @@ class ConsignmentTransitionService
      */
     public static function receive(UpJurusanConsignment $consignment, int $quantity, User $actor): void
     {
+        /** @var UpJurusanConsignment $current */
+        $current = UpJurusanConsignment::query()
+            ->lockForUpdate()
+            ->findOrFail($consignment->id);
+
         if ($quantity < 1) {
             throw ValidationException::withMessages([
                 'quantity' => 'Jumlah diterima minimal 1.',
             ]);
         }
 
-        if (! self::canReceive($consignment)) {
+        if (! self::canReceive($current)) {
             throw ValidationException::withMessages([
                 'quantity' => 'Barang hanya bisa diterima setelah request disetujui dan belum terminal.',
             ]);
         }
 
-        $nextQuantity = $consignment->received_quantity + $quantity;
+        $nextQuantity = $current->received_quantity + $quantity;
 
-        if ($nextQuantity > $consignment->requested_quantity) {
+        if ($nextQuantity > $current->requested_quantity) {
             throw ValidationException::withMessages([
                 'quantity' => 'Jumlah diterima tidak boleh melebihi jumlah request.',
             ]);
         }
 
-        $from = $consignment->status;
+        $from = $current->status;
 
-        $consignment->update([
+        $current->update([
             'received_quantity' => $nextQuantity,
             'status' => UpJurusanConsignmentStatus::Received,
         ]);
 
         UpJurusanStockMovement::query()->create([
-            'up_jurusan_consignment_id' => $consignment->id,
+            'up_jurusan_consignment_id' => $current->id,
             'user_id' => $actor->id,
             'type' => 'in',
             'quantity' => $quantity,
@@ -158,7 +178,7 @@ class ConsignmentTransitionService
 
         DomainEventService::record(
             DomainEventService::AGGREGATE_CONSIGNMENT,
-            $consignment->id,
+            $current->id,
             'consignment_received',
             $actor,
             [

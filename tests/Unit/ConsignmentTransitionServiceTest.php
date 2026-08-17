@@ -3,6 +3,7 @@
 use App\Enums\ProductStatus;
 use App\Enums\UpJurusanConsignmentStatus;
 use App\Enums\UserRole;
+use App\Models\DomainEvent;
 use App\Models\Product;
 use App\Models\UpJurusan;
 use App\Models\UpJurusanConsignment;
@@ -80,6 +81,60 @@ test('reject transitions pending_approval to rejected', function () {
     expect($consignment->status)->toBe(UpJurusanConsignmentStatus::Rejected)
         ->and($consignment->note)->toBe('Tidak sesuai standar')
         ->and($consignment->product->fresh()->status)->toBe(ProductStatus::Rejected);
+});
+
+test('only one transition from pending_approval succeeds across concurrency pairs', function () {
+    // Simulates two concurrent requests carrying a stale instance: the service must
+    // re-read the locked row so a second transition re-checks whatever the first committed.
+    $stale = makeConsignment(); // e.g. both requests loaded this instance while PendingApproval
+
+    ConsignmentTransitionService::approve($stale, 15);
+    expect($stale->fresh()->status)->toBe(UpJurusanConsignmentStatus::Approved)
+        ->and($stale->fresh()->product->fresh()->status)->toBe(ProductStatus::Approved);
+
+    expect(fn () => ConsignmentTransitionService::reject($stale, 'Late'))
+        ->toThrow(ValidationException::class);
+    expect($stale->fresh()->status)->toBe(UpJurusanConsignmentStatus::Approved)
+        ->and($stale->fresh()->product->fresh()->status)->toBe(ProductStatus::Approved);
+
+    expect(fn () => ConsignmentTransitionService::approve($stale, 20))
+        ->toThrow(ValidationException::class);
+    expect($stale->fresh()->status)->toBe(UpJurusanConsignmentStatus::Approved);
+});
+
+test('reject then approve on same pending consignment cannot double-apply', function () {
+    $stale = makeConsignment();
+
+    ConsignmentTransitionService::reject($stale, 'Not eligible');
+    expect($stale->fresh()->status)->toBe(UpJurusanConsignmentStatus::Rejected)
+        ->and($stale->fresh()->product->fresh()->status)->toBe(ProductStatus::Rejected);
+
+    expect(fn () => ConsignmentTransitionService::approve($stale, 15))
+        ->toThrow(ValidationException::class);
+});
+
+test('approve then approve on same pending consignment records exactly one event', function () {
+    $stale = makeConsignment();
+
+    ConsignmentTransitionService::approve($stale, 15);
+    expect(DomainEvent::query()->where('event_type', 'consignment_approved')->count())->toBe(1);
+
+    expect(fn () => ConsignmentTransitionService::approve($stale, 20))
+        ->toThrow(ValidationException::class);
+
+    expect(DomainEvent::query()->where('event_type', 'consignment_approved')->count())->toBe(1);
+});
+
+test('reject then reject on same pending consignment records exactly one event', function () {
+    $stale = makeConsignment();
+
+    ConsignmentTransitionService::reject($stale, 'Low quality');
+    expect(DomainEvent::query()->where('event_type', 'consignment_rejected')->count())->toBe(1);
+
+    expect(fn () => ConsignmentTransitionService::reject($stale, 'Again'))
+        ->toThrow(ValidationException::class);
+
+    expect(DomainEvent::query()->where('event_type', 'consignment_rejected')->count())->toBe(1);
 });
 
 test('cancel transitions approved to cancelled', function () {

@@ -35,8 +35,9 @@ class OrderItemCancellation
         User $actor,
         ?string $reason = null,
         bool $force = false,
+        bool $clearOrderFlags = false,
     ): void {
-        DB::transaction(function () use ($order, $actor, $reason, $force) {
+        DB::transaction(function () use ($order, $actor, $reason, $force, $clearOrderFlags) {
             /** @var Order $current */
             $current = Order::query()
                 ->with(['items:id,order_id,status,payment_status', 'items.order:id,user_id'])
@@ -71,6 +72,15 @@ class OrderItemCancellation
                     'reason' => $reason,
                 ],
             );
+
+            if ($clearOrderFlags) {
+                $current->update([
+                    'requires_manual_review' => false,
+                    'requires_manual_review_at' => null,
+                    'stuck_detected_at' => null,
+                    'stuck_reasons' => null,
+                ]);
+            }
         });
     }
 
@@ -167,17 +177,14 @@ class OrderItemCancellation
             return 'Item yang sudah selesai tidak dapat dibatalkan.';
         }
 
+        if ($item->payment_status === PaymentStatus::Paid) {
+            return 'Item yang sudah lunas tidak dapat dibatalkan.';
+        }
+
         if ($force) {
             return $actor->role === UserRole::Admin
                 ? null
                 : 'Hanya admin yang dapat memaksa pembatalan item ini.';
-        }
-
-        if (
-            $item->payment_status === PaymentStatus::Paid
-            && $item->status === OrderItemStatus::Sent
-        ) {
-            return 'Item yang sudah dibayar dan dikirim hanya dapat dibatalkan oleh admin.';
         }
 
         return match ($actor->role) {

@@ -106,6 +106,36 @@ test('payout exceeding the unpaid balance is rejected with the existing message'
         ->and(UpJurusanPayout::query()->count())->toBe(0);
 });
 
+test('payout after a restock cannot exceed the true unpaid balance', function () {
+    [$admin, $consignment] = payoutFixture();
+
+    $out = UpJurusanStockMovement::query()
+        ->where('up_jurusan_consignment_id', $consignment->id)
+        ->where('type', 'out')
+        ->firstOrFail();
+
+    UpJurusanStockMovement::query()->create([
+        'up_jurusan_consignment_id' => $consignment->id,
+        'user_id' => $admin->id,
+        'type' => 'in',
+        'source' => StockMovementSource::Reverse,
+        'quantity' => $out->quantity,
+        ...MoneyCalculationService::reverseMovementSplit($out, $out->quantity),
+        'reverses_movement_id' => $out->id,
+    ]);
+
+    expect(MoneyCalculationService::unpaidSellerAmount($consignment->id))->toBe(0);
+
+    $this->actingAs($admin)
+        ->from(route('admin-jurusan.consignments.show', $consignment))
+        ->post(route('admin-jurusan.consignments.payout', $consignment), [
+            'amount' => 1,
+        ])
+        ->assertSessionHasErrors(['amount' => 'Jumlah pencairan melebihi saldo seller.']);
+
+    expect(UpJurusanPayout::query()->count())->toBe(0);
+});
+
 test('payout amount must be at least 1', function () {
     [$admin, $consignment] = payoutFixture();
 

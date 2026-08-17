@@ -20,7 +20,16 @@ class RejectProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'reason' => ['nullable', 'string', 'max:1000'],
+            'reason' => [
+                'required',
+                'string',
+                'max:1000',
+                static function (string $attribute, mixed $value, callable $fail): void {
+                    if (trim((string) $value) === '') {
+                        $fail('Alasan penolakan wajib diisi.');
+                    }
+                },
+            ],
         ];
     }
 

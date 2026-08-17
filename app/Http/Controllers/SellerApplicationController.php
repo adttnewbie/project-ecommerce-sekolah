@@ -79,22 +79,37 @@ class SellerApplicationController extends Controller
 
     public function approve(Request $request, SellerApplication $application): RedirectResponse
     {
-        $this->ensurePending($application);
-
-        /** @var User $applicant */
-        $applicant = $application->user;
-        ActorLifecycle::assertCanPromoteToSeller($applicant);
-        $this->authorize('promoteToSeller', $applicant);
-
         DB::transaction(function () use ($request, $application) {
-            $application->update([
-                'status' => SellerApplication::APPROVED,
-                'reviewed_by' => $request->user()->id,
-                'reviewed_at' => now(),
-                'rejection_reason' => null,
-            ]);
+            $claimed = SellerApplication::query()
+                ->whereKey($application->id)
+                ->where('status', SellerApplication::PENDING)
+                ->lockForUpdate()
+                ->first();
 
-            $application->user()->update([
+            if ($claimed === null) {
+                abort(403);
+            }
+
+            /** @var User $applicant */
+            $applicant = $claimed->user;
+            ActorLifecycle::assertCanPromoteToSeller($applicant);
+            $this->authorize('promoteToSeller', $applicant);
+
+            $updated = SellerApplication::query()
+                ->whereKey($claimed->id)
+                ->where('status', SellerApplication::PENDING)
+                ->update([
+                    'status' => SellerApplication::APPROVED,
+                    'reviewed_by' => $request->user()->id,
+                    'reviewed_at' => now(),
+                    'rejection_reason' => null,
+                ]);
+
+            if ($updated !== 1) {
+                abort(403);
+            }
+
+            $claimed->user()->update([
                 'role' => UserRole::Seller,
             ]);
         });
@@ -105,25 +120,37 @@ class SellerApplicationController extends Controller
 
     public function reject(Request $request, SellerApplication $application): RedirectResponse
     {
-        $this->ensurePending($application);
-
         $validated = $request->validate([
             'rejection_reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $application->update([
-            'status' => SellerApplication::REJECTED,
-            'reviewed_by' => $request->user()->id,
-            'reviewed_at' => now(),
-            'rejection_reason' => $validated['rejection_reason'] ?? null,
-        ]);
+        DB::transaction(function () use ($request, $application, $validated) {
+            $claimed = SellerApplication::query()
+                ->whereKey($application->id)
+                ->where('status', SellerApplication::PENDING)
+                ->lockForUpdate()
+                ->first();
+
+            if ($claimed === null) {
+                abort(403);
+            }
+
+            $updated = SellerApplication::query()
+                ->whereKey($claimed->id)
+                ->where('status', SellerApplication::PENDING)
+                ->update([
+                    'status' => SellerApplication::REJECTED,
+                    'reviewed_by' => $request->user()->id,
+                    'reviewed_at' => now(),
+                    'rejection_reason' => $validated['rejection_reason'] ?? null,
+                ]);
+
+            if ($updated !== 1) {
+                abort(403);
+            }
+        });
 
         return to_route('admin.seller-applications.index')
             ->with('success', 'Pengajuan seller ditolak.');
-    }
-
-    private function ensurePending(SellerApplication $application): void
-    {
-        abort_unless($application->status === SellerApplication::PENDING, 403);
     }
 }

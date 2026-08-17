@@ -220,7 +220,8 @@ export default function AdminProductModeration({
                                                                 <Textarea
                                                                     name="reason"
                                                                     rows={4}
-                                                                    placeholder="Alasan penolakan opsional"
+                                                                    required
+                                                                    placeholder="Alasan penolakan"
                                                                     aria-invalid={Boolean(
                                                                         errors.reason,
                                                                     )}

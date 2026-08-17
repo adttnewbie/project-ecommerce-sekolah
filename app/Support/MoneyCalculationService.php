@@ -96,12 +96,16 @@ class MoneyCalculationService
 
     /**
      * Payout balance: sum stored seller_amount on out movements only (no recompute).
+     *
+     * Out movements that have been reversed (restocked) via a reverse movement are
+     * excluded so cancelled sales never contribute to a seller's payable balance.
      */
     public static function sellerEarningsFromOutMovements(int $consignmentId): int
     {
         return (int) UpJurusanStockMovement::query()
             ->where('up_jurusan_consignment_id', $consignmentId)
             ->where('type', 'out')
+            ->doesntHave('reversedBy')
             ->sum('seller_amount');
     }
 

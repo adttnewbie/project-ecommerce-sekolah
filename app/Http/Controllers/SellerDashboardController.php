@@ -71,14 +71,15 @@ class SellerDashboardController extends Controller
         );
 
         $stockQuery = Product::query()
+            ->withRealStock()
             ->where('seller_id', $seller->id)
             ->where('fulfillment_type', ProductFulfillmentType::ReadyStock);
         $outOfStockProducts = (clone $stockQuery)
-            ->whereRaw(Product::REAL_STOCK_SQL.' = 0')
+            ->whereRaw(Product::REAL_STOCK_EXPRESSION.' = 0')
             ->count();
         $lowStockProducts = (clone $stockQuery)
-            ->whereRaw(Product::REAL_STOCK_SQL.' > 0')
-            ->whereRaw(Product::REAL_STOCK_SQL.' <= ?', [Product::LOW_STOCK_THRESHOLD])
+            ->whereRaw(Product::REAL_STOCK_EXPRESSION.' > 0')
+            ->whereRaw(Product::REAL_STOCK_EXPRESSION.' <= ?', [Product::LOW_STOCK_THRESHOLD])
             ->count();
 
         return [
@@ -312,12 +313,11 @@ class SellerDashboardController extends Controller
     private function stockAlerts(User $seller): array
     {
         return Product::query()
-            ->select('products.*')
-            ->selectRaw(Product::REAL_STOCK_SQL.' as real_stock')
+            ->withRealStock()
             ->where('seller_id', $seller->id)
             ->where('fulfillment_type', ProductFulfillmentType::ReadyStock)
-            ->whereRaw(Product::REAL_STOCK_SQL.' <= ?', [Product::LOW_STOCK_THRESHOLD])
-            ->orderByRaw(Product::REAL_STOCK_SQL)
+            ->whereRaw(Product::REAL_STOCK_EXPRESSION.' <= ?', [Product::LOW_STOCK_THRESHOLD])
+            ->orderByRaw(Product::REAL_STOCK_EXPRESSION)
             ->orderBy('id')
             ->limit(5)
             ->get()

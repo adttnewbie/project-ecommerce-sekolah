@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Enums\ProductStatus;
 use App\Models\Product;
+use App\Traits\OwnerPayloadHelper;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class BuyerProductDetailController extends Controller
 {
+    use OwnerPayloadHelper;
+
     public function __invoke(Product $product): Response
     {
         abort_unless($product->status === ProductStatus::Approved, 404);
@@ -46,7 +49,7 @@ class BuyerProductDetailController extends Controller
                     'id' => $product->seller->id,
                     'name' => $product->seller->name,
                 ] : null,
-                'owner' => $this->ownerPayload($product),
+                'owner' => $this->detailOwnerPayload($product),
                 'category' => [
                     'id' => $product->category->id,
                     'name' => $product->category->name,
@@ -63,28 +66,8 @@ class BuyerProductDetailController extends Controller
     /**
      * @return array{id: int|null, name: string|null, type: string|null}
      */
-    private function ownerPayload(Product $product): array
+    private function detailOwnerPayload(Product $product): array
     {
-        if ($product->upJurusan) {
-            return [
-                'id' => $product->upJurusan->id,
-                'name' => $product->upJurusan->name,
-                'type' => 'up_jurusan',
-            ];
-        }
-
-        if ($product->seller) {
-            return [
-                'id' => $product->seller->id,
-                'name' => $product->seller->name,
-                'type' => 'seller',
-            ];
-        }
-
-        return [
-            'id' => null,
-            'name' => null,
-            'type' => null,
-        ];
+        return $this->buyerOwnerPayload($product);
     }
 }

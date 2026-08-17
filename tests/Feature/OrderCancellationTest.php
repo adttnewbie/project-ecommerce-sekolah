@@ -13,6 +13,7 @@ use App\Models\UpJurusan;
 use App\Models\UpJurusanConsignment;
 use App\Models\UpJurusanStockMovement;
 use App\Models\User;
+use App\Support\MoneyCalculationService;
 use App\Support\OrderItemCancellation;
 use Illuminate\Support\Facades\Artisan;
 
@@ -156,9 +157,12 @@ test('cancelling consignment order item restocks sold quantity and records rever
         'quantity' => 3,
         'reverses_movement_id' => $out->id,
     ]);
+
+    expect(MoneyCalculationService::sellerEarningsFromOutMovements($consignment->id))->toBe(0)
+        ->and(MoneyCalculationService::unpaidSellerAmount($consignment->id))->toBe(0);
 });
 
-test('admin can force cancel paid sent item', function () {
+test('admin cannot force cancel a paid sent item', function () {
     $admin = User::factory()->create(['role' => UserRole::Admin]);
     $buyer = User::factory()->create(['role' => UserRole::Buyer]);
     $seller = User::factory()->create(['role' => UserRole::Seller]);
@@ -171,15 +175,14 @@ test('admin can force cancel paid sent item', function () {
     ]);
 
     $this->actingAs($admin)
+        ->from(route('admin.orders.index'))
         ->post(route('admin.orders.cancel', $order), [
             'cancel_reason' => 'Dispute disetujui',
-            'force' => true,
         ])
-        ->assertRedirect()
-        ->assertSessionHas('success');
+        ->assertSessionHasErrors('order');
 
-    expect($order->fresh()->status)->toBe(OrderStatus::Cancelled)
-        ->and($product->fresh()->stock)->toBe(1);
+    expect($order->fresh()->status)->not->toBe(OrderStatus::Cancelled)
+        ->and($product->fresh()->stock)->toBe(0);
 });
 
 test('expire unpaid orders command cancels expired unpaid items and restocks', function () {
@@ -396,4 +399,167 @@ test('pre-order cancel does not change product stock', function () {
 
     expect($product->fresh()->stock)->toBe(0)
         ->and($order->fresh()->status)->toBe(OrderStatus::Cancelled);
+});
+
+test('admin can force cancel an unpaid order and restock', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create(['stock' => 0]);
+    $order = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Open,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    OrderItem::factory()->for($order)->for($product)->create([
+        'quantity' => 2,
+        'status' => OrderItemStatus::Packed,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.orders.cancel', $order), [
+            'cancel_reason' => 'Force cancel stuck',
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    expect($order->fresh()->status)->toBe(OrderStatus::Cancelled)
+        ->and($product->fresh()->stock)->toBe(2);
+});
+
+test('admin cannot force cancel an already cancelled order', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create(['stock' => 1]);
+    $order = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Cancelled,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    OrderItem::factory()->for($order)->for($product)->create([
+        'status' => OrderItemStatus::Cancelled,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+
+    $this->actingAs($admin)
+        ->from(route('admin.orders.index'))
+        ->post(route('admin.orders.cancel', $order), [
+            'cancel_reason' => 'Force cancel again',
+        ])
+        ->assertSessionHasErrors('order');
+
+    expect($product->fresh()->stock)->toBe(1);
+});
+
+test('admin cannot force cancel an already completed order', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create(['stock' => 1]);
+    $order = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Completed,
+        'payment_status' => PaymentStatus::Paid,
+    ]);
+    OrderItem::factory()->for($order)->for($product)->create([
+        'status' => OrderItemStatus::Completed,
+        'payment_status' => PaymentStatus::Paid,
+    ]);
+
+    $this->actingAs($admin)
+        ->from(route('admin.orders.index'))
+        ->post(route('admin.orders.cancel', $order), [
+            'cancel_reason' => 'Force cancel completed',
+        ])
+        ->assertSessionHasErrors('order');
+
+    expect($product->fresh()->stock)->toBe(1);
+});
+
+test('force cancel never leaves a paid item cancelled', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create(['stock' => 0]);
+    $order = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Open,
+        'payment_status' => PaymentStatus::Paid,
+    ]);
+    OrderItem::factory()->for($order)->for($product)->create([
+        'quantity' => 1,
+        'status' => OrderItemStatus::Sent,
+        'payment_status' => PaymentStatus::Paid,
+    ]);
+
+    $this->actingAs($admin)
+        ->from(route('admin.orders.index'))
+        ->post(route('admin.orders.cancel', $order), [
+            'cancel_reason' => 'Force cancel',
+        ]);
+
+    $this->assertDatabaseMissing('order_items', [
+        'order_id' => $order->id,
+        'status' => OrderItemStatus::Cancelled->value,
+        'payment_status' => PaymentStatus::Paid->value,
+    ]);
+});
+
+test('force cancel clears manual review flag atomically', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create(['stock' => 0]);
+    $order = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Open,
+        'payment_status' => PaymentStatus::Unpaid,
+        'requires_manual_review' => true,
+        'requires_manual_review_at' => now(),
+        'stuck_reasons' => ['manual_review'],
+    ]);
+    OrderItem::factory()->for($order)->for($product)->create([
+        'quantity' => 1,
+        'status' => OrderItemStatus::Packed,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.orders.cancel', $order), [
+            'cancel_reason' => 'Force cancel stuck',
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    $fresh = $order->fresh();
+    expect($fresh->status)->toBe(OrderStatus::Cancelled)
+        ->and($fresh->requires_manual_review)->toBeFalse()
+        ->and($fresh->stuck_reasons)->toBeNull();
+});
+
+test('failed force cancel does not clear manual review flag', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create(['stock' => 0]);
+    $order = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Open,
+        'payment_status' => PaymentStatus::Paid,
+        'requires_manual_review' => true,
+        'requires_manual_review_at' => now(),
+        'stuck_reasons' => ['manual_review'],
+    ]);
+    OrderItem::factory()->for($order)->for($product)->create([
+        'quantity' => 1,
+        'status' => OrderItemStatus::Sent,
+        'payment_status' => PaymentStatus::Paid,
+    ]);
+
+    $this->actingAs($admin)
+        ->from(route('admin.orders.index'))
+        ->post(route('admin.orders.cancel', $order), [
+            'cancel_reason' => 'Force cancel paid',
+        ])
+        ->assertSessionHasErrors('order');
+
+    $fresh = $order->fresh();
+    expect($fresh->status)->toBe(OrderStatus::Open)
+        ->and($fresh->requires_manual_review)->toBeTrue();
 });

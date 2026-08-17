@@ -120,6 +120,142 @@ test('payout unpaid balance reads stored seller_amount without recomputing rate'
     expect(MoneyCalculationService::unpaidSellerAmount($consignment->id))->toBe(0);
 });
 
+test('seller earnings exclude out movements that have been reversed', function () {
+    $adminJurusan = User::factory()->create(['role' => UserRole::AdminJurusan]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $upJurusan = UpJurusan::factory()->create(['admin_jurusan_id' => $adminJurusan->id]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create(['price' => 10000]);
+    $consignment = UpJurusanConsignment::factory()->create([
+        'seller_id' => $seller->id,
+        'product_id' => $product->id,
+        'up_jurusan_id' => $upJurusan->id,
+        'status' => UpJurusanConsignmentStatus::Received,
+        'commission_rate' => 10,
+        'received_quantity' => 5,
+        'sold_quantity' => 2,
+    ]);
+
+    $money = MoneyCalculationService::consignmentSaleSplit(10000, 2, 10);
+    $out = UpJurusanStockMovement::query()->create([
+        'up_jurusan_consignment_id' => $consignment->id,
+        'user_id' => $adminJurusan->id,
+        'type' => 'out',
+        'source' => 'pos_sale',
+        'quantity' => 2,
+        ...$money,
+    ]);
+
+    expect(MoneyCalculationService::sellerEarningsFromOutMovements($consignment->id))->toBe(18000);
+
+    UpJurusanStockMovement::query()->create([
+        'up_jurusan_consignment_id' => $consignment->id,
+        'user_id' => $adminJurusan->id,
+        'type' => 'in',
+        'source' => 'reverse',
+        'quantity' => 2,
+        ...MoneyCalculationService::reverseMovementSplit($out, 2),
+        'reverses_movement_id' => $out->id,
+    ]);
+
+    expect(MoneyCalculationService::sellerEarningsFromOutMovements($consignment->id))->toBe(0)
+        ->and(MoneyCalculationService::unpaidSellerAmount($consignment->id))->toBe(0);
+});
+
+test('with two sales, only the active (unreversed) sale is counted as earnings', function () {
+    $adminJurusan = User::factory()->create(['role' => UserRole::AdminJurusan]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $upJurusan = UpJurusan::factory()->create(['admin_jurusan_id' => $adminJurusan->id]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create(['price' => 10000]);
+    $consignment = UpJurusanConsignment::factory()->create([
+        'seller_id' => $seller->id,
+        'product_id' => $product->id,
+        'up_jurusan_id' => $upJurusan->id,
+        'status' => UpJurusanConsignmentStatus::Received,
+        'commission_rate' => 10,
+        'received_quantity' => 10,
+        'sold_quantity' => 4,
+    ]);
+
+    $money = MoneyCalculationService::consignmentSaleSplit(10000, 2, 10);
+
+    $outA = UpJurusanStockMovement::query()->create([
+        'up_jurusan_consignment_id' => $consignment->id,
+        'user_id' => $adminJurusan->id,
+        'type' => 'out',
+        'source' => 'pos_sale',
+        'quantity' => 2,
+        ...$money,
+    ]);
+    UpJurusanStockMovement::query()->create([
+        'up_jurusan_consignment_id' => $consignment->id,
+        'user_id' => $adminJurusan->id,
+        'type' => 'out',
+        'source' => 'pos_sale',
+        'quantity' => 2,
+        ...$money,
+    ]);
+
+    expect(MoneyCalculationService::sellerEarningsFromOutMovements($consignment->id))->toBe(36000);
+
+    UpJurusanStockMovement::query()->create([
+        'up_jurusan_consignment_id' => $consignment->id,
+        'user_id' => $adminJurusan->id,
+        'type' => 'in',
+        'source' => 'reverse',
+        'quantity' => 2,
+        ...MoneyCalculationService::reverseMovementSplit($outA, 2),
+        'reverses_movement_id' => $outA->id,
+    ]);
+
+    expect(MoneyCalculationService::sellerEarningsFromOutMovements($consignment->id))->toBe(18000)
+        ->and(MoneyCalculationService::unpaidSellerAmount($consignment->id))->toBe(18000);
+});
+
+test('repeated restock does not reduce seller earnings more than once', function () {
+    $adminJurusan = User::factory()->create(['role' => UserRole::AdminJurusan]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $upJurusan = UpJurusan::factory()->create(['admin_jurusan_id' => $adminJurusan->id]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create(['price' => 10000]);
+    $consignment = UpJurusanConsignment::factory()->create([
+        'seller_id' => $seller->id,
+        'product_id' => $product->id,
+        'up_jurusan_id' => $upJurusan->id,
+        'status' => UpJurusanConsignmentStatus::Received,
+        'commission_rate' => 10,
+        'received_quantity' => 5,
+        'sold_quantity' => 2,
+    ]);
+
+    $money = MoneyCalculationService::consignmentSaleSplit(10000, 2, 10);
+    $out = UpJurusanStockMovement::query()->create([
+        'up_jurusan_consignment_id' => $consignment->id,
+        'user_id' => $adminJurusan->id,
+        'type' => 'out',
+        'source' => 'pos_sale',
+        'quantity' => 2,
+        ...$money,
+    ]);
+
+    $reverseSplit = MoneyCalculationService::reverseMovementSplit($out, 2);
+    UpJurusanStockMovement::query()->create([
+        'up_jurusan_consignment_id' => $consignment->id,
+        'user_id' => $adminJurusan->id,
+        'type' => 'in',
+        'source' => 'reverse',
+        'quantity' => 2,
+        ...$reverseSplit,
+        'reverses_movement_id' => $out->id,
+    ]);
+
+    $this->assertDatabaseHas('up_jurusan_stock_movements', [
+        'reverses_movement_id' => $out->id,
+        'type' => 'in',
+    ]);
+
+    expect(MoneyCalculationService::sellerEarningsFromOutMovements($consignment->id))->toBe(0)
+        ->and(MoneyCalculationService::unpaidSellerAmount($consignment->id))->toBe(0);
+});
+
 test('reverse movement split preserves full amounts and scales partial', function () {
     $movement = new UpJurusanStockMovement([
         'unit_price' => 3000,

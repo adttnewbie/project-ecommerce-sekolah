@@ -6,6 +6,7 @@ use App\Enums\StockMovementSource;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -84,5 +85,15 @@ class UpJurusanStockMovement extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Reverse (restock) movements that reference this movement as their origin.
+     *
+     * @return HasMany<UpJurusanStockMovement, $this>
+     */
+    public function reversedBy(): HasMany
+    {
+        return $this->hasMany(UpJurusanStockMovement::class, 'reverses_movement_id');
     }
 }

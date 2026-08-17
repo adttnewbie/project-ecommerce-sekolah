@@ -107,3 +107,78 @@ test('admin can reject seller application', function () {
         'role' => UserRole::Buyer->value,
     ]);
 });
+
+test('approve fails when the application is not pending', function (string $initialStatus) {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $application = SellerApplication::factory()->create([
+        'user_id' => $buyer->id,
+        'status' => $initialStatus,
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.seller-applications.approve', $application))
+        ->assertForbidden();
+
+    $this->assertDatabaseHas('seller_applications', [
+        'id' => $application->id,
+        'status' => $initialStatus,
+    ]);
+    $this->assertDatabaseHas('users', [
+        'id' => $buyer->id,
+        'role' => UserRole::Buyer->value,
+    ]);
+})->with([
+    'already approved' => SellerApplication::APPROVED,
+    'already rejected' => SellerApplication::REJECTED,
+]);
+
+test('reject fails when the application is not pending', function (string $initialStatus) {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $application = SellerApplication::factory()->create([
+        'user_id' => $buyer->id,
+        'status' => $initialStatus,
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.seller-applications.reject', $application), [
+            'rejection_reason' => 'Data belum lengkap.',
+        ])
+        ->assertForbidden();
+
+    $this->assertDatabaseHas('seller_applications', [
+        'id' => $application->id,
+        'status' => $initialStatus,
+    ]);
+    $this->assertDatabaseHas('users', [
+        'id' => $buyer->id,
+        'role' => UserRole::Buyer->value,
+    ]);
+})->with([
+    'already approved' => SellerApplication::APPROVED,
+    'already rejected' => SellerApplication::REJECTED,
+]);
+
+test('approve fails when the applicant is not a buyer', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $application = SellerApplication::factory()->create([
+        'user_id' => $seller->id,
+        'status' => SellerApplication::PENDING,
+    ]);
+
+    $this->actingAs($admin)
+        ->from(route('admin.seller-applications.index'))
+        ->post(route('admin.seller-applications.approve', $application))
+        ->assertSessionHasErrors('application');
+
+    $this->assertDatabaseHas('seller_applications', [
+        'id' => $application->id,
+        'status' => SellerApplication::PENDING,
+    ]);
+    $this->assertDatabaseHas('users', [
+        'id' => $seller->id,
+        'role' => UserRole::Seller->value,
+    ]);
+});

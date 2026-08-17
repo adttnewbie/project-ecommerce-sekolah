@@ -11,6 +11,7 @@ use App\Support\OrderItemCancellation;
 use App\Support\OrderItemFulfillment;
 use App\Support\OrderSettlementService;
 use App\Support\OrderStatusSync;
+use App\Traits\OwnerPayloadHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,8 @@ use Inertia\Response;
 
 class BuyerOrderController extends Controller
 {
+    use OwnerPayloadHelper;
+
     public function index(Request $request): Response
     {
         /** @var User $buyer */
@@ -177,7 +180,7 @@ class BuyerOrderController extends Controller
                         'confirmed_at' => $item->payment_confirmed_at?->toIso8601String(),
                         'rejection_reason' => $item->payment_rejection_reason,
                     ],
-                    'seller' => $this->ownerPayload($item),
+                    'seller' => $this->buyerItemOwnerPayload($item),
                 ])
                 ->values()
                 ->all(),
@@ -188,16 +191,8 @@ class BuyerOrderController extends Controller
     /**
      * @return array{id: int|null, name: string|null}
      */
-    private function ownerPayload(OrderItem $item): array
+    private function buyerItemOwnerPayload(OrderItem $item): array
     {
-        if ($item->product->seller) {
-            return ['id' => $item->product->seller->id, 'name' => $item->product->seller->name];
-        }
-
-        if ($item->product->upJurusan) {
-            return ['id' => $item->product->upJurusan->id, 'name' => $item->product->upJurusan->name];
-        }
-
-        return ['id' => null, 'name' => null];
+        return $this->sellerOwnerPayload($item->product);
     }
 }

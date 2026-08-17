@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Enums\ProductSalesMethod;
 use App\Enums\ProductStatus;
 use App\Http\Requests\Admin\RejectProductRequest;
+use App\Support\DomainEventService;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -51,38 +53,60 @@ class AdminProductModerationController extends Controller
         ]);
     }
 
-    public function approve(Product $product): RedirectResponse
+    public function approve(Request $request, Product $product): RedirectResponse
     {
-        $this->ensurePending($product);
+        DB::transaction(function () use ($request, $product) {
+            $affected = Product::query()
+                ->whereKey($product->id)
+                ->where('status', ProductStatus::Pending)
+                ->where('sales_method', ProductSalesMethod::SelfManaged)
+                ->update([
+                    'status' => ProductStatus::Approved,
+                    'rejection_reason' => null,
+                ]);
 
-        $product->update([
-            'status' => ProductStatus::Approved,
-            'rejection_reason' => null,
-        ]);
+            abort_unless($affected === 1, 404);
+
+            DomainEventService::record(
+                DomainEventService::AGGREGATE_PRODUCT,
+                $product->id,
+                'product_approved',
+                $request->user(),
+                ['to_status' => ProductStatus::Approved->value],
+            );
+        });
 
         return back();
     }
 
     public function reject(RejectProductRequest $request, Product $product): RedirectResponse
     {
-        $this->ensurePending($product);
-
         $reason = trim($request->string('reason')->toString());
 
-        $product->update([
-            'status' => ProductStatus::Rejected,
-            'rejection_reason' => $reason === '' ? null : $reason,
-        ]);
+        DB::transaction(function () use ($request, $product, $reason) {
+            $affected = Product::query()
+                ->whereKey($product->id)
+                ->where('status', ProductStatus::Pending)
+                ->where('sales_method', ProductSalesMethod::SelfManaged)
+                ->update([
+                    'status' => ProductStatus::Rejected,
+                    'rejection_reason' => $reason,
+                ]);
+
+            abort_unless($affected === 1, 404);
+
+            DomainEventService::record(
+                DomainEventService::AGGREGATE_PRODUCT,
+                $product->id,
+                'product_rejected',
+                $request->user(),
+                [
+                    'to_status' => ProductStatus::Rejected->value,
+                    'reason' => $reason,
+                ],
+            );
+        });
 
         return back();
-    }
-
-    private function ensurePending(Product $product): void
-    {
-        abort_unless(
-            $product->status === ProductStatus::Pending
-            && $product->sales_method === ProductSalesMethod::SelfManaged,
-            404,
-        );
     }
 }

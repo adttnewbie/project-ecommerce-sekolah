@@ -7,6 +7,7 @@ use App\Models\OrderItem;
 use App\Models\User;
 use App\Support\OrderLivenessService;
 use App\Support\OrderSettlementService;
+use App\Traits\OwnerPayloadHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -16,6 +17,8 @@ use Inertia\Response;
 
 class AdminOrderController extends Controller
 {
+    use OwnerPayloadHelper;
+
     public function cancel(Request $request, Order $order): RedirectResponse
     {
         /** @var User $admin */
@@ -163,7 +166,7 @@ class AdminOrderController extends Controller
                                 'label' => $item->payment_method->label(),
                             ],
                         ],
-                        'seller' => $this->ownerPayload($item),
+                        'seller' => $this->adminItemOwnerPayload($item),
                     ])
                     ->values()
                     ->all(),
@@ -192,16 +195,8 @@ class AdminOrderController extends Controller
     /**
      * @return array{id: int|null, name: string|null}
      */
-    private function ownerPayload(OrderItem $item): array
+    private function adminItemOwnerPayload(OrderItem $item): array
     {
-        if ($item->product->seller) {
-            return ['id' => $item->product->seller->id, 'name' => $item->product->seller->name];
-        }
-
-        if ($item->product->upJurusan) {
-            return ['id' => $item->product->upJurusan->id, 'name' => $item->product->upJurusan->name];
-        }
-
-        return ['id' => null, 'name' => null];
+        return $this->sellerOwnerPayload($item->product);
     }
 }

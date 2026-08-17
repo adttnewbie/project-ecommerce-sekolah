@@ -105,7 +105,7 @@ test('detect stuck command marks stuck reasons', function () {
         ->and($order->stuck_reasons)->toContain('fulfillment_idle');
 });
 
-test('admin can force cancel stuck order', function () {
+test('admin cannot force cancel a paid order', function () {
     $admin = User::factory()->create(['role' => UserRole::Admin]);
     $buyer = User::factory()->create(['role' => UserRole::Buyer]);
     $seller = User::factory()->create(['role' => UserRole::Seller]);
@@ -122,14 +122,15 @@ test('admin can force cancel stuck order', function () {
     ]);
 
     $this->actingAs($admin)
+        ->from(route('admin.orders.index'))
         ->post(route('admin.orders.cancel', $order), [
             'cancel_reason' => 'Force cancel stuck',
         ])
-        ->assertRedirect()
-        ->assertSessionHas('success');
+        ->assertSessionHasErrors('order');
 
-    expect($order->fresh()->status)->toBe(OrderStatus::Cancelled)
-        ->and($product->fresh()->stock)->toBe(2);
+    expect($order->fresh()->status)->toBe(OrderStatus::Open)
+        ->and($order->items()->first()->status)->toBe(OrderItemStatus::Packed)
+        ->and($product->fresh()->stock)->toBe(0);
 });
 
 test('admin can force complete sent paid order', function () {
@@ -171,6 +172,42 @@ test('admin can mark order for manual review', function () {
     expect($order->requires_manual_review)->toBeTrue()
         ->and($order->requires_manual_review_reason)->toBe('Buyer komplain')
         ->and(OrderLivenessService::livenessLabel($order))->toBe('requires_action');
+});
+
+test('admin cannot mark a completed order for manual review', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $order = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Completed,
+        'payment_status' => PaymentStatus::Paid,
+    ]);
+
+    $this->actingAs($admin)
+        ->from(route('admin.orders.index'))
+        ->post(route('admin.orders.mark-review', $order), [
+            'reason' => 'Komplain',
+        ])
+        ->assertSessionHasErrors('order');
+
+    expect($order->fresh()->requires_manual_review)->toBeFalse();
+});
+
+test('admin cannot mark a cancelled order for manual review', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $order = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Cancelled,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+
+    $this->actingAs($admin)
+        ->from(route('admin.orders.index'))
+        ->post(route('admin.orders.mark-review', $order), [
+            'reason' => 'Komplain',
+        ])
+        ->assertSessionHasErrors('order');
+
+    expect($order->fresh()->requires_manual_review)->toBeFalse();
 });
 
 test('admin orders index filters by liveness', function () {

@@ -60,12 +60,6 @@ export default function CreateAdminJurusan() {
                             >
                                 {({ errors, processing }) => (
                                     <>
-                                        <input
-                                            type="hidden"
-                                            name="role"
-                                            value="admin_jurusan"
-                                            readOnly
-                                        />
                                         <div className="grid gap-5 sm:grid-cols-2">
                                             <label className="space-y-2">
                                                 <span className="text-sm font-medium text-slate-700">

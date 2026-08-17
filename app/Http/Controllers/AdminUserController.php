@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
@@ -67,16 +69,22 @@ class AdminUserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)],
-            'role' => ['required', Rule::in([UserRole::AdminJurusan->value])],
             'password' => ['required', 'confirmed', Password::defaults()],
+            'role' => [Rule::enum(UserRole::class), 'in:' . UserRole::AdminJurusan->value],
         ]);
 
-        User::query()->create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'role' => UserRole::from($validated['role']),
-            'password' => $validated['password'],
-        ]);
+        try {
+            User::query()->create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'role' => $validated['role'],
+                'password' => $validated['password'],
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            Validator::make($validated, [
+                'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)],
+            ])->validate();
+        }
 
         return to_route('admin.users.create-admin-jurusan')
             ->with('success', 'Akun admin jurusan berhasil dibuat.');
