@@ -155,8 +155,8 @@
     "semantic_hash": ""
   },
   "app/Http/Controllers/CheckoutController.php": {
-    "mtime": 1787020786.888692,
-    "ast_hash": "872d0d507d9aec7ded1b2e34c00ed86d",
+    "mtime": 1787539717.4996324,
+    "ast_hash": "921f37d79a9ccdb665f66e8814e97c78",
     "semantic_hash": ""
   },
   "app/Http/Controllers/Controller.php": {
@@ -475,8 +475,8 @@
     "semantic_hash": "0ca480ac2c381e7b2352344df162271b"
   },
   "app/Support/OrderLivenessService.php": {
-    "mtime": 1786943808.2058015,
-    "ast_hash": "f5d1024d3530eab6b6eb237ea7ccff14",
+    "mtime": 1787539107.2195606,
+    "ast_hash": "ea90cb1c21c729a37e11297b1b5910e5",
     "semantic_hash": ""
   },
   "app/Support/OrderPaymentSync.php": {
@@ -1560,8 +1560,8 @@
     "semantic_hash": "4ffdfd68fcb48f98c12a94a4b06ac851"
   },
   "tests/Feature/CheckoutTest.php": {
-    "mtime": 1786526174.874327,
-    "ast_hash": "fe803a6be5fa0b397c75601725ee832b",
+    "mtime": 1787539591.1076417,
+    "ast_hash": "21ce1f32e6e38d36a00764eafe920a78",
     "semantic_hash": ""
   },
   "tests/Feature/ClientAccessHardeningTest.php": {
@@ -1595,8 +1595,8 @@
     "semantic_hash": "4cdf715d18d73a0f548c0cfd20ff8595"
   },
   "tests/Feature/OrderLivenessTest.php": {
-    "mtime": 1786943808.2228012,
-    "ast_hash": "60bcdf588d7d9b6185c45b47ab71fdbe",
+    "mtime": 1787539345.5986156,
+    "ast_hash": "a9df8223df6209ab83bbe5b1566a3dfc",
     "semantic_hash": ""
   },
   "tests/Feature/OrderSettlementServiceTest.php": {
@@ -1780,8 +1780,8 @@
     "semantic_hash": ""
   },
   "app/Support/PaymentTransitionService.php": {
-    "mtime": 1786526174.732418,
-    "ast_hash": "9d0805b245dd20da131d00fd6ce677e7",
+    "mtime": 1787539084.439651,
+    "ast_hash": "2d13e65fd618556036ae82fd832d55cf",
     "semantic_hash": ""
   },
   "tests/Feature/PaymentRejectRecoveryFlowTest.php": {
@@ -1790,8 +1790,8 @@
     "semantic_hash": ""
   },
   "tests/Unit/PaymentTransitionServiceTest.php": {
-    "mtime": 1786526174.8769202,
-    "ast_hash": "12830843f5c365b05d83a4c1af5ae808",
+    "mtime": 1787539330.8456743,
+    "ast_hash": "029cb13587bc6f7b1d9419ac4238be32",
     "semantic_hash": ""
   },
   "app/Models/DomainEvent.php": {
@@ -1905,8 +1905,8 @@
     "semantic_hash": ""
   },
   "PRODUCTION_HARDENING.md": {
-    "mtime": 1786526174.7271307,
-    "ast_hash": "8af4c892a2344a2ee3c1e28fd89f380a",
+    "mtime": 1787540020.5806756,
+    "ast_hash": "faf107cc0cd74b0dd48939d39fc561f1",
     "semantic_hash": ""
   },
   ".opencode/opencode.json": {
@@ -1990,8 +1990,8 @@
     "semantic_hash": ""
   },
   "app/Events/PendingOrderCreated.php": {
-    "mtime": 1786982985.746585,
-    "ast_hash": "9ad2496be6b44a5a6c7e99e05ff4c6b1",
+    "mtime": 1787539497.3370137,
+    "ast_hash": "d71fadb42785060dd647aabe4968cedf",
     "semantic_hash": ""
   },
   "app/Events/ProductPendingModeration.php": {
@@ -2030,8 +2030,8 @@
     "semantic_hash": ""
   },
   "app/Listeners/AdminOrderNotify.php": {
-    "mtime": 1787021354.1865468,
-    "ast_hash": "13fb1b3b6f62216630505ee80599bf0f",
+    "mtime": 1787539717.5412164,
+    "ast_hash": "c13417937c764730cc83e6150dce665f",
     "semantic_hash": ""
   },
   "app/Listeners/AdminProductModerationNotify.php": {
@@ -2050,8 +2050,8 @@
     "semantic_hash": ""
   },
   "app/Listeners/CreatePendingOrderNotification.php": {
-    "mtime": 1786982993.878575,
-    "ast_hash": "95992fa0d95bd844fea9628c04a0daef",
+    "mtime": 1787539717.5213761,
+    "ast_hash": "08cd7a9eb143336239f448bc8b8e4b8f",
     "semantic_hash": ""
   },
   "app/Listeners/CreateProductModerationNotification.php": {
@@ -2082,11 +2082,6 @@
   "app/Providers/EventServiceProvider.php": {
     "mtime": 1787034740.710475,
     "ast_hash": "0adb910eccbaa7b4881665977d162c00",
-    "semantic_hash": ""
-  },
-  "app/Services/NotificationService.php": {
-    "mtime": 1786983108.240424,
-    "ast_hash": "cf9eafbd911570d30bc21de8f4ea935a",
     "semantic_hash": ""
   },
   "app/Traits/OwnerPayloadHelper.php": {

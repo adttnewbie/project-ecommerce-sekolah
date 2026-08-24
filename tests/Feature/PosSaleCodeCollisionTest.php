@@ -3,9 +3,9 @@
 use App\Enums\UpJurusanConsignmentStatus;
 use App\Enums\UserRole;
 use App\Models\Product;
+use App\Models\UpJurusan;
 use App\Models\UpJurusanConsignment;
 use App\Models\UpJurusanPosSale;
-use App\Models\UpJurusan;
 use App\Models\User;
 use App\Support\UniqueViolationRetry;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -33,6 +33,9 @@ function failPosSaleInsertOnAttempts(int ...$failingAttempts): void
     });
 }
 
+/**
+ * @return array{User, UpJurusanConsignment}
+ */
 function seedAssignedPicketWithConsignment(): array
 {
     $upJurusan = UpJurusan::factory()->create();

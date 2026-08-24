@@ -133,3 +133,28 @@ Everything else reviewed (MoneyCalculationService, ConsignmentTransition/Payout,
 - Pint + PHPStan clean on all touched files; repo-wide pint/phpstan still report pre-existing violations in the uncommitted notification WIP files (NotificationController, Notification models/preferences, HandleInertiaRequests, AdminNotificationTriggered) — tracked separately.
 
 > Note: `ShouldDispatchAfterCommit` was evaluated but intentionally not used: under `RefreshDatabase` the root transaction never commits, so deferred events would silently stop firing in feature tests. Post-commit dispatch-by-construction gives the same production guarantee without breaking the suite.
+
+---
+
+## 10. Fase 2 — Integritas data (2026-08-24)
+
+### Fixed
+
+1. **H1 backfill — stale seller notification hrefs.** Migration `2026_08_24_000001_fix_pending_order_notification_hrefs` + `NotificationHrefBackfill::run()` rewrite pending-order rows stored with an Order id against the OrderItem-bound seller route: resolve the recipient's own order item (lowest id), keep links that already point at one of their items, fall back to the orders index when nothing resolves. Logged per row.
+2. **RC-3 — POS transaction-code collisions.** `TransactionCode::unique()` probes with `exists()` and cannot see other connections' uncommitted rows; concurrent picket sales could die with SQLSTATE 23000. New `UniqueViolationRetry` helper (mirrors checkout's retry pattern) wraps both `storeSale` and `storeReport`. The sale row is created before any consignment mutation, so retries can never double-apply stock effects; the daily-report guard stays inside its locked transaction.
+3. **M4 — last unlocked consignment transitions.** `approve/reject/cancel/receive` already re-read under lock inside the service, but `complete()`, `recordSold()` and `restoreSold()` still did read-modify-write on the caller-passed model — a concurrent reversal or sale could oversell past `received_quantity` or complete an unsold consignment (last-writer-wins). All three now `lockForUpdate()->findOrFail()` and validate on the locked read.
+4. **M5 — cart unique race.** `CartController::store` did check-then-create with no lock; parallel adds of the same product hit the `(user_id, product_id)` unique index and returned 500. The flow now runs in a transaction with `lockForUpdate`, stock/pre-order validation evaluates the final merged quantity, and `UniqueViolationRetry` re-runs the whole flow if the insert still loses the race.
+
+### Tests added
+
+- NotificationHrefBackfillTest ×3 — stale rewrite, valid-link preservation, orphan/wrong-owner fallback.
+- PosSaleCodeCollisionTest ×3 — collision retried exactly once without double-applying sold_quantity, exhaustion surfaces 500 with zero side effects, direct helper attempt-count = 3.
+- ConsignmentTransitionLockTest ×5 — stale-snapshot oversell rejected, completion refused after concurrent reversal/duplicate completion, clean completion, restoreSold against locked row.
+- CartRaceTest ×3 — merge after lost insert race, stock re-check on merged quantity, plain add.
+
+### Verification status
+
+- Full suite: 542 tests / 540 passed / 2 skipped (pre-existing) / 0 failed.
+- Pint + PHPStan clean on all touched files. Remaining repo-wide debt unchanged: 33 PHPStan violations in the untracked-at-the-time notification WIP files plus the pre-existing `PicketUpJurusanConsignmentController:476` nullsafe nit — scheduled for Fase 4 cleanup.
+
+> Note: §2's RC-2 row was found stale during this phase — `receive()` had already gained its locked re-fetch in an earlier pass; this phase closed the remaining three methods.

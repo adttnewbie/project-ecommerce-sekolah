@@ -354,30 +354,30 @@ class PicketUpJurusanConsignmentController extends Controller
                 $totalQuantity = 0;
                 $totalAmount = 0;
 
-            foreach ($validated['items'] as $item) {
-                if ($item['source'] === 'product') {
-                    $product = Product::query()
+                foreach ($validated['items'] as $item) {
+                    if ($item['source'] === 'product') {
+                        $product = Product::query()
+                            ->whereKey($item['id'])
+                            ->lockForUpdate()
+                            ->firstOrFail();
+
+                        $this->authorizeProductPicket($picket, $product);
+                        $totalAmount += $this->recordProductSale($picket, $product, (int) $item['quantity'], $sale);
+                        $totalQuantity += (int) $item['quantity'];
+
+                        continue;
+                    }
+
+                    $consignment = UpJurusanConsignment::query()
+                        ->with('product:id,price')
                         ->whereKey($item['id'])
                         ->lockForUpdate()
                         ->firstOrFail();
 
-                    $this->authorizeProductPicket($picket, $product);
-                    $totalAmount += $this->recordProductSale($picket, $product, (int) $item['quantity'], $sale);
+                    $this->authorizePicket($picket, $consignment);
+                    $totalAmount += $this->recordSale($picket, $consignment, (int) $item['quantity'], $sale);
                     $totalQuantity += (int) $item['quantity'];
-
-                    continue;
                 }
-
-                $consignment = UpJurusanConsignment::query()
-                    ->with('product:id,price')
-                    ->whereKey($item['id'])
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
-                $this->authorizePicket($picket, $consignment);
-                $totalAmount += $this->recordSale($picket, $consignment, (int) $item['quantity'], $sale);
-                $totalQuantity += (int) $item['quantity'];
-            }
 
                 $sale->update([
                     'total_quantity' => $totalQuantity,
@@ -411,7 +411,7 @@ class PicketUpJurusanConsignmentController extends Controller
         }
 
         UniqueViolationRetry::run(
-            fn (): ?UpJurusanDailyReport => DB::transaction(function () use ($picket, $payload, $today): ?UpJurusanDailyReport {
+            fn (): UpJurusanDailyReport => DB::transaction(function () use ($picket, $payload, $today): UpJurusanDailyReport {
                 $existingReport = UpJurusanDailyReport::query()
                     ->where('up_jurusan_id', $picket->up_jurusan_id)
                     ->where('user_id', $picket->id)
@@ -474,7 +474,7 @@ class PicketUpJurusanConsignmentController extends Controller
             OrderItemFulfillment::assertCanAdvance($current, $newStatus);
 
             $sellerName = $current->product->seller_id ? $current->product->seller->name : ($current->product->upJurusan?->name ?? 'UP');
-            
+
             $current->update(['status' => $newStatus]);
             OrderStatusSync::sync($current->order);
 

@@ -3,8 +3,8 @@
 use App\Enums\NotificationType;
 use App\Enums\UserRole;
 use App\Models\Notification;
-use App\Models\OrderItem;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
 use App\Support\NotificationHrefBackfill;

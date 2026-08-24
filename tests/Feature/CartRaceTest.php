@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Event;
 
 uses(RefreshDatabase::class);
 
+/**
+ * @return array{User, Product}
+ */
 function createCartBuyerWithApprovedProduct(int $stock = 10): array
 {
     $buyer = User::factory()->create(['role' => UserRole::Buyer]);

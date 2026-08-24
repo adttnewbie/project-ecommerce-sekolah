@@ -88,8 +88,9 @@ class NotificationHrefBackfill
         }
 
         $linkedItem = OrderItem::query()->find($parsedId);
+        $linkedProduct = $linkedItem?->product;
 
-        if ($linkedItem !== null && $linkedItem->product?->seller_id === $sellerId) {
+        if ($linkedProduct !== null && $linkedProduct->seller_id === $sellerId) {
             return null;
         }
 

@@ -1,12 +1,12 @@
-# Graph Report - project-ecommerce-sekolah  (2026-08-23)
+# Graph Report - project-ecommerce-sekolah  (2026-08-24)
 
 ## Corpus Check
-- 428 files · ~160,615 words
+- 427 files · ~161,502 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2318 nodes · 5835 edges · 216 communities (142 shown, 74 thin omitted)
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 283 edges (avg confidence: 0.79)
+- 2316 nodes · 5828 edges · 222 communities (144 shown, 78 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 280 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
@@ -15,20 +15,20 @@
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- categories/index.tsx
+- orders.tsx
 - cn
 - card.tsx
 - Notification
 - inventory/index.tsx
 - AuthRedirect
 - auth-simple-layout.tsx
-- confirm.tsx
+- categories/index.tsx
 - Illuminate\Database\Eloquent\Relations\BelongsTo
 - Product
 - Illuminate\Database\Eloquent\Relations\HasMany
 - OrderItem
 - OrderItemStatus.php
-- PicketUpJurusanConsignmentController
+- Illuminate\Http\Request
 - EduCart Design System
 - UpJurusan
 - Illuminate\Broadcasting\InteractsWithSockets
@@ -40,10 +40,10 @@
 - UpJurusanStockMovement
 - User
 - index.ts
-- sidebar.tsx
+- app-sidebar.tsx
 - up-jurusan/index.tsx
 - ReportAggregationService
-- app-header.tsx
+- app-sidebar-header.tsx
 - dependencies
 - Order
 - NOTIFICATION SYSTEM - IMPLEMENTATION COMPLETE ✅
@@ -56,7 +56,7 @@
 - OrderStatus
 - Closure
 - Notifications/index.tsx
-- PaymentTransitionService
+- sidebar.tsx
 - reports/index.tsx
 - CreateNewUser.php
 - composer.json
@@ -74,18 +74,18 @@
 - CheckoutController
 - LowStockDetected
 - Production Hardening — Final Pass
-- Illuminate\Http\Request
+- HandleInertiaRequests
 - require
 - ci:check
-- SchoolClass
-- up-jurusan/consignments/index.tsx
+- FortifyServiceProvider
+- Illuminate\Http\RedirectResponse
 - 2026_08_02_000002_add_financial_history_protection.php
 - config
 - SellerApplicationPending
 - Illuminate\Console\Command
 - EduCart
-- Unit/ActorLifecycleTest.php
-- admin-jurusan/dashboard.tsx
+- two-factor-setup-modal.tsx
+- Illuminate\Database\Eloquent\Model
 - psr-4
 - laravel
 - test
@@ -94,7 +94,7 @@
 - use-mobile.tsx
 - button.tsx
 - Illuminate\Database\Eloquent\Factories\Factory
-- CartController
+- CartItem
 - post-create-project-cmd
 - breadcrumbs.tsx
 - eslint.config.js
@@ -106,7 +106,7 @@
 - @fontsource-variable/inter
 - globals
 - kilo.json
-- Illuminate\Http\RedirectResponse
+- OrderItemStatusChanged
 - opencode.json
 - .opencode/plugins/graphify.js
 - radix-ui
@@ -131,7 +131,7 @@
 - @vitejs/plugin-react
 - TransactionCode
 - 9. Layout
-- AdminProductModerationConcurrencyTest.php
+- artisan
 - 16. Responsive Design
 - 3. Brand Identity
 - 5. Typography
@@ -153,9 +153,9 @@
 - package.json
 - Illuminate\Foundation\Http\FormRequest
 - Illuminate\Database\Seeder
-- CheckoutController.php
+- UpJurusanConsignmentStatus.php
 - @types/react-dom
-- catalog/show.tsx
+- OwnerPayloadHelper.php
 - @radix-ui/react-slot
 - use-clipboard.ts
 - NotificationToast.tsx
@@ -179,55 +179,62 @@
 - @playwright/test
 - prettier
 - prettier-plugin-tailwindcss
-- UpdateInventoryRequest
-- RedirectAsIntended.php
-- AppServiceProvider
-- NotificationService
-- ConsignmentConcurrencyTest.php
-- babel-plugin-react-compiler
+- app-header.tsx
+- cart/index.tsx
+- SellerDashboardController
+- NotificationController
+- UpJurusanPayout
+- NotificationPreference
+- OrderSettlementService
 - class-variance-authority
-- @types/node
+- auth.ts
+- TwoFactorAuthenticationRequest
+- OrderPolicy
+- 2026_06_30_000002_add_completed_to_order_items_status.php
+- 2026_07_01_000005_add_pre_order_batch_fields.php
+- eslint-import-resolver-typescript
+- typescript-eslint
 
 ## God Nodes (most connected - your core abstractions)
 1. `cn()` - 207 edges
-2. `User` - 137 edges
-3. `Product` - 93 edges
+2. `User` - 138 edges
+3. `Product` - 91 edges
 4. `Button()` - 65 edges
 5. `Notification` - 62 edges
-6. `Order` - 60 edges
-7. `OrderItem` - 59 edges
+6. `Order` - 61 edges
+7. `OrderItem` - 58 edges
 8. `UpJurusanConsignment` - 52 edges
 9. `EduCart Design System` - 50 edges
 10. `UpJurusan` - 44 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `settlementOrder()` --calls--> `OrderItem`  [INFERRED]
-  tests/Feature/OrderSettlementServiceTest.php → app/Models/OrderItem.php
-- `makePaymentItem()` --calls--> `OrderItem`  [INFERRED]
-  tests/Unit/PaymentTransitionServiceTest.php → app/Models/OrderItem.php
+- `makePaymentItem()` --calls--> `Order`  [INFERRED]
+  tests/Unit/PaymentTransitionServiceTest.php → app/Models/Order.php
 - `payoutFixture()` --calls--> `Product`  [INFERRED]
   tests/Feature/ConsignmentPayoutTest.php → app/Models/Product.php
 - `settlementOrder()` --calls--> `Product`  [INFERRED]
   tests/Feature/OrderSettlementServiceTest.php → app/Models/Product.php
 - `makeConsignment()` --calls--> `Product`  [INFERRED]
   tests/Unit/ConsignmentTransitionServiceTest.php → app/Models/Product.php
+- `makePaymentItem()` --calls--> `Product`  [INFERRED]
+  tests/Unit/PaymentTransitionServiceTest.php → app/Models/Product.php
 
 ## Import Cycles
 - None detected.
 
-## Communities (216 total, 74 thin omitted)
+## Communities (222 total, 78 thin omitted)
 
-### Community 0 - "categories/index.tsx"
-Cohesion: 0.06
-Nodes (59): Badge(), badgeVariants, Table(), TableBody(), TableCell(), TableHead(), TableHeader(), TableRow() (+51 more)
+### Community 0 - "orders.tsx"
+Cohesion: 0.20
+Nodes (9): formatRupiah(), nextStatus, OrderStatus, PaymentStatus, paymentStatusStyles, PicketOrderItem, PicketOrders(), Props (+1 more)
 
 ### Community 1 - "cn"
-Cohesion: 0.06
-Nodes (54): AlertError(), Props, TextLink(), Alert(), AlertAction(), AlertDescription(), AlertTitle(), alertVariants (+46 more)
+Cohesion: 0.05
+Nodes (59): AlertError(), NotificationBadge(), Props, TextLink(), Alert(), AlertAction(), AlertDescription(), AlertTitle() (+51 more)
 
 ### Community 2 - "card.tsx"
-Cohesion: 0.08
-Nodes (31): Props, Card(), CardContent(), CardDescription(), CardHeader(), CardTitle(), Props, UpJurusan (+23 more)
+Cohesion: 0.06
+Nodes (54): Props, Badge(), badgeVariants, Card(), CardContent(), CardDescription(), CardHeader(), CardTitle() (+46 more)
 
 ### Community 3 - "Notification"
 Cohesion: 0.07
@@ -235,103 +242,103 @@ Nodes (4): Notification, self, NotificationModelTest, NotificationTest
 
 ### Community 4 - "inventory/index.tsx"
 Cohesion: 0.06
-Nodes (55): CardAction(), Select(), SelectContent(), SelectGroup(), SelectItem(), SelectLabel(), SelectTrigger(), SelectValue() (+47 more)
+Nodes (68): Select(), SelectContent(), SelectGroup(), SelectItem(), SelectLabel(), SelectTrigger(), SelectValue(), Table() (+60 more)
 
 ### Community 5 - "AuthRedirect"
 Cohesion: 0.13
-Nodes (7): LoginResponse, PasskeyLoginResponse, PasswordConfirmedResponse, AuthRedirect, Laravel\Fortify\Contracts\LoginResponse, Laravel\Fortify\Contracts\PasswordConfirmedResponse, Laravel\Passkeys\Contracts\PasskeyLoginResponse
+Nodes (7): LoginResponse, PasskeyLoginResponse, RedirectAsIntended, AuthRedirect, Illuminate\Contracts\Support\Responsable, Laravel\Fortify\Contracts\LoginResponse, Laravel\Passkeys\Contracts\PasskeyLoginResponse
 
 ### Community 6 - "auth-simple-layout.tsx"
 Cohesion: 0.20
 Nodes (8): AppLogo(), AppLogoIcon(), Props, AuthSimpleLayout(), AuthTheme, lightAuthTheme, AuthLayout(), AuthLayoutProps
 
-### Community 7 - "confirm.tsx"
-Cohesion: 0.13
-Nodes (24): AlertDialog(), AlertDialogAction(), AlertDialogCancel(), AlertDialogContent(), AlertDialogDescription(), AlertDialogFooter(), AlertDialogHeader(), AlertDialogTitle() (+16 more)
+### Community 7 - "categories/index.tsx"
+Cohesion: 0.12
+Nodes (28): AlertDialog(), AlertDialogAction(), AlertDialogCancel(), AlertDialogContent(), AlertDialogDescription(), AlertDialogFooter(), AlertDialogHeader(), AlertDialogOverlay() (+20 more)
 
 ### Community 8 - "Illuminate\Database\Eloquent\Relations\BelongsTo"
-Cohesion: 0.06
-Nodes (8): NotificationPreferencesController, CartItem, DomainEvent, NotificationPreference, UpJurusanDailyReportTransaction, UpJurusanDailyReportTransactionItem, Illuminate\Database\Eloquent\Model, Illuminate\Database\Eloquent\Relations\BelongsTo
+Cohesion: 0.07
+Nodes (3): UpJurusanDailyReportTransaction, UpJurusanDailyReportTransactionItem, Illuminate\Database\Eloquent\Relations\BelongsTo
 
 ### Community 9 - "Product"
 Cohesion: 0.10
-Nodes (7): AdminProductModerationController, ProductStatus, SellerProductController, Product, PreOrderRules, buyerOwnerPayload(), sellerOwnerPayload()
+Nodes (6): AdminProductModerationController, CartController, ProductStatus, SellerProductController, Product, PreOrderRules
 
 ### Community 11 - "OrderItem"
 Cohesion: 0.09
-Nodes (7): SellerOrderController, OrderItem, OrderItemCancellation, OrderItemFulfillment, up(), up(), OrderItemStatus
+Nodes (10): SellerOrderController, OrderItem, OrderItemFulfillment, OrderPaymentSync, OrderStatusSync, PaymentTransitionService, OrderItemStatus, PaymentStatus (+2 more)
 
 ### Community 12 - "OrderItemStatus.php"
-Cohesion: 0.10
-Nodes (9): next(), nextForPreOrder(), self, values(), fromStorage(), self, values(), up() (+1 more)
+Cohesion: 0.11
+Nodes (10): next(), nextForPreOrder(), self, values(), fromStorage(), self, values(), Illuminate\Foundation\Testing\RefreshDatabase (+2 more)
+
+### Community 13 - "Illuminate\Http\Request"
+Cohesion: 0.22
+Nodes (3): PicketUpJurusanConsignmentController, UpJurusanPosSale, Illuminate\Http\Request
 
 ### Community 14 - "EduCart Design System"
 Cohesion: 0.06
 Nodes (32): 10.10 Skeleton, 10.3 Search Bar, 10.5 Badge, 10.6 Navbar, 10.7 Breadcrumb, 10.8 Modal dan Dialog, 10.9 Toast, 10. Core Components (+24 more)
 
 ### Community 15 - "UpJurusan"
-Cohesion: 0.09
-Nodes (7): AdminJurusanUpJurusanController, UpJurusan, UpJurusanPolicy, UserPolicy, ActorLifecycle, picketUpJurusanFixture(), makeConsignment()
+Cohesion: 0.10
+Nodes (7): AdminJurusanDashboardController, UpJurusan, UpJurusanPolicy, UserPolicy, ActorLifecycle, picketUpJurusanFixture(), makeConsignment()
 
 ### Community 16 - "Illuminate\Broadcasting\InteractsWithSockets"
-Cohesion: 0.21
-Nodes (7): AdminNotificationTriggered, DailyReportSubmitted, OrderItemStatusChanged, AdminNotificationNotify, Illuminate\Broadcasting\InteractsWithSockets, Illuminate\Foundation\Events\Dispatchable, Illuminate\Queue\SerializesModels
-
-### Community 17 - "User.php"
-Cohesion: 0.10
-Nodes (3): label(), options(), SellerApplication
+Cohesion: 0.24
+Nodes (6): AdminNotificationTriggered, DailyReportSubmitted, AdminNotificationNotify, Illuminate\Broadcasting\InteractsWithSockets, Illuminate\Foundation\Events\Dispatchable, Illuminate\Queue\SerializesModels
 
 ### Community 18 - "devDependencies"
 Cohesion: 0.12
-Nodes (17): eslint-config-prettier, eslint-import-resolver-typescript, eslint-plugin-import, eslint-plugin-react-hooks, @laravel/vite-plugin-wayfinder, devDependencies, eslint, eslint-config-prettier (+9 more)
+Nodes (17): babel-plugin-react-compiler, eslint-config-prettier, eslint-plugin-import, eslint-plugin-react-hooks, @laravel/vite-plugin-wayfinder, devDependencies, babel-plugin-react-compiler, eslint (+9 more)
 
 ### Community 19 - "EventServiceProvider.php"
-Cohesion: 0.12
-Nodes (7): OrderPaymentApproved, AdminJurusanConsignmentNotify, AdminJurusanDailyReportNotify, PicketOfficerOrderNotify, PicketOrderPaymentNotify, EventServiceProvider, Illuminate\Foundation\Support\Providers\EventServiceProvider
+Cohesion: 0.20
+Nodes (5): OrderPaymentApproved, AdminJurusanDailyReportNotify, PicketOrderPaymentNotify, EventServiceProvider, Illuminate\Foundation\Support\Providers\EventServiceProvider
 
 ### Community 20 - "UpJurusanConsignment"
-Cohesion: 0.18
+Cohesion: 0.19
 Nodes (5): UpJurusanConsignment, ConsignmentTransitionService, DomainEventService, up(), UpJurusanConsignmentStatus
 
 ### Community 21 - "dropdown-menu.tsx"
-Cohesion: 0.09
-Nodes (24): NavUser(), DropdownMenu(), DropdownMenuCheckboxItem(), DropdownMenuContent(), DropdownMenuGroup(), DropdownMenuItem(), DropdownMenuLabel(), DropdownMenuRadioItem() (+16 more)
+Cohesion: 0.13
+Nodes (17): DropdownMenu(), DropdownMenuCheckboxItem(), DropdownMenuContent(), DropdownMenuGroup(), DropdownMenuItem(), DropdownMenuLabel(), DropdownMenuRadioItem(), DropdownMenuSeparator() (+9 more)
 
 ### Community 22 - "UpJurusanStockMovement"
-Cohesion: 0.10
+Cohesion: 0.12
 Nodes (3): UpJurusanStockMovement, MoneyCalculationService, payoutFixture()
 
 ### Community 23 - "User"
 Cohesion: 0.09
-Nodes (11): ExpireUnpaidOrdersCommand, SellerDashboardController, User, OrderPolicy, SystemActor, ProductCatalogSeeder, Illuminate\Foundation\Auth\User, Illuminate\Notifications\Notifiable (+3 more)
+Nodes (10): ExpireUnpaidOrdersCommand, User, OrderItemCancellation, SystemActor, ProductCatalogSeeder, Illuminate\Foundation\Auth\User, Illuminate\Notifications\Notifiable, Laravel\Fortify\Contracts\PasskeyUser (+2 more)
 
 ### Community 24 - "index.ts"
-Cohesion: 0.14
-Nodes (14): AppContent(), Props, AppShell(), Props, SidebarInset(), SidebarProvider(), Toaster(), AppHeaderLayout() (+6 more)
+Cohesion: 0.15
+Nodes (13): AppContent(), Props, AppShell(), Props, Toaster(), AppHeaderLayout(), AppSidebarLayout(), AppLayout() (+5 more)
 
-### Community 25 - "sidebar.tsx"
-Cohesion: 0.07
-Nodes (45): AppSidebar(), getMainNavItems(), lightTooltip, NavFooter(), NavMain(), Separator(), Sidebar(), SidebarContent() (+37 more)
+### Community 25 - "app-sidebar.tsx"
+Cohesion: 0.12
+Nodes (22): AppSidebar(), getMainNavItems(), lightTooltip, NavFooter(), NavMain(), Separator(), SidebarContent(), SidebarFooter() (+14 more)
 
 ### Community 26 - "up-jurusan/index.tsx"
-Cohesion: 0.09
-Nodes (34): HeaderNotification, notificationMenuStyle, roleLabels, typeToBorderColors, Props, Dialog(), DialogClose(), DialogContent() (+26 more)
+Cohesion: 0.13
+Nodes (23): Props, Dialog(), DialogClose(), DialogContent(), DialogDescription(), DialogFooter(), DialogHeader(), DialogOverlay() (+15 more)
 
 ### Community 27 - "ReportAggregationService"
-Cohesion: 0.18
+Cohesion: 0.14
 Nodes (3): Collection, ReportAggregationService, Illuminate\Support\Collection
 
-### Community 28 - "app-header.tsx"
-Cohesion: 0.10
-Nodes (22): AppHeader(), BuyerNavLink(), getBuyerNavItems(), AppSidebarHeader(), getSearchConfig(), Avatar(), AvatarBadge(), AvatarFallback() (+14 more)
+### Community 28 - "app-sidebar-header.tsx"
+Cohesion: 0.15
+Nodes (14): AppSidebarHeader(), getSearchConfig(), HeaderNotification, notificationMenuStyle, roleLabels, typeToBorderColors, Avatar(), AvatarBadge() (+6 more)
 
 ### Community 29 - "dependencies"
 Cohesion: 0.18
 Nodes (11): @base-ui/react, clsx, @laravel/passkeys, dependencies, @base-ui/react, clsx, @laravel/passkeys, react (+3 more)
 
 ### Community 30 - "Order"
-Cohesion: 0.09
-Nodes (10): BuyerOrderController, Order, OrderLivenessService, OrderSettlementService, OrderStatusSync, Carbon\CarbonInterface, Illuminate\Database\Eloquent\Builder, settlementOrder() (+2 more)
+Cohesion: 0.16
+Nodes (5): Order, OrderLivenessService, Carbon\CarbonInterface, Illuminate\Database\Eloquent\Builder, WeakMap
 
 ### Community 31 - "NOTIFICATION SYSTEM - IMPLEMENTATION COMPLETE ✅"
 Cohesion: 0.12
@@ -341,16 +348,12 @@ Nodes (15): 1. **Backend - Event & Listener Architecture**, 2. **Middleware - Ha
 Cohesion: 0.09
 Nodes (21): aliases, components, hooks, lib, ui, utils, iconLibrary, menuAccent (+13 more)
 
-### Community 33 - "UpJurusanDailyReport"
-Cohesion: 0.17
-Nodes (3): AdminJurusanDashboardController, AdminJurusanReportController, UpJurusanDailyReport
-
 ### Community 34 - "server.sh"
 Cohesion: 0.11
 Nodes (18): APP_DEBUG, APP_ENV, APP_FAKER_LOCALE, APP_FALLBACK_LOCALE, APP_KEY, APP_LOCALE, APP_URL, BCRYPT_ROUNDS (+10 more)
 
 ### Community 35 - "PendingOrderCreated"
-Cohesion: 0.20
+Cohesion: 0.15
 Nodes (3): PendingOrderCreated, AdminOrderNotify, CreatePendingOrderNotification
 
 ### Community 36 - "compilerOptions"
@@ -362,8 +365,8 @@ Cohesion: 0.10
 Nodes (11): AdminProductController, AdminSellerApplicationController, AdminUserController, BuyerCatalogController, BuyerProductDetailController, Controller, SellerConsignmentController, SellerInventoryController (+3 more)
 
 ### Community 38 - "OrderStatus"
-Cohesion: 0.14
-Nodes (11): Collection, Attribute, up(), down(), expandEnumColumn(), up(), down(), expandEnumColumn() (+3 more)
+Cohesion: 0.16
+Nodes (10): Attribute, up(), down(), expandEnumColumn(), up(), down(), expandEnumColumn(), up() (+2 more)
 
 ### Community 39 - "Closure"
 Cohesion: 0.22
@@ -371,19 +374,19 @@ Nodes (7): EnsureUserIsAdmin, EnsureUserIsAdminJurusan, EnsureUserIsBuyer, Ensur
 
 ### Community 40 - "Notifications/index.tsx"
 Cohesion: 0.09
-Nodes (28): NotificationBadge(), NotificationBadgeProps, NotificationEmptyState(), NotificationEmptyStateProps, NotificationFilterBar(), NotificationGroup(), NotificationItem(), NotificationItemProps (+20 more)
+Nodes (27): NotificationBadgeProps, NotificationEmptyState(), NotificationEmptyStateProps, NotificationFilterBar(), NotificationGroup(), NotificationItem(), NotificationItemProps, NotificationSheetProps (+19 more)
 
-### Community 41 - "PaymentTransitionService"
-Cohesion: 0.26
-Nodes (3): OrderPaymentSync, PaymentTransitionService, PaymentStatus
+### Community 41 - "sidebar.tsx"
+Cohesion: 0.10
+Nodes (27): NavUser(), Sidebar(), SidebarContext, SidebarContextProps, SidebarGroupAction(), SidebarInput(), SidebarInset(), SidebarMenuAction() (+19 more)
 
 ### Community 42 - "reports/index.tsx"
 Cohesion: 0.13
 Nodes (11): DailyReport, DateTimeProps, EmptyStateProps, formatRupiah(), Props, ReportHeaderProps, ReportsSection(), ReportsSectionProps (+3 more)
 
 ### Community 43 - "CreateNewUser.php"
-Cohesion: 0.22
-Nodes (4): CreateNewUser, Position, TestingUserSeeder, Laravel\Fortify\Contracts\CreatesNewUsers
+Cohesion: 0.16
+Nodes (5): CreateNewUser, Position, SchoolClass, TestingUserSeeder, Laravel\Fortify\Contracts\CreatesNewUsers
 
 ### Community 44 - "composer.json"
 Cohesion: 0.14
@@ -419,19 +422,15 @@ Nodes (4): emailRules(), nameRules(), profileRules(), ProfileUpdateRequest
 
 ### Community 54 - "PasswordValidationRules.php"
 Cohesion: 0.27
-Nodes (3): ResetUserPassword, PasswordUpdateRequest, Laravel\Fortify\Contracts\ResetsUserPasswords
+Nodes (3): ResetUserPassword, ProfileDeleteRequest, Laravel\Fortify\Contracts\ResetsUserPasswords
 
 ### Community 55 - "seller/dashboard.tsx"
 Cohesion: 0.08
 Nodes (29): ChartConfig, ChartContainer(), ChartContext, ChartContextProps, ChartLegendContent(), ChartTooltipContent(), getPayloadConfigFromPayload(), INITIAL_DIMENSION (+21 more)
 
 ### Community 58 - "Production Hardening — Final Pass"
-Cohesion: 0.18
-Nodes (10): 1. Implemented (6 items), 2. Audit — Remaining races, 3. Audit — Remaining N+1, 4. Audit — Remaining null dereferences, 5. Audit — Remaining unbounded queries, 6. Production Checklist, 7. Remaining technical debt, 8. Blocking release (+2 more)
-
-### Community 59 - "Illuminate\Http\Request"
-Cohesion: 0.12
-Nodes (6): NotificationController, SellerApplicationController, HandleInertiaRequests, NotificationDismissal, Illuminate\Http\Request, Inertia\Middleware
+Cohesion: 0.13
+Nodes (14): 1. Implemented (6 items), 2. Audit — Remaining races, 3. Audit — Remaining N+1, 4. Audit — Remaining null dereferences, 5. Audit — Remaining unbounded queries, 6. Production Checklist, 7. Remaining technical debt, 8. Blocking release (+6 more)
 
 ### Community 60 - "require"
 Cohesion: 0.25
@@ -441,9 +440,13 @@ Nodes (8): require, inertiajs/inertia-laravel, laravel/chisel, laravel/fortify, 
 Cohesion: 0.25
 Nodes (8): ci:check, dev, bun run format:check, bun run lint:check, bun run types:check, bunx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve --host=localhost\" \"php artisan queue:listen --tries=1 --timeout=0\" \"php artisan pail --timeout=0\" \"bun run dev\" --names=server,queue,logs,vite --kill-others, Composer\\Config::disableProcessTimeout, @test
 
-### Community 63 - "up-jurusan/consignments/index.tsx"
+### Community 62 - "FortifyServiceProvider"
 Cohesion: 0.25
-Nodes (6): CartItem, DailyReportItem, formatRupiah(), PicketUpJurusanConsignments(), PosProduct, Props
+Nodes (3): AppServiceProvider, FortifyServiceProvider, Illuminate\Support\ServiceProvider
+
+### Community 63 - "Illuminate\Http\RedirectResponse"
+Cohesion: 0.11
+Nodes (5): AdminJurusanUpJurusanController, SellerApplicationController, ProfileController, NotificationDismissal, Illuminate\Http\RedirectResponse
 
 ### Community 64 - "2026_08_02_000002_add_financial_history_protection.php"
 Cohesion: 0.67
@@ -461,13 +464,13 @@ Nodes (5): CreateTestNotifications, DetectStuckOrdersCommand, NotificationsClean
 Cohesion: 0.22
 Nodes (8): Demo Data, Deployment Checklist, EduCart, Fitur Utama, Production Notes, Quality Checks, Role Pengguna, Setup Local
 
-### Community 69 - "Unit/ActorLifecycleTest.php"
-Cohesion: 0.25
-Nodes (3): Illuminate\Foundation\Testing\RefreshDatabase, Illuminate\Foundation\Testing\TestCase, TestCase
+### Community 69 - "two-factor-setup-modal.tsx"
+Cohesion: 0.17
+Nodes (11): ManageTwoFactor(), Props, TwoFactorRecoveryCodes(), Props, TwoFactorSetupModal(), InputOTP(), InputOTPGroup(), InputOTPSlot() (+3 more)
 
-### Community 70 - "admin-jurusan/dashboard.tsx"
-Cohesion: 0.38
-Nodes (6): AdminJurusanDashboard(), Dashboard, formatRupiah(), formatTime(), Props, statusStyles
+### Community 70 - "Illuminate\Database\Eloquent\Model"
+Cohesion: 0.14
+Nodes (4): DomainEvent, SellerApplication, SellerApplicationFactory, Illuminate\Database\Eloquent\Model
 
 ### Community 71 - "psr-4"
 Cohesion: 0.40
@@ -494,12 +497,16 @@ Cohesion: 0.70
 Nodes (4): getServerSnapshot(), isSmallerThanBreakpoint(), mediaQueryListener(), useIsMobile()
 
 ### Community 77 - "button.tsx"
-Cohesion: 0.08
-Nodes (36): DeleteUser(), Heading(), InputError(), ManagePasskeys(), Props, ManageTwoFactor(), Props, PasskeyItem() (+28 more)
+Cohesion: 0.06
+Nodes (51): DeleteUser(), Heading(), InputError(), ManagePasskeys(), Props, PasskeyItem(), PasskeyRegistration(), Props (+43 more)
 
 ### Community 78 - "Illuminate\Database\Eloquent\Factories\Factory"
 Cohesion: 0.11
-Nodes (11): CategoryFactory, OrderFactory, OrderItemFactory, static, ProductFactory, SellerApplicationFactory, UpJurusanConsignmentFactory, UpJurusanFactory (+3 more)
+Nodes (10): CategoryFactory, OrderFactory, OrderItemFactory, static, ProductFactory, UpJurusanConsignmentFactory, UpJurusanFactory, static (+2 more)
+
+### Community 79 - "CartItem"
+Cohesion: 0.13
+Nodes (3): CartItem, up(), up()
 
 ### Community 81 - "post-create-project-cmd"
 Cohesion: 0.50
@@ -517,9 +524,9 @@ Nodes (6): 10.1 Button, Button states, Destructive button, Outline button, Prima
 Cohesion: 0.50
 Nodes (3): plugin, $schema, file:///home/adttnewbie/Documents/Coding/project-ecommerce-sekolah/.kilo/plugins/graphify.js
 
-### Community 107 - "Illuminate\Http\RedirectResponse"
-Cohesion: 0.15
-Nodes (4): AdminJurusanConsignmentController, AdminOrderController, ProfileController, Illuminate\Http\RedirectResponse
+### Community 107 - "OrderItemStatusChanged"
+Cohesion: 0.20
+Nodes (4): OrderItemStatusChanged, AdminJurusanConsignmentController, AdminJurusanConsignmentNotify, PicketOfficerOrderNotify
 
 ### Community 108 - "opencode.json"
 Cohesion: 0.50
@@ -541,8 +548,8 @@ Nodes (5): 4. Color System, Aturan penggunaan warna, Neutral color, Primary colo
 Cohesion: 0.40
 Nodes (5): 9. Layout, Breakpoints, Container, Grid produk, Header layout
 
-### Community 150 - "AdminProductModerationConcurrencyTest.php"
-Cohesion: 0.50
+### Community 150 - "artisan"
+Cohesion: 0.29
 Nodes (3): moderationProduct(), moderationTransition(), ProductStatus
 
 ### Community 151 - "16. Responsive Design"
@@ -582,52 +589,64 @@ Cohesion: 0.40
 Nodes (4): packageManager, private, $schema, type
 
 ### Community 172 - "Illuminate\Foundation\Http\FormRequest"
-Cohesion: 0.21
-Nodes (5): UpdateOrderItemStatusRequest, ProfileDeleteRequest, TwoFactorAuthenticationRequest, Illuminate\Foundation\Http\FormRequest, Laravel\Fortify\InteractsWithTwoFactorState
+Cohesion: 0.18
+Nodes (4): UpdateInventoryRequest, UpdateOrderItemStatusRequest, PasswordUpdateRequest, Illuminate\Foundation\Http\FormRequest
 
 ### Community 173 - "Illuminate\Database\Seeder"
 Cohesion: 0.36
 Nodes (4): DatabaseSeeder, TestNotificationSeeder, Illuminate\Database\Console\Seeds\WithoutModelEvents, Illuminate\Database\Seeder
 
-### Community 177 - "catalog/show.tsx"
-Cohesion: 0.32
-Nodes (7): CatalogProduct, CatalogShow(), CatalogShowProps, formatRupiah(), imageSource(), PageProps, Auth
+### Community 174 - "UpJurusanConsignmentStatus.php"
+Cohesion: 0.14
+Nodes (3): consignmentForkWait(), consignmentRunner(), Closure
+
+### Community 177 - "OwnerPayloadHelper.php"
+Cohesion: 0.16
+Nodes (4): AdminOrderController, BuyerOrderController, buyerOwnerPayload(), sellerOwnerPayload()
 
 ### Community 181 - "use-clipboard.ts"
 Cohesion: 0.33
 Nodes (5): TwoFactorSetupStep(), CopiedValue, CopyFn, useClipboard(), UseClipboardReturn
 
 ### Community 186 - "FortifyServiceProvider.php"
-Cohesion: 0.12
-Nodes (7): PasswordResetResponse, RegisterResponse, TwoFactorLoginResponse, Illuminate\Http\JsonResponse, Laravel\Fortify\Contracts\PasswordResetResponse, Laravel\Fortify\Contracts\RegisterResponse, Laravel\Fortify\Contracts\TwoFactorLoginResponse
+Cohesion: 0.10
+Nodes (9): PasswordConfirmedResponse, PasswordResetResponse, RegisterResponse, TwoFactorLoginResponse, Illuminate\Http\JsonResponse, Laravel\Fortify\Contracts\PasswordConfirmedResponse, Laravel\Fortify\Contracts\PasswordResetResponse, Laravel\Fortify\Contracts\RegisterResponse (+1 more)
 
 ### Community 190 - "seller/consignments/index.tsx"
 Cohesion: 0.67
 Nodes (3): formatRupiah(), Props, SellerConsignments()
 
-### Community 207 - "ConsignmentConcurrencyTest.php"
-Cohesion: 0.60
-Nodes (3): consignmentForkWait(), consignmentRunner(), Closure
+### Community 203 - "app-header.tsx"
+Cohesion: 0.19
+Nodes (11): AppHeader(), BuyerNavLink(), getBuyerNavItems(), Sheet(), SheetContent(), SheetDescription(), SheetFooter(), SheetHeader() (+3 more)
+
+### Community 204 - "cart/index.tsx"
+Cohesion: 0.27
+Nodes (7): CardAction(), Checkbox(), CartIndex(), CartIndexProps, CartItem, formatRupiah(), imageSource()
+
+### Community 214 - "auth.ts"
+Cohesion: 0.40
+Nodes (4): Passkey, TwoFactorSecretKey, TwoFactorSetupData, User
 
 ## Knowledge Gaps
-- **487 isolated node(s):** `$schema`, `file:///home/adttnewbie/Documents/Coding/project-ecommerce-sekolah/.kilo/plugins/graphify.js`, `$schema`, `.opencode/plugins/graphify.js`, `$schema` (+482 more)
+- **490 isolated node(s):** `$schema`, `file:///home/adttnewbie/Documents/Coding/project-ecommerce-sekolah/.kilo/plugins/graphify.js`, `$schema`, `.opencode/plugins/graphify.js`, `$schema` (+485 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **74 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **78 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `User` connect `User` to `Notification`, `AuthRedirect`, `Illuminate\Database\Eloquent\Relations\BelongsTo`, `Illuminate\Database\Eloquent\Relations\HasMany`, `OrderItem`, `OrderItemStatus.php`, `PicketUpJurusanConsignmentController`, `UpJurusan`, `User.php`, `UpJurusanConsignment`, `UpJurusanStockMovement`, `Order`, `Inertia\Response`, `PaymentTransitionService`, `CreateNewUser.php`, `CheckoutController.php`, `AdminDashboardController`, `PasswordValidationRules.php`, `CheckoutController`, `Illuminate\Http\Request`, `Illuminate\Console\Command`, `Unit/ActorLifecycleTest.php`, `NotificationService`, `Illuminate\Database\Eloquent\Factories\Factory`, `Product.php`?**
-  _High betweenness centrality (0.039) - this node is a cross-community bridge._
-- **Why does `cn()` connect `cn` to `categories/index.tsx`, `card.tsx`, `inventory/index.tsx`, `auth-simple-layout.tsx`, `confirm.tsx`, `Notifications/index.tsx`, `admin-jurusan/dashboard.tsx`, `button.tsx`, `dropdown-menu.tsx`, `seller/dashboard.tsx`, `index.ts`, `sidebar.tsx`, `up-jurusan/index.tsx`, `app-header.tsx`, `breadcrumbs.tsx`?**
-  _High betweenness centrality (0.032) - this node is a cross-community bridge._
-- **Why does `Product` connect `Product` to `Inertia\Response`, `Illuminate\Database\Eloquent\Relations\BelongsTo`, `Illuminate\Database\Eloquent\Relations\HasMany`, `OrderItem`, `OrderItemStatus.php`, `PicketUpJurusanConsignmentController`, `CheckoutController.php`, `CartController`, `UpJurusan`, `NotificationService`, `AdminDashboardController`, `Product.php`, `UpJurusanStockMovement`, `User`, `CheckoutController`, `Illuminate\Http\Request`, `Order`?**
+- **Why does `cn()` connect `cn` to `orders.tsx`, `card.tsx`, `inventory/index.tsx`, `two-factor-setup-modal.tsx`, `auth-simple-layout.tsx`, `categories/index.tsx`, `Notifications/index.tsx`, `sidebar.tsx`, `app-header.tsx`, `cart/index.tsx`, `button.tsx`, `dropdown-menu.tsx`, `seller/dashboard.tsx`, `app-sidebar.tsx`, `up-jurusan/index.tsx`, `app-sidebar-header.tsx`, `breadcrumbs.tsx`?**
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
+- **Why does `User` connect `User` to `Notification`, `AuthRedirect`, `Illuminate\Database\Eloquent\Relations\BelongsTo`, `Illuminate\Database\Eloquent\Relations\HasMany`, `OrderItem`, `OrderItemStatus.php`, `Illuminate\Http\Request`, `UpJurusan`, `User.php`, `UpJurusanConsignment`, `TransactionCode`, `UpJurusanStockMovement`, `Order`, `PendingOrderCreated`, `Inertia\Response`, `CreateNewUser.php`, `UpJurusanConsignmentStatus.php`, `AdminDashboardController`, `PasswordValidationRules.php`, `CheckoutController`, `HandleInertiaRequests`, `Illuminate\Http\RedirectResponse`, `Illuminate\Console\Command`, `Illuminate\Database\Eloquent\Model`, `SellerDashboardController`, `Illuminate\Database\Eloquent\Factories\Factory`, `UpJurusanPayout`, `CartItem`, `OrderPolicy`, `Product.php`?**
+  _High betweenness centrality (0.034) - this node is a cross-community bridge._
+- **Why does `Product` connect `Product` to `Illuminate\Database\Eloquent\Relations\BelongsTo`, `Illuminate\Database\Eloquent\Relations\HasMany`, `OrderItem`, `Illuminate\Http\Request`, `UpJurusan`, `UpJurusanConsignment`, `UpJurusanStockMovement`, `User`, `Order`, `Inertia\Response`, `UpJurusanConsignmentStatus.php`, `OwnerPayloadHelper.php`, `AdminDashboardController`, `CheckoutController`, `HandleInertiaRequests`, `Illuminate\Http\RedirectResponse`, `Illuminate\Database\Eloquent\Model`, `SellerDashboardController`, `CartItem`, `Product.php`?**
   _High betweenness centrality (0.014) - this node is a cross-community bridge._
 - **Are the 24 inferred relationships involving `User` (e.g. with `.handle()` and `.handle()`) actually correct?**
   _`User` has 24 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 18 inferred relationships involving `Product` (e.g. with `.adminQueue()` and `.stats()`) actually correct?**
-  _`Product` has 18 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 16 inferred relationships involving `Product` (e.g. with `.adminQueue()` and `.stats()`) actually correct?**
+  _`Product` has 16 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `$schema`, `file:///home/adttnewbie/Documents/Coding/project-ecommerce-sekolah/.kilo/plugins/graphify.js`, `$schema` to the rest of the system?**
-  _487 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `categories/index.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.056140350877192984 - nodes in this community are weakly interconnected._
+  _490 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `cn` be split into smaller, more focused modules?**
+  _Cohesion score 0.05146242132543503 - nodes in this community are weakly interconnected._
