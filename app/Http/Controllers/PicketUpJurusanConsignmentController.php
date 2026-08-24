@@ -23,6 +23,7 @@ use App\Support\OrderStatusSync;
 use App\Support\PaymentTransitionService;
 use App\Support\ReportAggregationService;
 use App\Support\TransactionCode;
+use App\Support\UniqueViolationRetry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -341,21 +342,17 @@ class PicketUpJurusanConsignmentController extends Controller
             'items.*.quantity' => ['required', 'integer', 'min:1'],
         ]);
 
-        $saleCode = null;
-        $saleId = 0;
-
-        DB::transaction(function () use ($validated, $picket, &$saleCode, &$saleId) {
-            $sale = UpJurusanPosSale::query()->create([
-                'up_jurusan_id' => $picket->up_jurusan_id,
-                'user_id' => $picket->id,
-                'code' => $this->posSaleCode(),
-                'total_quantity' => 0,
-                'total_amount' => 0,
-            ]);
-            $saleCode = $sale->code;
-            $saleId = $sale->id;
-            $totalQuantity = 0;
-            $totalAmount = 0;
+        [$saleCode, $saleId] = UniqueViolationRetry::run(
+            fn (): array => DB::transaction(function () use ($validated, $picket): array {
+                $sale = UpJurusanPosSale::query()->create([
+                    'up_jurusan_id' => $picket->up_jurusan_id,
+                    'user_id' => $picket->id,
+                    'code' => $this->posSaleCode(),
+                    'total_quantity' => 0,
+                    'total_amount' => 0,
+                ]);
+                $totalQuantity = 0;
+                $totalAmount = 0;
 
             foreach ($validated['items'] as $item) {
                 if ($item['source'] === 'product') {
@@ -382,11 +379,14 @@ class PicketUpJurusanConsignmentController extends Controller
                 $totalQuantity += (int) $item['quantity'];
             }
 
-            $sale->update([
-                'total_quantity' => $totalQuantity,
-                'total_amount' => $totalAmount,
-            ]);
-        });
+                $sale->update([
+                    'total_quantity' => $totalQuantity,
+                    'total_amount' => $totalAmount,
+                ]);
+
+                return [$sale->code, $sale->id];
+            }),
+        );
 
         return to_route('picket.pos')
             ->with('success', "Penjualan berhasil dicatat. No transaksi: {$saleCode}.")
@@ -410,35 +410,39 @@ class PicketUpJurusanConsignmentController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($picket, $payload, $today) {
-            $existingReport = UpJurusanDailyReport::query()
-                ->where('up_jurusan_id', $picket->up_jurusan_id)
-                ->where('user_id', $picket->id)
-                ->whereDate('report_date', $today)
-                ->lockForUpdate()
-                ->first();
+        UniqueViolationRetry::run(
+            fn (): ?UpJurusanDailyReport => DB::transaction(function () use ($picket, $payload, $today): ?UpJurusanDailyReport {
+                $existingReport = UpJurusanDailyReport::query()
+                    ->where('up_jurusan_id', $picket->up_jurusan_id)
+                    ->where('user_id', $picket->id)
+                    ->whereDate('report_date', $today)
+                    ->lockForUpdate()
+                    ->first();
 
-            if ($existingReport !== null) {
-                return;
-            }
+                if ($existingReport !== null) {
+                    return $existingReport;
+                }
 
-            $report = UpJurusanDailyReport::query()->create([
-                'up_jurusan_id' => $picket->up_jurusan_id,
-                'user_id' => $picket->id,
-                'report_date' => $today,
-                'total_sold' => $payload['total_sold'],
-                'total_revenue' => $payload['total_revenue'],
-                'submitted_at' => now(),
-            ]);
+                $report = UpJurusanDailyReport::query()->create([
+                    'up_jurusan_id' => $picket->up_jurusan_id,
+                    'user_id' => $picket->id,
+                    'report_date' => $today,
+                    'total_sold' => $payload['total_sold'],
+                    'total_revenue' => $payload['total_revenue'],
+                    'submitted_at' => now(),
+                ]);
 
-            ReportAggregationService::snapshotDailyReportTransactions($report, $payload['items']);
+                ReportAggregationService::snapshotDailyReportTransactions($report, $payload['items']);
 
-            DailyReportSubmitted::dispatch(
-                reportId: $report->id,
-                picketName: $picket->name,
-                totalRevenue: $payload['total_revenue']
-            );
-        });
+                DailyReportSubmitted::dispatch(
+                    reportId: $report->id,
+                    picketName: $picket->name,
+                    totalRevenue: $payload['total_revenue']
+                );
+
+                return $report;
+            }),
+        );
 
         return to_route('picket.reports')
             ->with('success', 'Laporan penjualan hari ini sudah dibuat.');
