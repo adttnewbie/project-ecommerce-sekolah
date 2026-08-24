@@ -26,4 +26,17 @@ class NotificationPreference extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Whether in-app notifications of a type may be delivered to the user.
+     * Absence of a preference row means opted-in (default enabled).
+     */
+    public static function allowsInApp(int $userId, string $type): bool
+    {
+        return ! static::query()
+            ->where('user_id', $userId)
+            ->where('type', $type)
+            ->where('in_app_enabled', false)
+            ->exists();
+    }
 }

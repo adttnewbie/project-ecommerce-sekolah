@@ -20,5 +20,6 @@ class OrderItemStatusChanged
         public readonly string $buyerName,
         public readonly string $action,
         public readonly ?int $picketId = null,
+        public readonly ?string $consignmentStatus = null,
     ) {}
 }

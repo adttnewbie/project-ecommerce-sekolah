@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UpJurusanConsignmentStatus;
 use App\Events\OrderItemStatusChanged;
 use App\Models\UpJurusanConsignment;
 use App\Models\User;
@@ -117,7 +118,8 @@ class AdminJurusanConsignmentController extends Controller
                 sellerName: $consignment->seller->name,
                 buyerName: 'Admin Jurusan',
                 action: 'disetujui dengan komisi '.$validated['commission_rate'].'%',
-                picketId: null
+                picketId: null,
+                consignmentStatus: UpJurusanConsignmentStatus::Approved->value,
             );
         });
 
@@ -149,7 +151,8 @@ class AdminJurusanConsignmentController extends Controller
                 sellerName: $consignment->seller->name,
                 buyerName: 'Admin Jurusan',
                 action: 'ditolak: '.$validated['rejection_reason'],
-                picketId: null
+                picketId: null,
+                consignmentStatus: UpJurusanConsignmentStatus::Rejected->value,
             );
         });
 
@@ -181,7 +184,8 @@ class AdminJurusanConsignmentController extends Controller
                 sellerName: $consignment->seller->name,
                 buyerName: 'Admin Jurusan',
                 action: 'dibatalkan'.($validated['note'] ? ': '.$validated['note'] : ''),
-                picketId: null
+                picketId: null,
+                consignmentStatus: UpJurusanConsignmentStatus::Cancelled->value,
             );
         });
 

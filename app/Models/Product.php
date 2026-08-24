@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ProductFulfillmentType;
 use App\Enums\ProductSalesMethod;
 use App\Enums\ProductStatus;
+use App\Events\LowStockDetected;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -46,6 +47,39 @@ class Product extends Model
     public const string REAL_STOCK_SQL = "(CASE WHEN products.sales_method = 'up_jurusan' AND products.seller_id IS NOT NULL THEN (SELECT COALESCE(SUM(received_quantity - sold_quantity), 0) FROM up_jurusan_consignments WHERE up_jurusan_consignments.product_id = products.id) ELSE products.stock END)";
 
     public const string REAL_STOCK_EXPRESSION = "(CASE WHEN products.sales_method = 'up_jurusan' AND products.seller_id IS NOT NULL THEN COALESCE(consignment_stock.available, 0) ELSE products.stock END)";
+
+    /**
+     * Single source of truth for low-stock detection: re-reads real stock
+     * with the same expression the seller header uses, and fires
+     * LowStockDetected once the threshold is reached. Safe to call after any
+     * stock-decreasing write.
+     */
+    public function dispatchLowStockNotificationIfReached(): void
+    {
+        if ($this->fulfillment_type !== ProductFulfillmentType::ReadyStock) {
+            return;
+        }
+
+        if ($this->seller_id === null) {
+            return;
+        }
+
+        $realStock = (int) static::query()
+            ->whereKey($this->id)
+            ->selectRaw(self::REAL_STOCK_SQL.' as real_stock')
+            ->value('real_stock');
+
+        if ($realStock > self::LOW_STOCK_THRESHOLD) {
+            return;
+        }
+
+        LowStockDetected::dispatch(
+            productId: $this->id,
+            productName: $this->name,
+            realStock: $realStock,
+            sellerId: $this->seller_id,
+        );
+    }
 
     /** @use HasFactory<ProductFactory> */
     use HasFactory;

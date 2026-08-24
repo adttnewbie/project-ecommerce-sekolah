@@ -3,8 +3,8 @@
 namespace App\Listeners;
 
 use App\Events\OrderItemStatusChanged;
-use App\Models\Notification;
-use App\Models\User;
+use App\Models\UpJurusanConsignment;
+use App\Support\NotificationDispatch;
 use Illuminate\Support\Facades\Log;
 
 class AdminJurusanConsignmentNotify
@@ -18,37 +18,40 @@ class AdminJurusanConsignmentNotify
             return;
         }
 
-        $adminJurusan = User::where('role', 'admin_jurusan')
-            ->first();
+        // The owner of the consignment's up jurusan is the recipient - not
+        // the first admin_jurusan in the database.
+        $ownerId = UpJurusanConsignment::query()
+            ->whereKey($event->consignmentId)
+            ->join('up_jurusans', 'up_jurusans.id', '=', 'up_jurusan_consignments.up_jurusan_id')
+            ->value('up_jurusans.admin_jurusan_id');
 
-        if (! $adminJurusan) {
-            Log::warning('No admin jurusan user found to receive consignment notification');
-
-            return;
-        }
-
-        $notificationKey = "admin-jurusan-consignment:{$event->consignmentId}-notif";
-
-        $existing = Notification::where('key', $notificationKey)->first();
-
-        if ($existing) {
-            return;
-        }
-
-        Notification::create([
-            'user_id' => $adminJurusan->id,
-            'type' => 'order',
-            'key' => $notificationKey,
-            'title' => "Barang titipan {$event->productName} {$event->action}",
-            'description' => "Dari seller {$event->sellerName}",
-            'href' => route('admin-jurusan.consignments.show', $event->consignmentId, false),
-            'data' => [
+        if ($ownerId === null) {
+            Log::warning('No admin jurusan owner found for consignment notification', [
                 'consignment_id' => $event->consignmentId,
-                'product_id' => $event->productId,
-                'seller_name' => $event->sellerName,
-                'source' => 'consignment_update',
+            ]);
+
+            return;
+        }
+
+        // Per-transition key: approve/reject/cancel each notify once while
+        // staying idempotent against retries of the same transition.
+        $status = $event->consignmentStatus ?? 'updated';
+        $notificationKey = "admin-jurusan-consignment:{$event->consignmentId}:{$status}";
+
+        NotificationDispatch::toUser(
+            (int) $ownerId,
+            'order',
+            $notificationKey,
+            [
+                'title' => "Barang titipan {$event->productName} {$event->action}",
+                'description' => "Dari seller {$event->sellerName}",
+                'href' => route('admin-jurusan.consignments.show', $event->consignmentId, false),
+                'data' => [
+                    'consignment_id' => $event->consignmentId,
+                    'status' => $status,
+                    'source' => 'order_item_status_changed',
+                ],
             ],
-            'created_at' => now(),
-        ]);
+        );
     }
 }

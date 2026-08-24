@@ -213,3 +213,26 @@ Everything else reviewed (MoneyCalculationService, ConsignmentTransition/Payout,
 
 - Seller consignment index pagination (deferred from Fase 3).
 - 2 skipped concurrency tests require the pcntl extension by design.
+
+---
+
+## 13. Notification hardening — audit 4 peran (2026-08-24)
+
+### Fixed
+
+1. **Schema — key uniqueness scoped to user.** `notifications.key` carried a global unique index, so the same logical notification could only ever reach ONE recipient (same failure class as the Fase 1 multi-seller bug). Uniqueness is now `(user_id, key)`.
+2. **Central dispatch.** `NotificationDispatch::toUser()/toRole()` consults `NotificationPreference::allowsInApp()` (absent row = opted in), then delivers idempotently per user+key. All 10 listeners rebuilt on top of it; preferences are now genuinely respected.
+3. **Admin recipients.** Admin-facing listeners notify *every* admin instead of `User::where('role')->first()`.
+4. **Admin jurusan targeting (Gap D).** Consignment notifications go to the owning `up_jurusan.admin_jurusan_id`; per-transition keys (`admin-jurusan-consignment:{id}:{status}`) make approve/reject/cancel each notify once while staying retry-idempotent (`OrderItemStatusChanged` gained `consignmentStatus`).
+5. **Seller moderation result (Gaps A+C).** New `ProductModerationDecided` event from the admin approve/reject actions drives a seller notification whose href points at `seller.products.index` (the old pending-notice href pointed sellers at the admin queue → 403).
+6. **Payment settled → seller (Gap E).** `PicketOrderPaymentNotify` (self-noise) removed; new `SellerPaymentPaidNotify` tells the seller when a picket settles their item, skipping seller-self approvals and non-approved statuses.
+7. **Low stock alive again (Gap B).** `LowStockDetected` was never dispatched anywhere. `Product::dispatchLowStockNotificationIfReached()` now shares the header's exact source of truth (`REAL_STOCK_SQL` + `LOW_STOCK_THRESHOLD = 5`, ReadyStock only) and is invoked after every stock-decreasing write: checkout self-managed decrement, POS product sale, and consignment `recordSold`.
+
+### Regression matrix added
+
+`NotificationTriggerMatrixTest` (7 tests): multi-admin fan-out with per-user idempotency; AJ owner-targeting + per-transition keys; daily-report owner routing; moderation approved/rejected to seller incl. role-accessible href GET; payment-paid to seller with no picket self-row and no seller self-approval echo; low-stock threshold firing once per product; preference gate blocking/re-enabling per user+type.
+
+### Verification status
+
+- Full suite: 551 tests / 549 passed / 2 skipped (pcntl-gated) / 0 failed.
+- pint ✓ phpstan 0 ✓ tsc ✓.

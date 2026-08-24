@@ -3,31 +3,28 @@
 namespace App\Listeners;
 
 use App\Enums\NotificationType;
-use App\Events\ProductPendingModeration;
+use App\Events\ProductModerationDecided;
 use App\Support\NotificationDispatch;
 
-class CreateProductModerationNotification
+class CreateModerationResultNotification
 {
     /**
      * Handle the event.
      */
-    public function handle(ProductPendingModeration $event): void
+    public function handle(ProductModerationDecided $event): void
     {
-        $notificationKey = $event->notificationKey();
-
         NotificationDispatch::toUser(
             $event->sellerId,
             NotificationType::Product->value,
-            $notificationKey,
+            $event->notificationKey(),
             [
-                // The recipient is the seller: point at their own catalog,
-                // never the admin moderation queue.
                 'href' => route('seller.products.index', absolute: false),
                 'title' => $event->notificationTitle(),
                 'description' => $event->notificationDescription(),
                 'data' => [
                     'product_id' => $event->productId,
-                    'source' => 'product_pending_moderation',
+                    'decision' => $event->decision,
+                    'source' => 'product_moderation_decided',
                 ],
             ],
         );

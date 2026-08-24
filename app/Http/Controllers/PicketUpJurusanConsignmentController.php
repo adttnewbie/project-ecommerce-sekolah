@@ -657,6 +657,8 @@ class PicketUpJurusanConsignmentController extends Controller
             'stock' => $product->stock - $quantity,
         ]);
 
+        $product->dispatchLowStockNotificationIfReached();
+
         UpJurusanStockMovement::query()->create([
             'up_jurusan_consignment_id' => null,
             'product_id' => $product->id,

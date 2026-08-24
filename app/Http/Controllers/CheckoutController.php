@@ -398,6 +398,8 @@ class CheckoutController extends Controller
                 'stock' => $product->stock - $quantity,
             ]);
 
+            $product->dispatchLowStockNotificationIfReached();
+
             if ($product->seller_id === null && $product->up_jurusan_id !== null) {
                 $money = MoneyCalculationService::upOwnedProductSaleSplit((int) $product->price, $quantity);
 

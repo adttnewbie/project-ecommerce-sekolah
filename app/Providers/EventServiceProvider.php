@@ -8,6 +8,7 @@ use App\Events\LowStockDetected;
 use App\Events\OrderItemStatusChanged;
 use App\Events\OrderPaymentApproved;
 use App\Events\PendingOrderCreated;
+use App\Events\ProductModerationDecided;
 use App\Events\ProductPendingModeration;
 use App\Events\SellerApplicationPending;
 use App\Listeners\AdminJurusanConsignmentNotify;
@@ -17,10 +18,11 @@ use App\Listeners\AdminOrderNotify;
 use App\Listeners\AdminProductModerationNotify;
 use App\Listeners\AdminSellerApplicationNotify;
 use App\Listeners\CreateLowStockNotification;
+use App\Listeners\CreateModerationResultNotification;
 use App\Listeners\CreatePendingOrderNotification;
 use App\Listeners\CreateProductModerationNotification;
 use App\Listeners\PicketOfficerOrderNotify;
-use App\Listeners\PicketOrderPaymentNotify;
+use App\Listeners\SellerPaymentPaidNotify;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -34,6 +36,10 @@ class EventServiceProvider extends ServiceProvider
         ProductPendingModeration::class => [
             CreateProductModerationNotification::class,
             AdminProductModerationNotify::class,
+        ],
+
+        ProductModerationDecided::class => [
+            CreateModerationResultNotification::class,
         ],
 
         LowStockDetected::class => [
@@ -54,7 +60,7 @@ class EventServiceProvider extends ServiceProvider
         ],
 
         OrderPaymentApproved::class => [
-            PicketOrderPaymentNotify::class,
+            SellerPaymentPaidNotify::class,
         ],
 
         AdminNotificationTriggered::class => [

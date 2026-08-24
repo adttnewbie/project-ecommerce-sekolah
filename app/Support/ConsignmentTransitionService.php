@@ -289,9 +289,17 @@ class ConsignmentTransitionService
 
         self::assertInvariants($current);
 
+        // Real stock for consigned products is derived from sold/received
+        // quantities, so a sale can push it below the threshold.
+        $consignmentProduct = $current->product()->first();
+
+        if ($consignmentProduct !== null) {
+            $consignmentProduct->dispatchLowStockNotificationIfReached();
+        }
+
         DomainEventService::record(
             DomainEventService::AGGREGATE_CONSIGNMENT,
-            $consignment->id,
+            $current->id,
             'consignment_sale_recorded',
             $actor,
             [

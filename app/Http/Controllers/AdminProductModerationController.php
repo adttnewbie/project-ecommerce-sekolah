@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ProductSalesMethod;
 use App\Enums\ProductStatus;
+use App\Events\ProductModerationDecided;
 use App\Http\Requests\Admin\RejectProductRequest;
 use App\Models\Product;
 use App\Support\DomainEventService;
@@ -74,6 +75,13 @@ class AdminProductModerationController extends Controller
                 $request->user(),
                 ['to_status' => ProductStatus::Approved->value],
             );
+
+            ProductModerationDecided::dispatch(
+                productId: $product->id,
+                productName: $product->name,
+                sellerId: (int) $product->seller_id,
+                decision: 'approved',
+            );
         });
 
         return back();
@@ -104,6 +112,14 @@ class AdminProductModerationController extends Controller
                     'to_status' => ProductStatus::Rejected->value,
                     'reason' => $reason,
                 ],
+            );
+
+            ProductModerationDecided::dispatch(
+                productId: $product->id,
+                productName: $product->name,
+                sellerId: (int) $product->seller_id,
+                decision: 'rejected',
+                reason: $reason !== '' ? $reason : null,
             );
         });
 
