@@ -126,17 +126,19 @@ class MoneyCalculationService
      * two SUMs per row when rendering a list. Same semantics as
      * sellerEarningsFromOutMovements (out movements only, reversed excluded).
      *
-     * @param  list<int>  $consignmentIds
+     * @param  iterable<int, int|string>  $consignmentIds
      * @return array<int, int>
      */
-    public static function sellerEarningsMap(array $consignmentIds): array
+    public static function sellerEarningsMap(iterable $consignmentIds): array
     {
-        if ($consignmentIds === []) {
+        $ids = self::normalizeConsignmentIds($consignmentIds);
+
+        if ($ids === []) {
             return [];
         }
 
         return UpJurusanStockMovement::query()
-            ->whereIn('up_jurusan_consignment_id', $consignmentIds)
+            ->whereIn('up_jurusan_consignment_id', $ids)
             ->where('type', 'out')
             ->doesntHave('reversedBy')
             ->groupBy('up_jurusan_consignment_id')
@@ -149,21 +151,38 @@ class MoneyCalculationService
     /**
      * Grouped paid payout totals keyed by consignment id.
      *
-     * @param  list<int>  $consignmentIds
+     * @param  iterable<int, int|string>  $consignmentIds
      * @return array<int, int>
      */
-    public static function paidPayoutMap(array $consignmentIds): array
+    public static function paidPayoutMap(iterable $consignmentIds): array
     {
-        if ($consignmentIds === []) {
+        $ids = self::normalizeConsignmentIds($consignmentIds);
+
+        if ($ids === []) {
             return [];
         }
 
         return UpJurusanPayout::query()
-            ->whereIn('up_jurusan_consignment_id', $consignmentIds)
+            ->whereIn('up_jurusan_consignment_id', $ids)
             ->groupBy('up_jurusan_consignment_id')
             ->selectRaw('up_jurusan_consignment_id, COALESCE(SUM(amount), 0) as total')
             ->pluck('total', 'up_jurusan_consignment_id')
             ->map(fn (mixed $total): int => (int) $total)
             ->all();
+    }
+
+    /**
+     * @param  iterable<int, int|string>  $consignmentIds
+     * @return list<int>
+     */
+    private static function normalizeConsignmentIds(iterable $consignmentIds): array
+    {
+        $ids = [];
+
+        foreach ($consignmentIds as $consignmentId) {
+            $ids[] = (int) $consignmentId;
+        }
+
+        return $ids;
     }
 }

@@ -158,3 +158,30 @@ Everything else reviewed (MoneyCalculationService, ConsignmentTransition/Payout,
 - Pint + PHPStan clean on all touched files. Remaining repo-wide debt unchanged: 33 PHPStan violations in the untracked-at-the-time notification WIP files plus the pre-existing `PicketUpJurusanConsignmentController:476` nullsafe nit — scheduled for Fase 4 cleanup.
 
 > Note: §2's RC-2 row was found stale during this phase — `receive()` had already gained its locked re-fetch in an earlier pass; this phase closed the remaining three methods.
+
+---
+
+## 11. Fase 3 — Performa (2026-08-24)
+
+### Fixed
+
+1. **N1-1 + N1-2 — consignment money aggregates.** `MoneyCalculationService::sellerEarningsMap/paidPayoutMap` do one grouped SUM per table keyed by `up_jurusan_consignment_id` (reversed movements still excluded). Seller consignment index dropped from ~4 SUMs per row to 2 queries total; `ActorLifecycle::userHasUnpaidPayouts/upJurusanHasUnpaidPayouts` read the maps instead of looping `unpaidSellerAmount`. Single-id methods remain for detail/payout paths. Benchmark: seller consignment list payload unchanged; equivalence covered by tests.
+2. **U-4 — dashboard order trend in SQL.** `orderTrendData()` no longer materialises eight months of orders: two grouped queries (`COUNT`/`SUM` keyed by `substr(created_at,1,7)`, portable SQLite/MySQL/PostgreSQL) feed the same 8-bucket payload.
+3. **U-6 — catalog pagination.** Buyer catalog paginates 12/page with query-string preservation and the same through()-mapped payload; `catalog/index.tsx` reads paginator data/meta, shows a range line, and renders Prev/Next (disabled at edges) via wayfinder hrefs that keep search/category filters.
+
+### Tests added
+
+- MoneyAggregateMapTest ×3 — grouped maps equal per-id sums (incl. reversed exclusion + overpaid clamp), empty-list guard, lifecycle detection flips after settlement.
+- DashboardTest trend bucket test — counts/revenue per month, rejected payments excluded.
+- CatalogTest pagination test — 12/1 split across pages, meta fields, filter preservation on page 2.
+
+### Verification status
+
+- Full suite: 547 tests / 545 passed / 2 skipped (pre-existing) / 0 failed.
+- Pint + PHPStan clean on all touched files (repo-wide WIP debt unchanged).
+- Benchmark log now records catalog.index before=14 → after=6 queries.
+
+### Deferred
+
+- **N1-3** (per-row livenessLabel EXISTS on admin orders index) → Fase 4.
+- Seller consignment index pagination → later pass (list is small; aggregates already fixed).

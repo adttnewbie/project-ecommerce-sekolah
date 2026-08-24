@@ -126,7 +126,7 @@ class ActorLifecycle
      * One grouped pair of aggregates instead of two SUM queries per
      * consignment when scanning a whole list.
      *
-     * @param  list<int>  $consignmentIds
+     * @param  iterable<int, int|string>  $consignmentIds
      */
     private static function hasUnpaidPayout(array $consignmentIds): bool
     {

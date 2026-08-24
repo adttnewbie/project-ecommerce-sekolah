@@ -4,10 +4,10 @@ use App\Enums\StockMovementSource;
 use App\Enums\UpJurusanConsignmentStatus;
 use App\Enums\UserRole;
 use App\Models\Product;
+use App\Models\UpJurusan;
 use App\Models\UpJurusanConsignment;
 use App\Models\UpJurusanPayout;
 use App\Models\UpJurusanStockMovement;
-use App\Models\UpJurusan;
 use App\Models\User;
 use App\Support\ActorLifecycle;
 use App\Support\MoneyCalculationService;
@@ -86,16 +86,16 @@ it('builds grouped maps that match the per-consignment sums', function () {
     $paid = MoneyCalculationService::paidPayoutMap([$withReversal->id, $overpaid->id, $untouched->id]);
 
     expect($earnings)->toBe([
-            $withReversal->id => 999, // reversed movement excluded
-            $overpaid->id => 5000,
-        ])
+        $withReversal->id => 999, // reversed movement excluded
+        $overpaid->id => 5000,
+    ])
         ->and($paid)->toBe([$overpaid->id => 8000])
         ->and($earnings[$withReversal->id])->toBe(MoneyCalculationService::sellerEarningsFromOutMovements($withReversal->id))
         ->and($earnings[$overpaid->id])->toBe(MoneyCalculationService::sellerEarningsFromOutMovements($overpaid->id))
         ->and($paid[$overpaid->id])->toBe(MoneyCalculationService::paidPayoutAmount($overpaid->id))
         // Untouched consignments fall back to zero in list payloads.
         ->and(max(0, ($earnings[$untouched->id] ?? 0) - ($paid[$untouched->id] ?? 0)))
-            ->toBe(MoneyCalculationService::unpaidSellerAmount($untouched->id));
+        ->toBe(MoneyCalculationService::unpaidSellerAmount($untouched->id));
 });
 
 it('returns empty maps for an empty id list', function () {
