@@ -137,9 +137,13 @@ export function AppSidebarHeader({
         adminJurusanHeader,
         auth,
         buyerHeader,
+        notificationBadge,
         picketOfficerHeader,
         sellerHeader,
     } = usePage().props;
+
+    const unreadCount = notificationBadge?.count ?? 0;
+    const badgeLabel = unreadCount > 99 ? '99+' : String(unreadCount);
     const [search, setSearch] = useState('');
     const getInitials = useInitials();
     const currentBreadcrumb = breadcrumbs[breadcrumbs.length - 1];
@@ -330,25 +334,11 @@ export function AppSidebarHeader({
                                     aria-label="Notifikasi"
                                 >
                                     <Bell className="size-5" />
-                                    {sellerHeader?.notifications &&
-                                        sellerHeader.notifications.length >
-                                            0 && (
-                                            <span
-                                                className={`absolute top-2 right-2 size-2.5 rounded-full ring-2 ring-white ${sellerHeader.notifications.length > 9 ? 'h-5 w-5 rounded-[8px] bg-red-500 p-1' : 'bg-red-500'} ${sellerHeader.notifications.length > 9 ? 'flex items-center justify-center' : ''} ${sellerHeader.notifications.some((n) => n.type === 'order' || n.type === 'stock') ? 'notification-badge-pulse' : ''}`}
-                                            >
-                                                {sellerHeader.notifications
-                                                    .length > 9 && (
-                                                    <span className="text-[10px] leading-none font-semibold text-white">
-                                                        {Math.floor(
-                                                            sellerHeader
-                                                                .notifications
-                                                                .length / 10,
-                                                        )}
-                                                        +
-                                                    </span>
-                                                )}
-                                            </span>
-                                        )}
+                                    {unreadCount > 0 && (
+                                        <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
+                                            {badgeLabel}
+                                        </span>
+                                    )}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
@@ -479,25 +469,11 @@ export function AppSidebarHeader({
                                     aria-label={`Notifikasi ${userRole || 'Admin'}`}
                                 >
                                     <Bell className="size-5" />
-                                    {adminHeader &&
-                                        adminHeader.notifications?.length >
-                                            0 && (
-                                            <span
-                                                className={`absolute top-2 right-2 size-2.5 rounded-full ring-2 ring-white ${adminHeader.notifications.length > 9 ? 'h-5 w-5 rounded-[8px] bg-red-500 p-1' : 'bg-red-500'} ${adminHeader.notifications.length > 9 ? 'flex items-center justify-center' : ''} ${adminHeader.notifications.some((n) => n.type === 'product') ? 'notification-badge-pulse' : ''}`}
-                                            >
-                                                {adminHeader.notifications
-                                                    .length > 9 && (
-                                                    <span className="text-[10px] leading-none font-semibold text-white">
-                                                        {Math.floor(
-                                                            adminHeader
-                                                                .notifications
-                                                                .length / 10,
-                                                        )}
-                                                        +
-                                                    </span>
-                                                )}
-                                            </span>
-                                        )}
+                                    {unreadCount > 0 && (
+                                        <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
+                                            {badgeLabel}
+                                        </span>
+                                    )}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent

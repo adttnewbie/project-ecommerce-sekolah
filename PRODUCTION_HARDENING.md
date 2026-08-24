@@ -284,3 +284,11 @@ Checkout post-commit kini mengelompokkan item pending per up jurusan tujuan (pro
 Listener `PicketVerificationNotify` mem-fan-out ke picket officer UJ tsb (domain: satu picket per UJ — `users.up_jurusan_id` unique) dengan key `picket-new-order:{orderId}:{upJurusanId}`, type `payment` (memicu pulse badge eksisting), href `picket.orders`, pref-gated `payment`.
 
 Regresi: `PicketVerificationNotifyTest` ×4 — fan-out + isolasi UJ lain; itemCount hanya item actionable; idempotent per order+UJ sementara order baru tetap notif; preference gate.
+
+### Header unification (2026-08-24, lanjutan §14)
+
+Bell header admin & seller dibuang builder derived-nya dan kini membaca **baris persisted** lewat `persistedNotificationsFor()` — satu sumber kebaban dengan halaman `/notifications`, dropdown recent, dismiss, mark-all-read, dan preference gate. Mapping kategori: produk pending → `AdminProductModerationNotify`, order pending seller → `CreatePendingOrderNotification`, low stock → `CreateLowStockNotification` — tidak ada actionable case yang hilang; justru admin/seller kini juga melihat payment decisions, pembatalan dua arah, dan laporan harian yang dulu tak pernah masuk bell mereka.
+
+Semantik resmi: **bell = halaman = riwayat tersimpan**. Baris tetap tampil sampai di-dismiss manual; read-state (`is_read`) nyata dari `read_at`; tidak ada auto-resolve berdasarkan perubahan domain state. Badge merah semua role memakai **unread count persisted sejati** (`notificationBadge.count`) dengan cap visual 99+.
+
+Regresi: DashboardTest §header ditulis ulang (4 test) ke semantik persisted — termasuk kontrak baru "notif bertahan sebagai history setelah domain state berubah", cap limit 10, dan isolasi antar-seller.

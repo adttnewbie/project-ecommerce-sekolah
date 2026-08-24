@@ -7,7 +7,9 @@ use App\Enums\ProductSalesMethod;
 use App\Enums\ProductStatus;
 use App\Enums\UpJurusanConsignmentStatus;
 use App\Enums\UserRole;
+use App\Events\LowStockDetected;
 use App\Models\Category;
+use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -134,44 +136,58 @@ test('admin dashboard uses real product and order data', function () {
         );
 });
 
-test('admin header notifications contain admin action items', function () {
-    $admin = User::factory()->create(['role' => UserRole::Admin]);
-    $seller = User::factory()->create(['role' => UserRole::Seller]);
-    $category = Category::factory()->create();
-    $pendingProduct = Product::factory()->for($seller, 'seller')->for($category)->create([
-        'name' => 'Produk Pending Admin',
-        'status' => ProductStatus::Pending,
+function seedHeaderNotification(User $recipient, string $key, string $title, string $type = 'order'): Notification
+{
+    return Notification::create([
+        'user_id' => $recipient->id,
+        'type' => $type,
+        'key' => $key,
+        'title' => $title,
+        'description' => null,
+        'href' => '/notifications',
+        'created_at' => now(),
     ]);
+}
+
+test('admin header notifications contain persisted admin action items', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+    $notification = seedHeaderNotification(
+        $admin,
+        'admin-product-moderation:77',
+        'Produk Pending Admin',
+        'product',
+    );
 
     $this->actingAs($admin)
         ->get(route('dashboard'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('adminHeader.notifications.0.type', 'product')
-            ->where('adminHeader.notifications.0.title', $pendingProduct->name)
-            ->where('adminHeader.notifications.0.href', route('admin.products.moderation.index', absolute: false))
+            ->where('adminHeader.notifications.0.title', 'Produk Pending Admin')
+            ->where('adminHeader.notifications.0.is_read', false)
             ->has('adminHeader.notifications', 1)
             ->where('adminHeader.supportEmail', config('mail.from.address')),
         );
+
+    expect($notification->fresh())->not->toBeNull();
 });
 
 test('header notifications can be dismissed per user', function () {
     $admin = User::factory()->create(['role' => UserRole::Admin]);
-    $seller = User::factory()->create(['role' => UserRole::Seller]);
-    $category = Category::factory()->create();
-    $pendingProduct = Product::factory()->for($seller, 'seller')->for($category)->create([
-        'name' => 'Produk Bisa Dihapus',
-        'status' => ProductStatus::Pending,
-    ]);
-    $notificationKey = "admin-product-pending:{$pendingProduct->id}:{$pendingProduct->updated_at->getTimestamp()}";
+    $notification = seedHeaderNotification(
+        $admin,
+        'admin-product-moderation:77',
+        'Produk Bisa Dihapus',
+    );
 
     $this->actingAs($admin)
-        ->delete(route('notifications.destroy', $notificationKey))
+        ->delete(route('notifications.destroy', $notification->key))
         ->assertRedirect();
 
     $this->assertDatabaseHas('notification_dismissals', [
         'user_id' => $admin->id,
-        'key' => $notificationKey,
+        'key' => $notification->key,
     ]);
 
     $this->actingAs($admin)
@@ -182,61 +198,59 @@ test('header notifications can be dismissed per user', function () {
         );
 });
 
-test('header notifications disappear when the task is completed elsewhere', function () {
+test('seller header notifications persist as history after the task is handled', function () {
     $seller = User::factory()->create(['role' => UserRole::Seller]);
     $buyer = User::factory()->create();
-    $category = Category::factory()->create();
-    $product = Product::factory()->for($seller, 'seller')->for($category)->approved()->create(['stock' => 20]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create(['stock' => 20]);
     $order = Order::factory()->for($buyer)->create();
-    $pendingItem = OrderItem::factory()->for($order)->for($product)->create([
+    $item = OrderItem::factory()->for($order)->for($product)->create([
         'status' => OrderItemStatus::Pending,
     ]);
+
+    $notification = Notification::create([
+        'user_id' => $seller->id,
+        'type' => 'order',
+        'key' => "order-pending:{$order->id}:{$seller->id}",
+        'title' => "Pesanan #{$order->id}",
+        'description' => $item->product_name.' menunggu diproses',
+        'href' => route('seller.orders.show', $item, absolute: false),
+        'created_at' => now(),
+    ]);
+
+    // Domain state moves on (item packed) - the persisted notification stays.
+    $item->update(['status' => OrderItemStatus::Packed]);
 
     $this->actingAs($seller)
         ->get(route('seller.dashboard'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->has('sellerHeader.notifications', 1)
-            ->where('sellerHeader.notifications.0.type', 'order'),
-        );
-
-    $pendingItem->update(['status' => OrderItemStatus::Packed]);
-
-    $this->actingAs($seller)
-        ->get(route('seller.dashboard'))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('sellerHeader.notifications', []),
+            ->where('sellerHeader.notifications.0.key', $notification->key)
+            ->where('sellerHeader.notifications.0.is_read', false),
         );
 });
 
-test('header notifications show more than three items for admin and seller', function () {
+test('header notifications cap at the dropdown limit for admin and seller', function () {
     $admin = User::factory()->create(['role' => UserRole::Admin]);
     $seller = User::factory()->create(['role' => UserRole::Seller]);
-    $category = Category::factory()->create();
 
-    Product::factory()->count(6)->for($seller, 'seller')->for($category)->create([
-        'status' => ProductStatus::Pending,
-    ]);
+    foreach (range(1, 12) as $i) {
+        seedHeaderNotification($admin, "admin-order:{$i}", "Order admin {$i}");
+        seedHeaderNotification($seller, "seller-low-stock:{$i}", "Stok rendah {$i}", 'stock');
+    }
 
     $this->actingAs($admin)
         ->get(route('dashboard'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->has('adminHeader.notifications', 6),
+            ->has('adminHeader.notifications', 10),
         );
-
-    Product::query()->delete();
-
-    Product::factory()->count(6)->for($seller, 'seller')->for($category)->approved()->create([
-        'stock' => 1,
-    ]);
 
     $this->actingAs($seller)
         ->get(route('seller.dashboard'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->has('sellerHeader.notifications', 6),
+            ->has('sellerHeader.notifications', 10),
         );
 });
 
@@ -607,49 +621,49 @@ test('seller dashboard includes offline up jurusan consignment sales', function 
         );
 });
 
-test('seller header notifications contain only current seller action items', function () {
+test('seller header notifications contain only the current seller persisted rows', function () {
     $seller = User::factory()->create(['role' => UserRole::Seller]);
     $otherSeller = User::factory()->create(['role' => UserRole::Seller]);
-    $buyer = User::factory()->create();
-    $category = Category::factory()->create();
 
-    $lowStockProduct = Product::factory()->for($seller, 'seller')->for($category)->approved()->create([
-        'name' => 'Pulpen Biru',
-        'stock' => 2,
-    ]);
-    $normalProduct = Product::factory()->for($seller, 'seller')->for($category)->approved()->create([
-        'stock' => 20,
-    ]);
-    $otherProduct = Product::factory()->for($otherSeller, 'seller')->for($category)->approved()->create([
-        'stock' => 0,
-    ]);
-
-    $order = Order::factory()->for($buyer)->create();
-    $pendingItem = OrderItem::factory()->for($order)->for($lowStockProduct)->create([
-        'product_name' => $lowStockProduct->name,
-        'status' => OrderItemStatus::Pending,
-    ]);
-    OrderItem::factory()->for($order)->for($normalProduct)->create([
-        'status' => OrderItemStatus::Sent,
-    ]);
-    OrderItem::factory()->for($order)->for($otherProduct)->create([
-        'status' => OrderItemStatus::Pending,
-    ]);
+    $orderNotification = seedHeaderNotification(
+        $seller,
+        'order-pending:501:'.$seller->id,
+        'Pesanan #501',
+        'order',
+    );
+    $stockNotification = seedHeaderNotification(
+        $seller,
+        'seller-stock-low:77',
+        'Pulpen Biru stok menipis!',
+        'stock',
+    );
+    seedHeaderNotification(
+        $otherSeller,
+        'seller-item-cancelled:999',
+        'Notif seller lain',
+    );
 
     $this->actingAs($seller)
         ->get(route('seller.dashboard'))
         ->assertInertia(fn (Assert $page) => $page
             ->has('sellerHeader.notifications', 2)
             ->where('sellerHeader.notifications.0.type', 'order')
-            ->where('sellerHeader.notifications.0.href', route('seller.orders.show', $pendingItem, absolute: false))
+            ->where('sellerHeader.notifications.0.key', $orderNotification->key)
             ->where('sellerHeader.notifications.1.type', 'stock')
-            ->where('sellerHeader.notifications.1.title', 'Pulpen Biru')
-            ->where('sellerHeader.notifications.1.href', route('seller.inventory.index', ['q' => 'Pulpen Biru'], absolute: false))
+            ->where('sellerHeader.notifications.1.key', $stockNotification->key)
             ->where('sellerHeader.supportEmail', config('mail.from.address')),
+        );
+
+    // The other seller never sees rows addressed to this seller.
+    $this->actingAs($otherSeller)
+        ->get(route('seller.dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('sellerHeader.notifications', 1)
+            ->where('sellerHeader.notifications.0.key', 'seller-item-cancelled:999'),
         );
 });
 
-test('seller low stock notifications use real consignment stock', function () {
+test('seller low stock notifications come from persisted rows using real consignment stock', function () {
     $seller = User::factory()->create(['role' => UserRole::Seller]);
     $category = Category::factory()->create();
     $upJurusan = UpJurusan::factory()->create();
@@ -658,12 +672,12 @@ test('seller low stock notifications use real consignment stock', function () {
         'stock' => 0,
         'fulfillment_type' => ProductFulfillmentType::PreOrder,
     ]);
-    $rawOutButRealNormal = Product::factory()->for($seller, 'seller')->for($category)->approved()->create([
+    $normalProduct = Product::factory()->for($seller, 'seller')->for($category)->approved()->create([
         'name' => 'Stok Titipan Normal',
         'stock' => 0,
         'sales_method' => ProductSalesMethod::UpJurusan,
     ]);
-    $rawNormalButRealLow = Product::factory()->for($seller, 'seller')->for($category)->approved()->create([
+    $lowProduct = Product::factory()->for($seller, 'seller')->for($category)->approved()->create([
         'name' => 'Stok Titipan Menipis',
         'stock' => 20,
         'sales_method' => ProductSalesMethod::UpJurusan,
@@ -671,7 +685,7 @@ test('seller low stock notifications use real consignment stock', function () {
 
     UpJurusanConsignment::factory()->create([
         'seller_id' => $seller->id,
-        'product_id' => $rawOutButRealNormal->id,
+        'product_id' => $normalProduct->id,
         'up_jurusan_id' => $upJurusan->id,
         'received_quantity' => 8,
         'sold_quantity' => 0,
@@ -679,12 +693,19 @@ test('seller low stock notifications use real consignment stock', function () {
     ]);
     UpJurusanConsignment::factory()->create([
         'seller_id' => $seller->id,
-        'product_id' => $rawNormalButRealLow->id,
+        'product_id' => $lowProduct->id,
         'up_jurusan_id' => $upJurusan->id,
         'received_quantity' => 5,
         'sold_quantity' => 4,
         'status' => UpJurusanConsignmentStatus::Received,
     ]);
+
+    LowStockDetected::dispatch(
+        productId: $lowProduct->id,
+        productName: $lowProduct->name,
+        realStock: 1,
+        sellerId: $seller->id,
+    );
 
     $this->actingAs($seller)
         ->get(route('seller.dashboard'))
@@ -692,8 +713,8 @@ test('seller low stock notifications use real consignment stock', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->has('sellerHeader.notifications', 1)
             ->where('sellerHeader.notifications.0.type', 'stock')
-            ->where('sellerHeader.notifications.0.title', 'Stok Titipan Menipis')
-            ->where('sellerHeader.notifications.0.description', 'Stok tersisa 1'),
+            ->where('sellerHeader.notifications.0.title', 'Stok Titipan Menipis stok menipis!')
+            ->where('sellerHeader.notifications.0.description', 'Sisa stok hanya 1 unit'),
         );
 });
 

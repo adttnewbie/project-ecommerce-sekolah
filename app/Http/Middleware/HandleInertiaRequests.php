@@ -2,15 +2,10 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\OrderItemStatus;
-use App\Enums\ProductFulfillmentType;
-use App\Enums\ProductStatus;
 use App\Enums\UserRole;
 use App\Models\CartItem;
 use App\Models\Notification;
 use App\Models\NotificationDismissal;
-use App\Models\OrderItem;
-use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -127,30 +122,8 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
-        $dismissedKeys = $this->dismissedNotificationKeys($admin);
-
-        // Action items are derived live from domain state so they disappear
-        // as soon as the underlying task is handled elsewhere.
-        $notifications = Product::query()
-            ->with('seller:id,name')
-            ->where('status', ProductStatus::Pending)
-            ->whereNotNull('seller_id')
-            ->oldest()
-            ->limit(self::HEADER_NOTIFICATION_LIMIT)
-            ->get(['id', 'seller_id', 'name', 'updated_at'])
-            ->map(fn (Product $product) => [
-                'key' => $this->notificationKey('admin-product-pending', $product->id, $product->updated_at?->getTimestamp()),
-                'type' => 'product',
-                'title' => $product->name,
-                'description' => 'Menunggu moderasi dari '.$product->seller->name,
-                'href' => route('admin.products.moderation.index', absolute: false),
-                'is_read' => false,
-                'created_at' => $product->updated_at?->toISOString(),
-            ])
-            ->reject(fn (array $notification) => in_array($notification['key'], $dismissedKeys, true));
-
         return [
-            'notifications' => $notifications->values()->all(),
+            'notifications' => $this->persistedNotificationsFor($admin),
             'supportEmail' => config('mail.from.address'),
         ];
     }
@@ -167,55 +140,48 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
-        $dismissedKeys = $this->dismissedNotificationKeys($seller);
-
-        // Pending orders to process.
-        $orders = OrderItem::query()
-            ->whereHas('product', fn ($query) => $query->where('seller_id', $seller->id))
-            ->where('status', OrderItemStatus::Pending)
-            ->latest()
-            ->limit(self::HEADER_NOTIFICATION_LIMIT)
-            ->get()
-            ->map(fn (OrderItem $item) => [
-                'key' => $this->notificationKey('seller-order-pending', $item->id, $item->updated_at?->getTimestamp()),
-                'type' => 'order',
-                'title' => "Pesanan #{$item->order_id}",
-                'description' => $item->product_name.' menunggu diproses',
-                'href' => route('seller.orders.show', $item, absolute: false),
-                'is_read' => false,
-                'created_at' => $item->updated_at?->toISOString(),
-            ])
-            ->reject(fn (array $notification) => in_array($notification['key'], $dismissedKeys, true));
-
-        // Low stock alerts based on real (consignment-aware) stock.
-        $stock = Product::query()
-            ->select('products.*')
-            ->selectRaw(Product::REAL_STOCK_SQL.' as real_stock')
-            ->where('seller_id', $seller->id)
-            ->where('fulfillment_type', ProductFulfillmentType::ReadyStock)
-            ->whereRaw(Product::REAL_STOCK_SQL.' <= ?', [Product::LOW_STOCK_THRESHOLD])
-            ->orderByRaw(Product::REAL_STOCK_SQL)
-            ->limit(self::HEADER_NOTIFICATION_LIMIT)
-            ->get()
-            ->map(function (Product $product) {
-                $realStock = (int) $product->getAttribute('real_stock');
-
-                return [
-                    'key' => $this->notificationKey('seller-stock-low', $product->id, $product->updated_at?->getTimestamp()),
-                    'type' => 'stock',
-                    'title' => $product->name,
-                    'description' => $realStock === 0 ? 'Stok habis' : "Stok tersisa {$realStock}",
-                    'href' => route('seller.inventory.index', ['q' => $product->name], absolute: false),
-                    'is_read' => false,
-                    'created_at' => $product->updated_at?->toISOString(),
-                ];
-            })
-            ->reject(fn (array $notification) => in_array($notification['key'], $dismissedKeys, true));
-
         return [
-            'notifications' => $orders->concat($stock)->values()->all(),
+            'notifications' => $this->persistedNotificationsFor($seller),
             'supportEmail' => config('mail.from.address'),
         ];
+    }
+
+    /**
+     * Latest persisted notifications addressed to the user, honouring their
+     * dismissals - the single source of truth shared with /notifications.
+     *
+     * @return array<int, array{key: string, type: string, title: string, description: string|null, href: string, is_read: bool, created_at: string}>
+     */
+    private function persistedNotificationsFor(User $user): array
+    {
+        $dismissedKeys = $this->dismissedNotificationKeys($user);
+
+        return Notification::query()
+            ->where('user_id', $user->id)
+            ->active()
+            ->orderBy('created_at', 'desc')
+            ->limit(self::HEADER_NOTIFICATION_LIMIT)
+            ->get([
+                'key',
+                'type',
+                'title',
+                'description',
+                'href',
+                'read_at',
+                'created_at',
+            ])
+            ->map(fn (Notification $notification) => [
+                'key' => $notification->key,
+                'type' => $notification->type,
+                'title' => $notification->title,
+                'description' => $notification->description,
+                'href' => $notification->href,
+                'is_read' => $notification->read_at !== null,
+                'created_at' => $notification->created_at->toISOString(),
+            ])
+            ->reject(fn (array $notification) => in_array($notification['key'], $dismissedKeys, true))
+            ->values()
+            ->all();
     }
 
     /**
@@ -227,11 +193,6 @@ class HandleInertiaRequests extends Middleware
             ->where('user_id', $user->id)
             ->pluck('key')
             ->all();
-    }
-
-    private function notificationKey(string $type, int $id, ?int $version): string
-    {
-        return "{$type}:{$id}:".($version ?? 0);
     }
 
     /**

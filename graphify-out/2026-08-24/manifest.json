@@ -155,8 +155,8 @@
     "semantic_hash": ""
   },
   "app/Http/Controllers/CheckoutController.php": {
-    "mtime": 1787578558.5760455,
-    "ast_hash": "56f1022d2be03985592c512cf2eda34d",
+    "mtime": 1787585324.9741938,
+    "ast_hash": "e5d1da1e10b63872e680e862e7cc394a",
     "semantic_hash": ""
   },
   "app/Http/Controllers/Controller.php": {
@@ -1905,8 +1905,8 @@
     "semantic_hash": ""
   },
   "PRODUCTION_HARDENING.md": {
-    "mtime": 1787584027.5453386,
-    "ast_hash": "206e2e9fa87c3c2b7ca3139cca3a15fb",
+    "mtime": 1787585595.1903768,
+    "ast_hash": "52df51792c2f81c139bd55a5a628a031",
     "semantic_hash": ""
   },
   ".opencode/opencode.json": {
@@ -2070,8 +2070,8 @@
     "semantic_hash": ""
   },
   "app/Providers/EventServiceProvider.php": {
-    "mtime": 1787583607.7958395,
-    "ast_hash": "e3585ad5ceb03547189a5f875787c0da",
+    "mtime": 1787585348.3233368,
+    "ast_hash": "6047e2e965f47ca05c67e1dc6ba8b0fb",
     "semantic_hash": ""
   },
   "app/Traits/OwnerPayloadHelper.php": {
@@ -2297,6 +2297,21 @@
   ".opencode/plans/buyer-bell-header-fix.md": {
     "mtime": 1787582081.1694348,
     "ast_hash": "4fdf20f41f662f8d3160586076653aac",
+    "semantic_hash": ""
+  },
+  "app/Events/OrderItemsAwaitingVerification.php": {
+    "mtime": 1787585253.2587225,
+    "ast_hash": "2e177d9eef74e66eec8678371d3ddf77",
+    "semantic_hash": ""
+  },
+  "app/Listeners/PicketVerificationNotify.php": {
+    "mtime": 1787585240.7468872,
+    "ast_hash": "b784395d965b40d92b692d7178a44d57",
+    "semantic_hash": ""
+  },
+  "tests/Feature/PicketVerificationNotifyTest.php": {
+    "mtime": 1787585502.0559332,
+    "ast_hash": "46de0d91a19e584729fdd7c4edbf606f",
     "semantic_hash": ""
   }
 }

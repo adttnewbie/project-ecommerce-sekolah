@@ -40,7 +40,7 @@ const userMenuClassName =
     'w-56 rounded-[8px] bg-white text-slate-900 ring-slate-200 [&_[data-slot=dropdown-menu-item]]:text-slate-700 [&_[data-slot=dropdown-menu-item]]:focus:bg-slate-100 [&_[data-slot=dropdown-menu-item]]:focus:text-slate-900 [&_[data-slot=dropdown-menu-label]]:text-slate-500 [&_[data-slot=dropdown-menu-separator]]:bg-slate-200';
 
 export function AppHeader() {
-    const { auth, buyerHeader } = usePage().props;
+    const { auth, buyerHeader, notificationBadge } = usePage().props;
     const { isCurrentUrl } = useCurrentUrl();
     const [search, setSearch] = useState(() =>
         typeof window === 'undefined'
@@ -175,13 +175,13 @@ export function AppHeader() {
                                         aria-label="Notifikasi"
                                     >
                                         <Bell className="size-5" />
-                                        {buyerHeader?.notifications &&
-                                            buyerHeader.notifications.length >
-                                                0 && (
-                                                <span
-                                                    className={`absolute top-2 right-2 size-2.5 rounded-full ring-2 ring-white ${buyerHeader.notifications.some((n) => !n.is_read) ? 'bg-red-500' : 'bg-slate-300'}`}
-                                                />
-                                            )}
+                                        {(notificationBadge?.count ?? 0) > 0 && (
+                                            <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
+                                                {notificationBadge.count > 99
+                                                    ? '99+'
+                                                    : notificationBadge.count}
+                                            </span>
+                                        )}
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
