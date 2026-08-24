@@ -6,6 +6,7 @@ use App\Enums\OrderItemStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\StockMovementSource;
 use App\Enums\UserRole;
+use App\Events\OrderItemCancelled;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -141,6 +142,18 @@ class OrderItemCancellation
 
         OrderPaymentSync::sync($current->order);
         OrderStatusSync::sync($current->order->fresh(['items']));
+
+        OrderItemCancelled::dispatch(
+            orderItemId: $current->id,
+            orderId: $current->order_id,
+            productName: $current->product_name,
+            sellerId: (int) ($current->product->seller_id ?? 0),
+            buyerId: (int) $current->order->user_id,
+            actorId: $actor->id,
+            actorRole: $actor->role->value,
+            reason: $reason,
+            isExpiry: $isExpiry,
+        );
 
         $order = $current->order->fresh(['items']);
         if ($order->items->every(fn (OrderItem $orderItem) => $orderItem->status === OrderItemStatus::Cancelled)) {

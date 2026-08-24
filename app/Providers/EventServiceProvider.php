@@ -6,6 +6,7 @@ use App\Events\AdminNotificationTriggered;
 use App\Events\BuyerOrderStateChanged;
 use App\Events\DailyReportSubmitted;
 use App\Events\LowStockDetected;
+use App\Events\OrderItemCancelled;
 use App\Events\OrderItemStatusChanged;
 use App\Events\OrderPaymentApproved;
 use App\Events\PendingOrderCreated;
@@ -18,6 +19,7 @@ use App\Listeners\AdminNotificationNotify;
 use App\Listeners\AdminOrderNotify;
 use App\Listeners\AdminProductModerationNotify;
 use App\Listeners\AdminSellerApplicationNotify;
+use App\Listeners\BuyerItemCancelledNotify;
 use App\Listeners\BuyerOrderStatusNotify;
 use App\Listeners\BuyerPaymentDecidedNotify;
 use App\Listeners\CreateLowStockNotification;
@@ -26,6 +28,7 @@ use App\Listeners\CreatePendingOrderNotification;
 use App\Listeners\CreateProductModerationNotification;
 use App\Listeners\PersistBuyerOrderNotice;
 use App\Listeners\PicketOfficerOrderNotify;
+use App\Listeners\SellerCancelledOrderNotify;
 use App\Listeners\SellerPaymentPaidNotify;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
@@ -67,6 +70,11 @@ class EventServiceProvider extends ServiceProvider
         OrderPaymentApproved::class => [
             SellerPaymentPaidNotify::class,
             BuyerPaymentDecidedNotify::class,
+        ],
+
+        OrderItemCancelled::class => [
+            SellerCancelledOrderNotify::class,
+            BuyerItemCancelledNotify::class,
         ],
 
         BuyerOrderStateChanged::class => [

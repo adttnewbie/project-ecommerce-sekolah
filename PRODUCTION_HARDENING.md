@@ -267,3 +267,12 @@ New events/listeners: `BuyerOrderStateChanged` → `PersistBuyerOrderNotice`, pl
 ### Verification status
 
 - Full suite: 557 tests / 555 passed / 2 skipped (pcntl) / 0 failed; pint ✓ phpstan 0 ✓ tsc/eslint/prettier ✓.
+
+### Cancellation notifications (2026-08-24, lanjutan §14)
+
+`OrderItemCancellation::cancelItemWithinTransaction` — choke point seluruh jalur pembatalan (buyer, seller, picket, expiry, admin force-cancel, auto-cancel karena penolakan pembayaran) — kini men-dispatch `OrderItemCancelled(orderItemId, orderId, productName, sellerId, buyerId, actorId, actorRole, reason, isExpiry)` dengan dua listener actor-aware:
+
+- `SellerCancelledOrderNotify`: seller menerima setiap pembatalan itemnya (pembeli/picket/admin/expiry) kecuali aksinya sendiri — key `seller-item-cancelled:{itemId}`.
+- `BuyerItemCancelledNotify`: buyer diberi tahu hanya ketika pembatalan dilakukan seller/picket; self-cancel senyap dan expiry/force-cancel tetap lewat `BuyerOrderStateChanged` (tanpa dobel).
+
+Keduanya pref-gated & idempotent via `NotificationDispatch`. Regresi: `OrderCancelledNotifyTest` ×5 (multi-seller fan-out, dua arah silence rules, picket both-sides, system-side expiry ke seller, preference gate).
