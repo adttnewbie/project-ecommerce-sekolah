@@ -506,7 +506,10 @@ export default function SellerOrdersIndex({
                                                             item.payment.status
                                                                 .code !==
                                                                 'paid' &&
-                                                            !item.cancelled_at && (
+                                                            item.status.code !==
+                                                                'cancelled' &&
+                                                            item.status.code !==
+                                                                'completed' && (
                                                                 <Button
                                                                     type="button"
                                                                     size="sm"

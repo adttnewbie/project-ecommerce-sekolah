@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
-type OrderStatus = 'pending' | 'packed' | 'sent' | 'completed';
+type OrderStatus = 'pending' | 'packed' | 'sent' | 'completed' | 'cancelled';
 type PaymentStatus = 'unpaid' | 'pending_confirmation' | 'paid' | 'rejected';
 
 type PicketOrderItem = {
@@ -49,6 +49,7 @@ const statusStyles: Record<OrderStatus, string> = {
     packed: 'bg-amber-50 text-amber-700',
     sent: 'bg-indigo-50 text-indigo-700',
     completed: 'bg-emerald-50 text-emerald-700',
+    cancelled: 'bg-rose-50 text-rose-700',
 };
 
 const paymentStatusStyles: Record<PaymentStatus, string> = {
@@ -59,7 +60,7 @@ const paymentStatusStyles: Record<PaymentStatus, string> = {
 };
 
 const nextStatus: Record<
-    Exclude<OrderStatus, 'sent' | 'completed'>,
+    Exclude<OrderStatus, 'sent' | 'completed' | 'cancelled'>,
     { code: OrderStatus; action: string }
 > = {
     pending: { code: 'packed', action: 'Tandai dikemas' },
@@ -81,7 +82,11 @@ export default function PicketOrders({ daily_report, order_items }: Props) {
     const [paymentError, setPaymentError] = useState<string>();
 
     const advanceStatus = (item: PicketOrderItem) => {
-        if (item.status.code === 'sent' || item.status.code === 'completed') {
+        if (
+            item.status.code === 'sent' ||
+            item.status.code === 'completed' ||
+            item.status.code === 'cancelled'
+        ) {
             return;
         }
 
@@ -264,7 +269,10 @@ export default function PicketOrders({ daily_report, order_items }: Props) {
                                             <div className="flex justify-end gap-2">
                                                 {item.payment.status.code !==
                                                     'paid' &&
-                                                    !item.cancelled_at && (
+                                                    item.status.code !==
+                                                        'cancelled' &&
+                                                    item.status.code !==
+                                                        'completed' && (
                                                         <Button
                                                             type="button"
                                                             size="sm"

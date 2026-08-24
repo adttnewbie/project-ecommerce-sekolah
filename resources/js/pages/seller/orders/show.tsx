@@ -19,7 +19,13 @@ import { cn } from '@/lib/utils';
 import { index as ordersIndex, updateStatus } from '@/routes/seller/orders';
 
 type OrderStatus =
-    'pending' | 'in_production' | 'ready' | 'packed' | 'sent' | 'completed';
+    | 'pending'
+    | 'in_production'
+    | 'ready'
+    | 'packed'
+    | 'sent'
+    | 'completed'
+    | 'cancelled';
 
 type PaymentStatus = 'unpaid' | 'pending_confirmation' | 'paid' | 'rejected';
 
@@ -71,6 +77,7 @@ const statusStyles: Record<OrderStatus, string> = {
     packed: 'bg-amber-50 text-amber-700',
     sent: 'bg-indigo-50 text-indigo-700',
     completed: 'bg-emerald-50 text-emerald-700',
+    cancelled: 'bg-rose-50 text-rose-700',
 };
 
 const paymentStatusStyles: Record<PaymentStatus, string> = {
@@ -90,7 +97,8 @@ const nextStatus = {
 const nextActionFor = (orderItem: OrderDetailProps['orderItem']) => {
     if (
         orderItem.status.code === 'sent' ||
-        orderItem.status.code === 'completed'
+        orderItem.status.code === 'completed' ||
+        orderItem.status.code === 'cancelled'
     ) {
         return null;
     }
@@ -324,7 +332,10 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                                             </div>
                                             {orderItem.payment.status.code !==
                                                 'paid' &&
-                                                !orderItem.cancelled_at && (
+                                                orderItem.status.code !==
+                                                    'cancelled' &&
+                                                orderItem.status.code !==
+                                                    'completed' && (
                                                     <Button
                                                         type="button"
                                                         variant="outline"
