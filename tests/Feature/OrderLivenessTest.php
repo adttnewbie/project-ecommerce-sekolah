@@ -343,3 +343,47 @@ test('expiry batch skips an item paid mid-run and still cancels the rest', funct
             $itemB->fresh()->payment_status === PaymentStatus::Paid
         )->toBeTrue();
 });
+
+test('primed page labels match per-order evaluation', function () {
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $product = Product::factory()->approved()->create();
+
+    $expired = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Open,
+        'payment_status' => PaymentStatus::Unpaid,
+        'expires_at' => now()->subHour(),
+    ]);
+    OrderItem::factory()->for($expired)->for($product)->create([
+        'status' => OrderItemStatus::Pending,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+
+    $stuck = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Open,
+        'payment_status' => PaymentStatus::Paid,
+    ]);
+    OrderItem::factory()->for($stuck)->for($product)->create([
+        'status' => OrderItemStatus::Sent,
+        'payment_status' => PaymentStatus::Paid,
+        'status_changed_at' => now()->subHours(OrderLivenessService::SENT_IDLE_HOURS + 1),
+    ]);
+
+    $healthy = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Open,
+        'payment_status' => PaymentStatus::Paid,
+    ]);
+    OrderItem::factory()->for($healthy)->for($product)->create([
+        'status' => OrderItemStatus::Sent,
+        'payment_status' => PaymentStatus::Paid,
+        'status_changed_at' => now(),
+    ]);
+
+    OrderLivenessService::primeForOrders([$expired, $stuck, $healthy]);
+
+    expect(OrderLivenessService::livenessLabel($expired))->toBe('expired')
+        ->and(OrderLivenessService::livenessLabel($stuck))->toBe('stuck')
+        ->and(OrderLivenessService::livenessLabel($healthy))->toBe('active')
+        ->and(OrderLivenessService::stuckReasonsFor($stuck))->toContain('sent_idle')
+        ->and(OrderLivenessService::stuckReasonsFor($expired))->toContain('unpaid_expired')
+        ->and(OrderLivenessService::stuckReasonsFor($healthy))->toBe([]);
+});

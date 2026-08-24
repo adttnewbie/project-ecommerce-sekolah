@@ -138,6 +138,8 @@ class AdminOrderController extends Controller
 
         $orders = $query->latest()->paginate(10)->withQueryString();
 
+        OrderLivenessService::primeForOrders($orders->getCollection());
+
         return Inertia::render('admin/orders/index', [
             'orders' => $orders->through(fn (Order $order) => [
                 'id' => $order->id,

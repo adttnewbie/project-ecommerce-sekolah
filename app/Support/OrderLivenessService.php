@@ -189,29 +189,54 @@ class OrderLivenessService
             return self::stuckReasonsCache()[$order];
         }
 
-        $order->loadMissing('items');
-        $reasons = [];
+        self::primeForOrders([$order], $now);
 
-        if (self::unpaidExpiredQuery($now)->whereKey($order->id)->exists()) {
-            $reasons[] = 'unpaid_expired';
+        return self::stuckReasonsCache()[$order] ?? [];
+    }
+
+    /**
+     * Precompute stuck reasons for a batch of orders with three batched
+     * queries instead of up to three EXISTS probes per order - used when
+     * rendering lists so a 10-row page costs 3 queries, not ~30.
+     *
+     * @param  iterable<int, Order>  $orders
+     */
+    public static function primeForOrders(iterable $orders, ?CarbonInterface $now = null): void
+    {
+        $now ??= now();
+
+        // Instances already carrying cached reasons keep them.
+        $pending = collect($orders)
+            ->filter(fn ($order) => $order instanceof Order)
+            ->reject(fn (Order $order) => isset(self::stuckReasonsCache()[$order]));
+
+        if ($pending->isEmpty()) {
+            return;
         }
 
-        if (self::stuckFulfillmentQuery($now)->whereKey($order->id)->exists()) {
-            $reasons[] = 'fulfillment_idle';
+        $ids = $pending->pluck('id');
+
+        $reasonSets = [
+            'unpaid_expired' => self::unpaidExpiredQuery($now)->whereKey($ids)->pluck('id')->all(),
+            'fulfillment_idle' => self::stuckFulfillmentQuery($now)->whereKey($ids)->pluck('id')->all(),
+            'sent_idle' => self::stuckSentQuery($now)->whereKey($ids)->pluck('id')->all(),
+        ];
+
+        foreach ($pending as $order) {
+            $reasons = [];
+
+            foreach ($reasonSets as $reason => $matchedIds) {
+                if (in_array($order->id, $matchedIds, true)) {
+                    $reasons[] = $reason;
+                }
+            }
+
+            if ($order->requires_manual_review) {
+                $reasons[] = 'manual_review';
+            }
+
+            self::stuckReasonsCache()[$order] = array_values(array_unique($reasons));
         }
-
-        if (self::stuckSentQuery($now)->whereKey($order->id)->exists()) {
-            $reasons[] = 'sent_idle';
-        }
-
-        if ($order->requires_manual_review) {
-            $reasons[] = 'manual_review';
-        }
-
-        $result = array_values(array_unique($reasons));
-        self::stuckReasonsCache()[$order] = $result;
-
-        return $result;
     }
 
     /**
@@ -250,16 +275,23 @@ class OrderLivenessService
         $now ??= now();
         $marked = 0;
 
-        $orders = self::detectStuckOrders($now);
-
-        foreach ($orders as $order) {
-            $reasons = self::stuckReasonsFor($order, $now);
-            $order->update([
-                'stuck_detected_at' => $now,
-                'stuck_reasons' => $reasons,
-            ]);
-            $marked++;
-        }
+        Order::query()
+            ->where(function (Builder $query) use ($now) {
+                $query->whereIn('id', self::stuckQuery($now)->select('id'))
+                    ->orWhereIn('id', self::unpaidExpiredQuery($now)->select('id'));
+            })
+            ->with('items')
+            ->orderBy('id')
+            ->chunkById(200, function ($orders) use ($now, &$marked): void {
+                foreach ($orders as $order) {
+                    self::stuckReasonsFor($order, $now);
+                    $order->update([
+                        'stuck_detected_at' => $now,
+                        'stuck_reasons' => self::stuckReasonsCache()[$order],
+                    ]);
+                    $marked++;
+                }
+            });
 
         return $marked;
     }
