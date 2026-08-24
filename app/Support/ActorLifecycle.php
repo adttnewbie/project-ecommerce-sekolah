@@ -81,19 +81,10 @@ class ActorLifecycle
     {
         $consignmentIds = UpJurusanConsignment::query()
             ->where('seller_id', $user->id)
-            ->pluck('id');
+            ->pluck('id')
+            ->all();
 
-        if ($consignmentIds->isEmpty()) {
-            return false;
-        }
-
-        foreach ($consignmentIds as $consignmentId) {
-            if (self::consignmentUnpaidAmount((int) $consignmentId) > 0) {
-                return true;
-            }
-        }
-
-        return false;
+        return self::hasUnpaidPayout($consignmentIds);
     }
 
     public static function consignmentUnpaidAmount(int $consignmentId): int
@@ -125,10 +116,29 @@ class ActorLifecycle
     {
         $consignmentIds = UpJurusanConsignment::query()
             ->where('up_jurusan_id', $upJurusan->id)
-            ->pluck('id');
+            ->pluck('id')
+            ->all();
+
+        return self::hasUnpaidPayout($consignmentIds);
+    }
+
+    /**
+     * One grouped pair of aggregates instead of two SUM queries per
+     * consignment when scanning a whole list.
+     *
+     * @param  list<int>  $consignmentIds
+     */
+    private static function hasUnpaidPayout(array $consignmentIds): bool
+    {
+        if ($consignmentIds === []) {
+            return false;
+        }
+
+        $earnings = MoneyCalculationService::sellerEarningsMap($consignmentIds);
+        $paid = MoneyCalculationService::paidPayoutMap($consignmentIds);
 
         foreach ($consignmentIds as $consignmentId) {
-            if (self::consignmentUnpaidAmount((int) $consignmentId) > 0) {
+            if (max(0, ($earnings[$consignmentId] ?? 0) - ($paid[$consignmentId] ?? 0)) > 0) {
                 return true;
             }
         }

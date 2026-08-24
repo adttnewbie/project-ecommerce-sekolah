@@ -16,15 +16,20 @@ class SellerConsignmentController extends Controller
         /** @var User $seller */
         $seller = $request->user();
 
+        $consignments = UpJurusanConsignment::query()
+            ->with(['product:id,name', 'upJurusan:id,name'])
+            ->where('seller_id', $seller->id)
+            ->latest()
+            ->get();
+
+        $earningsByConsignment = MoneyCalculationService::sellerEarningsMap($consignments->modelKeys());
+        $paidByConsignment = MoneyCalculationService::paidPayoutMap($consignments->modelKeys());
+
         return Inertia::render('seller/consignments/index', [
-            'consignments' => UpJurusanConsignment::query()
-                ->with(['product:id,name', 'upJurusan:id,name'])
-                ->where('seller_id', $seller->id)
-                ->latest()
-                ->get()
-                ->map(function (UpJurusanConsignment $consignment) {
-                    $sellerEarnings = MoneyCalculationService::sellerEarningsFromOutMovements($consignment->id);
-                    $paidAmount = MoneyCalculationService::paidPayoutAmount($consignment->id);
+            'consignments' => $consignments
+                ->map(function (UpJurusanConsignment $consignment) use ($earningsByConsignment, $paidByConsignment): array {
+                    $sellerEarnings = $earningsByConsignment[$consignment->id] ?? 0;
+                    $paidAmount = $paidByConsignment[$consignment->id] ?? 0;
 
                     return [
                         'id' => $consignment->id,
@@ -36,7 +41,7 @@ class SellerConsignmentController extends Controller
                         'commission_rate' => $consignment->commission_rate,
                         'seller_earnings' => $sellerEarnings,
                         'paid_amount' => $paidAmount,
-                        'unpaid_amount' => MoneyCalculationService::unpaidSellerAmount($consignment->id),
+                        'unpaid_amount' => max(0, $sellerEarnings - $paidAmount),
                         'status' => [
                             'code' => $consignment->status->value,
                             'label' => $consignment->status->label(),
