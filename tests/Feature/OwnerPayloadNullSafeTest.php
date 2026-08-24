@@ -24,12 +24,12 @@ test('catalog index handles a product without any owner', function () {
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('catalog/index')
-        ->has('products', 1)
-        ->where('products.0.id', $orphan->id)
-        ->where('products.0.owner.id', null)
-        ->where('products.0.owner.name', null)
-        ->where('products.0.owner.type', null)
-        ->where('products.0.seller', null));
+        ->has('products.data', 1)
+        ->where('products.data.0.id', $orphan->id)
+        ->where('products.data.0.owner.id', null)
+        ->where('products.data.0.owner.name', null)
+        ->where('products.data.0.owner.type', null)
+        ->where('products.data.0.seller', null));
 });
 
 test('catalog detail handles a product without any owner', function () {
@@ -76,12 +76,12 @@ test('catalog index keeps the owner payload for seller and up_jurusan products',
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('catalog/index')
-        ->where('products.0.id', $sellerProduct->id)
-        ->where('products.0.owner.id', $sellerProduct->seller_id)
-        ->where('products.0.owner.name', $sellerProduct->seller->name)
-        ->where('products.0.owner.type', 'seller')
-        ->where('products.1.id', $upJurusanProduct->id)
-        ->where('products.1.owner.id', $upJurusan->id)
-        ->where('products.1.owner.name', $upJurusan->name)
-        ->where('products.1.owner.type', 'up_jurusan'));
+        ->where('products.data.0.id', $sellerProduct->id)
+        ->where('products.data.0.owner.id', $sellerProduct->seller_id)
+        ->where('products.data.0.owner.name', $sellerProduct->seller->name)
+        ->where('products.data.0.owner.type', 'seller')
+        ->where('products.data.1.id', $upJurusanProduct->id)
+        ->where('products.data.1.owner.id', $upJurusan->id)
+        ->where('products.data.1.owner.name', $upJurusan->name)
+        ->where('products.data.1.owner.type', 'up_jurusan'));
 });

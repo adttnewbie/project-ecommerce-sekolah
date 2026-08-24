@@ -11,7 +11,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { home } from '@/routes';
-import { show as catalogShow } from '@/routes/catalog';
+import { index as catalogIndex, show as catalogShow } from '@/routes/catalog';
 import type { Auth } from '@/types';
 
 type CatalogCategory = {
@@ -53,13 +53,22 @@ type CatalogProduct = {
     };
 };
 
+type CatalogPaginator = {
+    data: CatalogProduct[];
+    current_page: number;
+    last_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+};
+
 type CatalogIndexProps = {
     categories: CatalogCategory[];
     filters: {
         search: string;
         category: string;
     };
-    products: CatalogProduct[];
+    products: CatalogPaginator;
 };
 
 type PageProps = {
@@ -93,6 +102,15 @@ export default function CatalogIndex({
         auth.user?.role === 'buyer'
             ? auth.user.name.split(' ')[0]
             : 'selamat datang';
+
+    const pageHref = (page: number) =>
+        catalogIndex({
+            query: {
+                search: filters.search || undefined,
+                category: filters.category || undefined,
+                page: page > 1 ? page : undefined,
+            },
+        });
 
     return (
         <>
@@ -199,11 +217,11 @@ export default function CatalogIndex({
                             </p>
                         </div>
                         <Badge className="w-fit shrink-0 rounded-full bg-white text-slate-600 ring-1 ring-slate-200">
-                            {products.length} produk tersedia
+                            {products.total} produk tersedia
                         </Badge>
                     </section>
 
-                    {products.length === 0 ? (
+                    {products.data.length === 0 ? (
                         <section className="rounded-[8px] border border-dashed border-slate-300 bg-white px-5 py-12 text-center">
                             <div className="mx-auto flex size-12 items-center justify-center rounded-[8px] bg-blue-50 text-blue-700">
                                 <Package className="size-5" />
@@ -218,7 +236,7 @@ export default function CatalogIndex({
                         </section>
                     ) : (
                         <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-                            {products.map((product) => {
+                            {products.data.map((product) => {
                                 const src = imageSource(product.image);
 
                                 return (
@@ -282,6 +300,54 @@ export default function CatalogIndex({
                                     </Link>
                                 );
                             })}
+                        </section>
+                    )}
+
+                    {products.last_page > 1 && (
+                        <section className="flex flex-wrap items-center justify-between gap-3">
+                            <p className="text-sm text-slate-500">
+                                Menampilkan {products.from}–{products.to} dari{' '}
+                                {products.total} produk
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={products.current_page <= 1}
+                                    asChild
+                                >
+                                    <Link
+                                        href={pageHref(
+                                            products.current_page - 1,
+                                        )}
+                                        preserveScroll={false}
+                                    >
+                                        Sebelumnya
+                                    </Link>
+                                </Button>
+                                <span className="text-sm font-medium text-slate-600">
+                                    Halaman {products.current_page} dari{' '}
+                                    {products.last_page}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={
+                                        products.current_page >=
+                                        products.last_page
+                                    }
+                                    asChild
+                                >
+                                    <Link
+                                        href={pageHref(
+                                            products.current_page + 1,
+                                        )}
+                                        preserveScroll={false}
+                                    >
+                                        Berikutnya
+                                    </Link>
+                                </Button>
+                            </div>
                         </section>
                     )}
                 </div>

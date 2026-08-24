@@ -59,8 +59,9 @@ class BuyerCatalogController extends Controller
                     fn ($query) => $query->where('slug', $category),
                 ))
                 ->latest()
-                ->get(['id', 'seller_id', 'up_jurusan_id', 'category_id', 'name', 'slug', 'description', 'price', 'stock', 'sales_method', 'fulfillment_type', 'pre_order_estimate_days', 'pre_order_deadline', 'pre_order_min_quantity', 'pre_order_note', 'image'])
-                ->map(fn (Product $product) => [
+                ->paginate(12)
+                ->withQueryString()
+                ->through(fn (Product $product): array => [
                     'id' => $product->id,
                     'name' => $product->name,
                     'slug' => $product->slug,
@@ -87,9 +88,7 @@ class BuyerCatalogController extends Controller
                         'name' => $product->category->name,
                         'slug' => $product->category->slug,
                     ],
-                ])
-                ->values()
-                ->all(),
+                ]),
         ]);
     }
 

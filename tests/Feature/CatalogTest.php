@@ -76,10 +76,10 @@ test('public catalog only shows approved products with available stock', functio
             ->where('filters.category', '')
             ->has('categories', 1)
             ->where('categories.0.name', 'Alat Tulis')
-            ->has('products', 1)
-            ->where('products.0.name', 'Pulpen Gel Hitam')
-            ->where('products.0.stock', 12)
-            ->where('products.0.category.name', 'Alat Tulis'),
+            ->has('products.data', 1)
+            ->where('products.data.0.name', 'Pulpen Gel Hitam')
+            ->where('products.data.0.stock', 12)
+            ->where('products.data.0.category.name', 'Alat Tulis'),
         );
 });
 
@@ -117,8 +117,8 @@ test('home page renders buyer landing catalog and can filter categories', functi
             ->component('catalog/index')
             ->where('filters.category', 'buku')
             ->has('categories', 2)
-            ->has('products', 1)
-            ->where('products.0.name', 'Buku Tulis Polos'),
+            ->has('products.data', 1)
+            ->where('products.data.0.name', 'Buku Tulis Polos'),
         );
 });
 
@@ -145,14 +145,14 @@ test('public catalog shows approved pre-order products without ready stock', fun
     $this->get(route('catalog.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->has('products', 1)
-            ->where('products.0.name', 'Brownies PO')
-            ->where('products.0.stock', 0)
-            ->where('products.0.is_pre_order', true)
-            ->where('products.0.fulfillment_type.code', ProductFulfillmentType::PreOrder->value)
-            ->where('products.0.pre_order_estimate_days', 5)
-            ->where('products.0.pre_order_deadline', '2026-08-01')
-            ->where('products.0.pre_order_min_quantity', 15),
+            ->has('products.data', 1)
+            ->where('products.data.0.name', 'Brownies PO')
+            ->where('products.data.0.stock', 0)
+            ->where('products.data.0.is_pre_order', true)
+            ->where('products.data.0.fulfillment_type.code', ProductFulfillmentType::PreOrder->value)
+            ->where('products.data.0.pre_order_estimate_days', 5)
+            ->where('products.data.0.pre_order_deadline', '2026-08-01')
+            ->where('products.data.0.pre_order_min_quantity', 15),
         );
 
     $this->get(route('catalog.show', ['product' => $product->slug]))
@@ -193,8 +193,8 @@ test('public catalog can search products from query string', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('catalog/index')
             ->where('filters.search', 'pulpen')
-            ->has('products', 1)
-            ->where('products.0.name', 'Pulpen Gel Hitam'),
+            ->has('products.data', 1)
+            ->where('products.data.0.name', 'Pulpen Gel Hitam'),
         );
 });
 
@@ -234,9 +234,9 @@ test('public catalog can filter products by category query string', function () 
         ->assertInertia(fn (Assert $page) => $page
             ->component('catalog/index')
             ->where('filters.category', 'buku')
-            ->has('products', 1)
-            ->where('products.0.name', 'Buku Tulis Polos')
-            ->where('products.0.category.name', 'Buku'),
+            ->has('products.data', 1)
+            ->where('products.data.0.name', 'Buku Tulis Polos')
+            ->where('products.data.0.category.name', 'Buku'),
         );
 });
 
@@ -319,10 +319,10 @@ test('public catalog can show products owned by up jurusan', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('catalog/index')
-            ->has('products', 1)
-            ->where('products.0.id', $product->id)
-            ->where('products.0.owner.type', 'up_jurusan')
-            ->where('products.0.owner.name', 'UP RPL'));
+            ->has('products.data', 1)
+            ->where('products.data.0.id', $product->id)
+            ->where('products.data.0.owner.type', 'up_jurusan')
+            ->where('products.data.0.owner.name', 'UP RPL'));
 
     $this->get(route('catalog.show', ['product' => $product->slug]))
         ->assertOk()
@@ -362,9 +362,9 @@ test('catalog uses received up jurusan consignment stock for consigned seller pr
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('catalog/index')
-            ->has('products', 1)
-            ->where('products.0.name', 'Risol Titipan')
-            ->where('products.0.stock', 5));
+            ->has('products.data', 1)
+            ->where('products.data.0.name', 'Risol Titipan')
+            ->where('products.data.0.stock', 5));
 
     $this->get(route('catalog.show', ['product' => $product->slug]))
         ->assertOk()
@@ -408,3 +408,36 @@ test('public cannot see product detail when status is not approved', function (P
     ProductStatus::Pending,
     ProductStatus::Rejected,
 ]);
+
+test('catalog paginates products twelve per page with query string preserved', function () {
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $category = Category::factory()->create();
+
+    Product::factory()
+        ->for($seller, 'seller')
+        ->for($category)
+        ->approved()
+        ->count(13)
+        ->create(['stock' => 5]);
+
+    $this->get(route('catalog.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('catalog/index')
+            ->has('products.data', 12)
+            ->where('products.total', 13)
+            ->where('products.current_page', 1)
+            ->where('products.last_page', 2)
+            ->where('products.from', 1)
+            ->where('products.to', 12),
+        );
+
+    $this->get(route('catalog.index', ['page' => 2, 'category' => $category->slug]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('products.data', 1)
+            ->where('products.total', 13)
+            ->where('products.current_page', 2)
+            ->where('filters.category', $category->slug),
+        );
+});

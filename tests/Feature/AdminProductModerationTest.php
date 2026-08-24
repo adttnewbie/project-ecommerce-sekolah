@@ -112,9 +112,9 @@ test('admin can approve a pending product and buyer catalog shows it', function 
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('catalog/index')
-            ->has('products', 1)
-            ->where('products.0.name', 'Pulpen Gel Hitam')
-            ->where('products.0.slug', 'pulpen-gel-hitam'),
+            ->has('products.data', 1)
+            ->where('products.data.0.name', 'Pulpen Gel Hitam')
+            ->where('products.data.0.slug', 'pulpen-gel-hitam'),
         );
 });
 
