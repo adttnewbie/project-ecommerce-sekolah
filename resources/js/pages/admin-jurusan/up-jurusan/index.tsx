@@ -1,14 +1,18 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
-    ClipboardList,
-    PackagePlus,
+    ArrowRight,
+    BadgeCheck,
+    Package,
     ShieldCheck,
-    UserPlus,
+    Sparkles,
+    Users,
     Warehouse,
 } from 'lucide-react';
-import { useState } from 'react';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import InputError from '@/components/input-error';
+import { EmptyState } from '@/components/admin-jurusan/empty-state';
+import { PageHeader } from '@/components/admin-jurusan/page-header';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -17,33 +21,8 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import {
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
-} from '@/components/ui/chart';
-import type { ChartConfig } from '@/components/ui/chart';
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 
 type Props = {
     upJurusans: {
@@ -62,15 +41,9 @@ type Props = {
             category_name: string;
             price: number;
             stock: number;
-            status: {
-                code: string;
-                label: string;
-            };
+            status: { code: string; label: string };
         }[];
-        revenue_chart: {
-            day: string;
-            revenue: number;
-        }[];
+        revenue_chart: { day: string; revenue: number }[];
         summary: {
             revenue_7_days: number;
             up_product_count: number;
@@ -85,594 +58,233 @@ type Props = {
         email: string;
         up_jurusan_id: number | null;
     }[];
-    categories: {
-        id: number;
-        name: string;
-    }[];
+    categories: { id: number; name: string }[];
 };
 
-const formatRupiah = (value: number) =>
-    new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 0,
-    }).format(value);
-
-const formatNumber = (value: number) =>
-    new Intl.NumberFormat('id-ID').format(value);
-
-const revenueChartConfig = {
-    revenue: {
-        label: 'Omzet jurusan',
-        color: '#2563eb',
-    },
-} satisfies ChartConfig;
-
-export default function AdminJurusanUpJurusan({
-    upJurusans,
-    categories,
-}: Props) {
+export default function AdminJurusanUpJurusan({ upJurusans }: Props) {
+    const { flash } = usePage().props as unknown as {
+        flash: { success?: string; error?: string };
+    };
     const hasUpJurusan = upJurusans.length > 0;
 
     return (
         <>
             <Head title="UP Jurusan" />
-            <main className="min-h-dvh space-y-6 bg-slate-50 p-4 sm:p-6">
-                <section className="rounded-[8px] border border-slate-200 bg-white p-5 shadow-sm">
-                    <div className="flex items-start gap-4">
-                        <span className="grid size-11 shrink-0 place-items-center rounded-[8px] bg-blue-50 text-blue-700">
-                            <Warehouse className="size-5" />
-                        </span>
-                        <div>
-                            <p className="text-sm font-medium text-blue-700">
-                                Master UP
-                            </p>
-                            <h1 className="mt-2 text-2xl font-semibold text-slate-950">
-                                UP Jurusan
-                            </h1>
-                            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-                                Buat unit, assign picket, dan tambah produk
-                                milik jurusan.
-                            </p>
-                        </div>
-                    </div>
-                </section>
+            <div className="space-y-6 p-4 sm:p-6">
+                <PageHeader
+                    badge="Master UP"
+                    badgeIcon={Warehouse}
+                    title="UP Jurusan"
+                    description="Kelola unit produksi jurusan. Klik kartu untuk lihat detail omzet, picket, dan produk."
+                    actions={
+                        hasUpJurusan ? (
+                            <Badge className="rounded-md bg-emerald-50 text-emerald-700">
+                                <BadgeCheck className="size-3.5" />
+                                {upJurusans.length} UP Aktif
+                            </Badge>
+                        ) : undefined
+                    }
+                />
+
+                {flash.success && (
+                    <Alert className="rounded-xl border-emerald-200 bg-emerald-50 text-emerald-800">
+                        <Sparkles className="size-4" />
+                        <AlertTitle>Berhasil</AlertTitle>
+                        <AlertDescription>{flash.success}</AlertDescription>
+                    </Alert>
+                )}
+                {flash.error && (
+                    <Alert variant="destructive" className="rounded-xl">
+                        <AlertTitle>Gagal</AlertTitle>
+                        <AlertDescription>{flash.error}</AlertDescription>
+                    </Alert>
+                )}
 
                 {hasUpJurusan ? (
-                    <div className="flex items-center gap-3 rounded-[8px] border border-blue-100 bg-blue-50 p-4 text-sm text-blue-700">
-                        <ShieldCheck className="size-5 shrink-0" />
-                        Akun admin jurusan ini sudah memiliki UP Jurusan.
-                    </div>
+                    <Alert className="rounded-xl border-blue-100 bg-blue-50 text-blue-800">
+                        <ShieldCheck className="size-4" />
+                        <AlertTitle>UP sudah aktif</AlertTitle>
+                        <AlertDescription className="text-blue-700">
+                            Klik kartu UP di bawah untuk kelola produk &
+                            picket di halaman detail.
+                        </AlertDescription>
+                    </Alert>
                 ) : (
-                    <Form
-                        action="/admin-jurusan/up-jurusan"
-                        method="post"
-                        className="grid gap-3 rounded-[8px] border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_2fr_auto]"
-                    >
-                        <Input
-                            name="name"
-                            placeholder="Nama UP Jurusan"
-                            required
-                        />
-                        <Input
-                            name="description"
-                            placeholder="Deskripsi singkat"
-                        />
-                        <Button type="submit">Buat UP</Button>
-                    </Form>
-                )}
-
-                {upJurusans.length > 0 && (
-                    <div className="space-y-4">
-                        {upJurusans.map((up) => (
-                            <UpJurusanOverview key={up.id} up={up} />
-                        ))}
-                    </div>
-                )}
-
-                <div className="overflow-hidden rounded-[8px] border border-slate-200 bg-white shadow-sm">
-                    {upJurusans.map((up) => (
-                        <UpJurusanItem
-                            key={up.id}
-                            up={up}
-                            categories={categories}
-                        />
-                    ))}
-                    {upJurusans.length === 0 && (
-                        <div className="grid place-items-center p-10 text-center">
-                            <span className="grid size-12 place-items-center rounded-[8px] bg-slate-100 text-slate-500">
-                                <Warehouse className="size-6" />
-                            </span>
-                            <p className="mt-3 font-medium text-slate-950">
-                                Belum ada UP Jurusan.
-                            </p>
-                            <p className="mt-1 text-sm text-slate-500">
-                                Buat UP pertama untuk mulai kelola produk dan
-                                picket.
-                            </p>
-                        </div>
-                    )}
-                </div>
-            </main>
-        </>
-    );
-}
-
-function UpJurusanOverview({ up }: { up: Props['upJurusans'][number] }) {
-    return (
-        <section className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.8fr)]">
-            <UpJurusanRevenueChart up={up} />
-            <UpJurusanSummary up={up} />
-        </section>
-    );
-}
-
-function UpJurusanRevenueChart({ up }: { up: Props['upJurusans'][number] }) {
-    return (
-        <Card className="gap-0 rounded-[8px] border-slate-100 py-0 shadow-sm">
-            <CardHeader className="p-5 pb-0">
-                <CardTitle>Omzet Jurusan</CardTitle>
-                <CardDescription>
-                    {up.name} - gross produk UP dan komisi titipan selama 7
-                    hari.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="p-5">
-                {up.revenue_chart.every((item) => item.revenue === 0) ? (
-                    <div className="grid h-64 place-items-center text-sm text-slate-500">
-                        Belum ada omzet jurusan dalam 7 hari terakhir.
-                    </div>
-                ) : (
-                    <ChartContainer
-                        config={revenueChartConfig}
-                        className="aspect-auto h-64 w-full"
-                    >
-                        <BarChart
-                            accessibilityLayer
-                            data={up.revenue_chart}
-                            barCategoryGap="34%"
-                            margin={{
-                                top: 12,
-                                right: 12,
-                                left: -18,
-                                bottom: 0,
-                            }}
-                        >
-                            <CartesianGrid vertical={false} />
-                            <XAxis
-                                dataKey="day"
-                                tickLine={false}
-                                tickMargin={10}
-                                axisLine={false}
-                            />
-                            <YAxis
-                                tickLine={false}
-                                axisLine={false}
-                                tickMargin={10}
-                                width={68}
-                                tickFormatter={(value) =>
-                                    `Rp ${formatNumber(Number(value) / 1000)}rb`
-                                }
-                            />
-                            <ChartTooltip
-                                cursor={false}
-                                content={
-                                    <ChartTooltipContent
-                                        indicator="dot"
-                                        formatter={(value) => (
-                                            <div className="flex min-w-36 flex-1 items-center justify-between gap-3">
-                                                <span className="text-muted-foreground">
-                                                    Omzet jurusan
-                                                </span>
-                                                <span className="font-mono font-medium text-foreground tabular-nums">
-                                                    {formatRupiah(
-                                                        Number(value),
-                                                    )}
-                                                </span>
-                                            </div>
-                                        )}
-                                        className="rounded-[8px] bg-white text-slate-900 ring-slate-200"
-                                    />
-                                }
-                            />
-                            <Bar
-                                dataKey="revenue"
-                                fill="var(--color-revenue)"
-                                radius={[4, 4, 0, 0]}
-                                maxBarSize={42}
-                            />
-                        </BarChart>
-                    </ChartContainer>
-                )}
-            </CardContent>
-        </Card>
-    );
-}
-
-function UpJurusanSummary({ up }: { up: Props['upJurusans'][number] }) {
-    const summaryItems = [
-        {
-            label: 'Omzet 7 hari',
-            value: formatRupiah(up.summary.revenue_7_days),
-        },
-        {
-            label: 'Produk UP aktif',
-            value: `${formatNumber(up.summary.up_product_count)} produk`,
-        },
-        {
-            label: 'Titipan aktif',
-            value: `${formatNumber(up.summary.active_consignment_count)} titipan`,
-        },
-        {
-            label: 'Stok tersedia',
-            value: `${formatNumber(up.summary.available_stock)} item`,
-        },
-    ];
-
-    return (
-        <Card className="gap-0 rounded-[8px] border-slate-100 py-0 shadow-sm">
-            <CardHeader className="p-5 pb-0">
-                <CardTitle>Ringkasan {up.name}</CardTitle>
-                <CardDescription>
-                    Snapshot operasional UP Jurusan untuk demo dan monitoring.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 p-5">
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-                    {summaryItems.map((item) => (
-                        <div
-                            key={item.label}
-                            className="rounded-[8px] border border-slate-100 bg-slate-50 p-3"
-                        >
-                            <p className="text-xs font-medium text-slate-500">
-                                {item.label}
-                            </p>
-                            <p className="mt-1 text-base font-semibold text-slate-950 tabular-nums">
-                                {item.value}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="rounded-[8px] border border-blue-100 bg-blue-50 p-3">
-                    <p className="flex items-center gap-2 text-sm font-medium text-blue-800">
-                        <ClipboardList className="size-4" />
-                        Picket bertugas
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-blue-700">
-                        {up.summary.picket_names.length > 0
-                            ? up.summary.picket_names.join(', ')
-                            : 'Belum ada picket officer.'}
-                    </p>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
-function UpJurusanItem({
-    up,
-    categories,
-}: {
-    up: Props['upJurusans'][number];
-    categories: Props['categories'];
-}) {
-    const hasPicket = up.picket_officers.length > 0;
-    const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
-
-    return (
-        <div className="border-b border-slate-100 p-4 last:border-b-0">
-            <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
-                <div>
-                    <p className="font-medium text-slate-950">{up.name}</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                        {up.description ?? '-'}
-                    </p>
-                </div>
-                <span className="w-fit rounded-[6px] bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">
-                    Aktif
-                </span>
-            </div>
-            <div className="mt-4 space-y-3">
-                <div>
-                    <p className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                        <UserPlus className="size-4 text-slate-500" />
-                        Picket Officer
-                    </p>
-                    <p className="mt-1 text-sm text-slate-500">
-                        {hasPicket
-                            ? up.picket_officers
-                                  .map(
-                                      (picket) =>
-                                          `${picket.name} (${picket.email})`,
-                                  )
-                                  .join(', ')
-                            : 'Belum ada picket officer.'}
-                    </p>
-                </div>
-
-                {!hasPicket && (
-                    <div className="rounded-[8px] border border-blue-100 bg-blue-50 p-3">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <p className="text-sm text-blue-700">
-                                Buat akun picket officer dari halaman khusus.
-                                Akun baru akan otomatis ditugaskan ke UP ini.
-                            </p>
-                            <Button
-                                asChild
-                                className="w-full rounded-[8px] sm:w-auto"
+                    <Card className="rounded-xl border-slate-200 shadow-sm">
+                        <CardHeader className="border-b border-slate-100">
+                            <CardTitle className="flex items-center gap-2">
+                                <Warehouse className="size-5 text-blue-600" />
+                                Buat UP Jurusan Pertama
+                            </CardTitle>
+                            <CardDescription>
+                                Nama UP akan jadi brand di katalog & POS.
+                                Contoh: UP RPL, UP TKJ, Kantin Jurusan.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-5">
+                            <Form
+                                action="/admin-jurusan/up-jurusan"
+                                method="post"
+                                disableWhileProcessing
+                                className="grid gap-3 md:grid-cols-[1fr_1.5fr_auto]"
                             >
-                                <Link href="/admin-jurusan/picket-officer/create">
-                                    <UserPlus className="size-4" />
-                                    Buat Picket
-                                </Link>
-                            </Button>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            <div className="mt-4 border-t border-slate-100 pt-4">
-                <div className="mb-4">
-                    <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                            <Warehouse className="size-4 text-slate-500" />
-                            Produk Milik {up.name}
-                        </div>
-                        <Dialog
-                            open={isProductDialogOpen}
-                            onOpenChange={setIsProductDialogOpen}
-                        >
-                            <DialogTrigger asChild>
-                                <Button size="sm" className="w-full sm:w-auto">
-                                    <PackagePlus className="size-4" />
-                                    Tambah Produk UP
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
-                                <DialogHeader>
-                                    <DialogTitle>Tambah Produk UP</DialogTitle>
-                                    <DialogDescription>
-                                        Tambahkan produk milik {up.name} untuk
-                                        dijual melalui POS UP Jurusan.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <Form
-                                    action="/admin-jurusan/products"
-                                    method="post"
-                                    resetOnSuccess
-                                    onSuccess={() =>
-                                        setIsProductDialogOpen(false)
-                                    }
-                                    className="space-y-4"
-                                >
-                                    {({ errors, processing }) => (
-                                        <>
-                                            <input
-                                                type="hidden"
-                                                name="up_jurusan_id"
-                                                value={up.id}
-                                                readOnly
+                                {({ errors, processing }) => (
+                                    <>
+                                        <div className="space-y-1.5">
+                                            <Label className="text-xs font-medium text-slate-700">
+                                                Nama UP *
+                                            </Label>
+                                            <Input
+                                                name="name"
+                                                placeholder="Contoh: UP RPL"
+                                                required
+                                                className="rounded-lg"
+                                                aria-invalid={Boolean(
+                                                    errors.name,
+                                                )}
                                             />
-                                            <div className="grid gap-4 sm:grid-cols-2">
-                                                <div className="grid gap-2">
-                                                    <Label
-                                                        htmlFor={`product-name-${up.id}`}
-                                                    >
-                                                        Nama produk
-                                                    </Label>
-                                                    <Input
-                                                        id={`product-name-${up.id}`}
-                                                        name="name"
-                                                        placeholder="Nama produk UP"
-                                                        required
-                                                        aria-invalid={Boolean(
-                                                            errors.name,
-                                                        )}
-                                                    />
-                                                    <InputError
-                                                        message={errors.name}
-                                                    />
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label
-                                                        htmlFor={`product-category-${up.id}`}
-                                                    >
-                                                        Kategori
-                                                    </Label>
-                                                    <Select
-                                                        name="category_id"
-                                                        required
-                                                    >
-                                                        <SelectTrigger
-                                                            id={`product-category-${up.id}`}
-                                                            aria-invalid={Boolean(
-                                                                errors.category_id,
-                                                            )}
-                                                            className="w-full rounded-[8px] border-slate-200 bg-white"
-                                                        >
-                                                            <SelectValue placeholder="Pilih kategori" />
-                                                        </SelectTrigger>
-                                                        <SelectContent className="rounded-[8px] bg-white text-slate-900 ring-slate-200">
-                                                            <SelectGroup>
-                                                                <SelectLabel>
-                                                                    Kategori
-                                                                </SelectLabel>
-                                                                {categories.map(
-                                                                    (
-                                                                        category,
-                                                                    ) => (
-                                                                        <SelectItem
-                                                                            key={
-                                                                                category.id
-                                                                            }
-                                                                            value={String(
-                                                                                category.id,
-                                                                            )}
-                                                                        >
-                                                                            {
-                                                                                category.name
-                                                                            }
-                                                                        </SelectItem>
-                                                                    ),
-                                                                )}
-                                                            </SelectGroup>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <InputError
-                                                        message={
-                                                            errors.category_id
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="grid gap-2 sm:col-span-2">
-                                                    <Label
-                                                        htmlFor={`product-description-${up.id}`}
-                                                    >
-                                                        Deskripsi
-                                                    </Label>
-                                                    <Input
-                                                        id={`product-description-${up.id}`}
-                                                        name="description"
-                                                        placeholder="Deskripsi produk"
-                                                        required
-                                                        aria-invalid={Boolean(
-                                                            errors.description,
-                                                        )}
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            errors.description
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label
-                                                        htmlFor={`product-price-${up.id}`}
-                                                    >
-                                                        Harga
-                                                    </Label>
-                                                    <Input
-                                                        id={`product-price-${up.id}`}
-                                                        name="price"
-                                                        type="number"
-                                                        min="1"
-                                                        placeholder="Harga"
-                                                        required
-                                                        aria-invalid={Boolean(
-                                                            errors.price,
-                                                        )}
-                                                    />
-                                                    <InputError
-                                                        message={errors.price}
-                                                    />
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label
-                                                        htmlFor={`product-stock-${up.id}`}
-                                                    >
-                                                        Stok awal
-                                                    </Label>
-                                                    <Input
-                                                        id={`product-stock-${up.id}`}
-                                                        name="stock"
-                                                        type="number"
-                                                        min="0"
-                                                        placeholder="Stok"
-                                                        required
-                                                        aria-invalid={Boolean(
-                                                            errors.stock,
-                                                        )}
-                                                    />
-                                                    <InputError
-                                                        message={errors.stock}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <DialogFooter>
-                                                <DialogClose asChild>
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        disabled={processing}
-                                                    >
-                                                        Batal
-                                                    </Button>
-                                                </DialogClose>
-                                                <Button
-                                                    type="submit"
-                                                    disabled={processing}
-                                                >
-                                                    {processing
-                                                        ? 'Menyimpan...'
-                                                        : 'Tambah Produk'}
-                                                </Button>
-                                            </DialogFooter>
-                                        </>
-                                    )}
-                                </Form>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
-                    {up.products.length === 0 ? (
-                        <div className="rounded-[8px] border border-dashed border-slate-200 p-4 text-sm text-slate-500">
-                            Belum ada produk milik UP Jurusan.
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto rounded-[8px] border border-slate-100">
-                            <table className="min-w-full text-sm">
-                                <thead className="bg-slate-50 text-left text-xs font-medium text-slate-500">
-                                    <tr>
-                                        <th className="px-4 py-3">Produk</th>
-                                        <th className="px-4 py-3">Kategori</th>
-                                        <th className="px-4 py-3 text-right">
-                                            Stok
-                                        </th>
-                                        <th className="px-4 py-3 text-right">
-                                            Harga
-                                        </th>
-                                        <th className="px-4 py-3 text-right">
-                                            Status
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {up.products.map((product) => (
-                                        <tr
-                                            key={product.id}
-                                            className="bg-white"
+                                            <InputError message={errors.name} />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label className="text-xs font-medium text-slate-700">
+                                                Deskripsi singkat
+                                            </Label>
+                                            <Input
+                                                name="description"
+                                                placeholder="Contoh: Unit produksi jurusan Rekayasa Perangkat Lunak"
+                                                className="rounded-lg"
+                                                aria-invalid={Boolean(
+                                                    errors.description,
+                                                )}
+                                            />
+                                            <InputError
+                                                message={errors.description}
+                                            />
+                                        </div>
+                                        <div className="flex items-end">
+                                            <Button
+                                                type="submit"
+                                                disabled={processing}
+                                                className="w-full rounded-lg md:w-auto"
+                                            >
+                                                {processing
+                                                    ? 'Membuat...'
+                                                    : 'Buat UP'}
+                                            </Button>
+                                        </div>
+                                    </>
+                                )}
+                            </Form>
+                        </CardContent>
+                    </Card>
+                )}
+
+                <Card className="overflow-hidden rounded-xl border-slate-200 shadow-sm">
+                    <CardContent className="p-0">
+                        {upJurusans.length === 0 ? (
+                            <EmptyState
+                                icon={Warehouse}
+                                title="Belum ada UP Jurusan"
+                                description="Buat UP pertama untuk mulai kelola produk dan picket. Setelah UP jadi, klik kartu untuk lihat detail omzet dan produk."
+                            />
+                        ) : (
+                            <div className="divide-y divide-slate-100">
+                                {upJurusans.map((up) => {
+                                    const hasPicket =
+                                        up.picket_officers.length > 0;
+                                    return (
+                                        <Link
+                                            key={up.id}
+                                            href={`/admin-jurusan/up-jurusan/${up.id}`}
+                                            className="group block p-5 transition hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none sm:p-6"
                                         >
-                                            <td className="px-4 py-3">
-                                                <p className="font-medium text-slate-950">
-                                                    {product.name}
-                                                </p>
-                                                <p className="mt-1 text-xs text-slate-500">
-                                                    Dikelola {up.name}
-                                                </p>
-                                            </td>
-                                            <td className="px-4 py-3 text-slate-600">
-                                                {product.category_name}
-                                            </td>
-                                            <td className="px-4 py-3 text-right tabular-nums">
-                                                {product.stock}
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-medium tabular-nums">
-                                                {formatRupiah(product.price)}
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <span className="rounded-[6px] bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
-                                                    {product.status.label}
+                                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="grid size-9 place-items-center rounded-xl bg-blue-50 text-blue-600">
+                                                                <Warehouse className="size-5" />
+                                                            </span>
+                                                            <h3 className="truncate text-base font-semibold text-slate-900 group-hover:text-blue-700">
+                                                                {up.name}
+                                                            </h3>
+                                                        </div>
+                                                        <Badge className="rounded-md bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+                                                            Aktif
+                                                        </Badge>
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="rounded-md"
+                                                        >
+                                                            <Package className="size-3.5" />
+                                                            {
+                                                                up.products
+                                                                    .length
+                                                            }{' '}
+                                                            produk
+                                                        </Badge>
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className={`rounded-md ${hasPicket ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}
+                                                        >
+                                                            <Users className="size-3.5" />
+                                                            {hasPicket
+                                                                ? up
+                                                                      .picket_officers[0]
+                                                                      .name
+                                                                : 'Belum ada picket'}
+                                                        </Badge>
+                                                    </div>
+                                                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">
+                                                        {up.description ||
+                                                            'Tidak ada deskripsi'}
+                                                    </p>
+                                                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
+                                                            Omzet 7h:{' '}
+                                                            {new Intl.NumberFormat(
+                                                                'id-ID',
+                                                                {
+                                                                    style: 'currency',
+                                                                    currency:
+                                                                        'IDR',
+                                                                    maximumFractionDigits: 0,
+                                                                },
+                                                            ).format(
+                                                                up.summary
+                                                                    .revenue_7_days,
+                                                            )}
+                                                        </span>
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
+                                                            Stok:{' '}
+                                                            {
+                                                                up.summary
+                                                                    .available_stock
+                                                            }
+                                                        </span>
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
+                                                            Titipan:{' '}
+                                                            {
+                                                                up.summary
+                                                                    .active_consignment_count
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <span className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-blue-600 group-hover:gap-2">
+                                                    Lihat Detail
+                                                    <ArrowRight className="size-4 transition group-hover:translate-x-0.5" />
                                                 </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
+                                            </div>
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
-        </div>
+        </>
     );
 }
 

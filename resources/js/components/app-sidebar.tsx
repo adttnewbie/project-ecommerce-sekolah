@@ -86,7 +86,7 @@ export function AppSidebar() {
                         <SidebarMenuButton
                             size="lg"
                             asChild
-                            className="h-auto rounded-[8px] p-2 text-slate-900 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:p-0 hover:bg-slate-100 hover:text-slate-900 data-[state=open]:bg-slate-100"
+                            className="h-auto rounded-xl p-2 text-slate-900 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:p-0 hover:bg-slate-100 hover:text-slate-900 data-[state=open]:bg-slate-100"
                         >
                             <Link href={dashboardHref} prefetch>
                                 <AppLogo />
@@ -112,8 +112,8 @@ export function AppSidebar() {
                                         ...lightTooltip,
                                     }}
                                     className={cn(
-                                        'h-11 rounded-[8px] px-3 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 active:scale-[0.99]',
-                                        'data-open:bg-slate-100 data-active:bg-blue-50 data-active:text-blue-700 data-active:hover:bg-blue-50',
+                                        'h-11 rounded-xl px-3 text-slate-600 transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-100 hover:text-slate-900 active:scale-[0.99]',
+                                        'data-open:bg-slate-100 data-active:bg-[#EFF8FF] data-active:text-[#0080FF] data-active:hover:bg-[#EFF8FF]',
                                     )}
                                 >
                                     {href.startsWith('#') ? (
@@ -155,7 +155,7 @@ export function AppSidebar() {
                                     children: 'Pengaturan',
                                     ...lightTooltip,
                                 }}
-                                className="h-11 rounded-[8px] px-3 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                className="h-11 rounded-xl px-3 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                             >
                                 <Link href={edit()} prefetch>
                                     <Settings />
@@ -235,12 +235,7 @@ function getMainNavItems(
                 icon: Warehouse,
             },
             {
-                title: 'Picket Officer',
-                href: '/admin-jurusan/picket-officer/create',
-                icon: UserRoundCheck,
-            },
-            {
-                title: 'Pengajuan Titip',
+                title: 'Titipan',
                 href: '/admin-jurusan/consignments',
                 icon: ClipboardCheck,
             },
@@ -248,6 +243,11 @@ function getMainNavItems(
                 title: 'Laporan',
                 href: '/admin-jurusan/reports',
                 icon: FileText,
+            },
+            {
+                title: 'Picket Officer',
+                href: '/admin-jurusan/picket-officer/create',
+                icon: UserRoundCheck,
             },
         ];
     }
@@ -260,14 +260,14 @@ function getMainNavItems(
                 icon: LayoutDashboard,
             },
             {
-                title: 'POS Terminal',
-                href: '/picket/pos',
-                icon: ShoppingCart,
-            },
-            {
                 title: 'Terima Barang',
                 href: '/picket/receiving',
                 icon: ClipboardCheck,
+            },
+            {
+                title: 'POS Terminal',
+                href: '/picket/pos',
+                icon: ShoppingCart,
             },
             {
                 title: 'Pesanan',

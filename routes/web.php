@@ -121,6 +121,7 @@ Route::middleware(['auth', EnsureUserIsAdminJurusan::class])
     ->group(function () {
         Route::get('dashboard', AdminJurusanDashboardController::class)->name('dashboard');
         Route::get('up-jurusan', [AdminJurusanUpJurusanController::class, 'index'])->name('up-jurusan.index');
+        Route::get('up-jurusan/{upJurusan}', [AdminJurusanUpJurusanController::class, 'show'])->name('up-jurusan.show');
         Route::post('up-jurusan', [AdminJurusanUpJurusanController::class, 'store'])->name('up-jurusan.store');
         Route::delete('up-jurusan/{upJurusan}', [AdminJurusanUpJurusanController::class, 'destroy'])->name('up-jurusan.destroy');
         Route::get('picket-officer/create', [AdminJurusanUpJurusanController::class, 'createPicket'])->name('picket-officer.create');

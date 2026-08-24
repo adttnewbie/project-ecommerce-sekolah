@@ -94,6 +94,60 @@ class AdminJurusanUpJurusanController extends Controller
         ]);
     }
 
+    public function show(Request $request, UpJurusan $upJurusan): Response
+    {
+        /** @var User $adminJurusan */
+        $adminJurusan = $request->user();
+
+        abort_unless($upJurusan->admin_jurusan_id === $adminJurusan->id, 403);
+
+        $upJurusan->load([
+            'picketOfficers:id,name,email,up_jurusan_id',
+            'products' => fn ($query) => $query
+                ->whereNull('seller_id')
+                ->with('category:id,name')
+                ->latest()
+                ->select(['id', 'up_jurusan_id', 'category_id', 'name', 'price', 'stock', 'status']),
+        ]);
+
+        $revenueChart = $this->revenueChart($upJurusan);
+
+        return Inertia::render('admin-jurusan/up-jurusan/show', [
+            'upJurusan' => [
+                'id' => $upJurusan->id,
+                'name' => $upJurusan->name,
+                'description' => $upJurusan->description,
+                'picket_officers' => $upJurusan->picketOfficers
+                    ->map(fn (User $picket) => [
+                        'id' => $picket->id,
+                        'name' => $picket->name,
+                        'email' => $picket->email,
+                        'up_jurusan_id' => $picket->up_jurusan_id,
+                    ])
+                    ->all(),
+                'products' => $upJurusan->products
+                    ->map(fn (Product $product) => [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'category_name' => $product->category->name,
+                        'price' => $product->price,
+                        'stock' => $product->stock,
+                        'status' => [
+                            'code' => $product->status->value,
+                            'label' => $product->status->label(),
+                        ],
+                    ])
+                    ->all(),
+                'revenue_chart' => $revenueChart,
+                'summary' => $this->summary($upJurusan, $revenueChart),
+            ],
+            'categories' => Category::query()
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->all(),
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         /** @var User $adminJurusan */

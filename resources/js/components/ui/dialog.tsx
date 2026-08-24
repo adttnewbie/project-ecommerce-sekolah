@@ -55,6 +55,34 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
 }) {
+  const {
+    onInteractOutside: userOnInteractOutside,
+    onPointerDownOutside: userOnPointerDownOutside,
+    onPointerDownCapture: userOnPointerDownCapture,
+    onFocusOutside: userOnFocusOutside,
+    onEscapeKeyDown: userOnEscapeKeyDown,
+    ...rest
+  } = props as unknown as {
+    onInteractOutside?: (e: Event) => void;
+    onPointerDownOutside?: (e: Event) => void;
+    onPointerDownCapture?: (e: any) => void;
+    onFocusOutside?: (e: Event) => void;
+    onEscapeKeyDown?: (e: KeyboardEvent) => void;
+  };
+  const selectWasOpenRef = React.useRef(false);
+
+  React.useEffect(() => {
+    const handlePointerDown = () => {
+      if (typeof document !== 'undefined') {
+        selectWasOpenRef.current =
+          !!document.querySelector('[data-slot="select-content"]');
+      }
+    };
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    return () =>
+      document.removeEventListener('pointerdown', handlePointerDown, true);
+  }, []);
+
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -64,7 +92,73 @@ function DialogContent({
           "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 rounded-[8px] bg-white p-6 text-sm text-slate-900 shadow-xl ring-1 ring-slate-200 duration-100 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
         )}
-        {...props}
+        onPointerDownCapture={(e: any) => {
+          if (typeof document !== 'undefined') {
+            const hasSelect = !!document.querySelector(
+              '[data-slot="select-content"]',
+            );
+            // simpan status saat pointer down, sebelum Select unmount
+            selectWasOpenRef.current = hasSelect;
+          }
+          userOnPointerDownCapture?.(e);
+        }}
+        onInteractOutside={(e) => {
+          // Jika Select sedang terbuka (capture di pointerDown) atau masih ada di DOM, jangan tutup Dialog
+          if (
+            selectWasOpenRef.current ||
+            (typeof document !== 'undefined' &&
+              document.querySelector('[data-slot="select-content"]'))
+          ) {
+            e.preventDefault();
+            selectWasOpenRef.current = false;
+          }
+          const target = e.target as HTMLElement;
+          if (
+            target?.closest?.('[data-slot="select-content"]') ||
+            target?.closest?.('[data-radix-popper-content-wrapper]') ||
+            target?.closest?.('[data-slot="select-trigger"]')
+          ) {
+            e.preventDefault();
+          }
+          userOnInteractOutside?.(e);
+        }}
+        onPointerDownOutside={(e) => {
+          if (
+            selectWasOpenRef.current ||
+            (typeof document !== 'undefined' &&
+              document.querySelector('[data-slot="select-content"]'))
+          ) {
+            e.preventDefault();
+            selectWasOpenRef.current = false;
+          }
+          const target = e.target as HTMLElement;
+          if (target?.closest?.('[data-slot="select-content"]')) {
+            e.preventDefault();
+          }
+          userOnPointerDownOutside?.(e);
+        }}
+        onFocusOutside={(e: any) => {
+          if (
+            selectWasOpenRef.current ||
+            (typeof document !== 'undefined' &&
+              document.querySelector('[data-slot="select-content"]'))
+          ) {
+            e.preventDefault();
+          }
+          // @ts-ignore
+          userOnFocusOutside?.(e);
+        }}
+        onEscapeKeyDown={(e: any) => {
+          if (
+            typeof document !== 'undefined' &&
+            document.querySelector('[data-slot="select-content"]')
+          ) {
+            e.preventDefault();
+          }
+          // @ts-ignore
+          userOnEscapeKeyDown?.(e);
+        }}
+        {...rest}
       >
         {children}
         {showCloseButton && (

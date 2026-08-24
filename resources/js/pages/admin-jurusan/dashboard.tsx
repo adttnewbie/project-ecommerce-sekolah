@@ -4,10 +4,30 @@ import {
     Banknote,
     ClipboardCheck,
     FileCheck2,
+    Inbox,
     PackageCheck,
 } from 'lucide-react';
+import { EmptyState } from '@/components/admin-jurusan/empty-state';
+import { PageHeader } from '@/components/admin-jurusan/page-header';
+import { StatCard } from '@/components/admin-jurusan/stat-card';
+import { StatusBadge } from '@/components/admin-jurusan/status-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
 type Dashboard = {
@@ -46,178 +66,324 @@ const formatTime = (value: string) =>
         minute: '2-digit',
     }).format(new Date(value));
 
-const statusStyles: Record<string, string> = {
-    pending_approval: 'bg-amber-50 text-amber-700 ring-amber-100',
-    approved: 'bg-blue-50 text-blue-700 ring-blue-100',
-    received: 'bg-blue-50 text-blue-700 ring-blue-100',
-    completed: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
-    rejected: 'bg-rose-50 text-rose-700 ring-rose-100',
-    cancelled: 'bg-slate-100 text-slate-600 ring-slate-200',
-};
-
 export default function AdminJurusanDashboard({ dashboard }: Props) {
-    const stats = [
-        {
-            label: 'Penjualan UP Hari Ini',
-            value: formatRupiah(dashboard.today_sales),
-            icon: Banknote,
-            href: '/admin-jurusan/reports',
-        },
-        {
-            label: 'Titipan Menunggu Persetujuan',
-            value: dashboard.pending_requests,
-            icon: ClipboardCheck,
-            href: '/admin-jurusan/consignments',
-        },
-        {
-            label: 'Titipan Menunggu Diterima',
-            value: dashboard.awaiting_receive,
-            icon: PackageCheck,
-            href: '/admin-jurusan/consignments',
-        },
-        {
-            label: 'Laporan Hari Ini',
-            value: dashboard.report_status.label,
-            icon: FileCheck2,
-            href: '/admin-jurusan/reports',
-        },
-    ];
-
     return (
         <>
             <Head title="Dashboard Admin Jurusan" />
-            <main className="min-h-dvh space-y-6 bg-slate-50 p-4 sm:p-6">
-                <header className="rounded-[8px] border border-slate-200 bg-white p-5 shadow-sm">
-                    <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-                        <div>
-                            <p className="text-sm font-medium text-blue-700">
-                                Admin Jurusan
-                            </p>
-                            <h1 className="mt-2 text-2xl font-semibold text-slate-950">
-                                Dashboard UP Jurusan
-                            </h1>
-                            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-                                Tinjau penjualan hari ini, titipan, penerimaan,
-                                dan laporan picket.
-                            </p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            <Button asChild variant="outline">
+            <div className="space-y-6 p-4 sm:p-6">
+                <PageHeader
+                    badge="Admin Jurusan"
+                    badgeIcon={FileCheck2}
+                    title="Dashboard UP Jurusan"
+                    description="Tinjau penjualan hari ini, titipan yang menunggu persetujuan, penerimaan fisik, dan laporan picket."
+                    actions={
+                        <>
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="rounded-lg"
+                            >
                                 <Link href="/admin-jurusan/reports">
                                     Lihat Laporan
                                 </Link>
                             </Button>
-                            <Button asChild>
+                            <Button asChild className="rounded-lg">
                                 <Link href="/admin-jurusan/consignments">
                                     Tinjau Titipan
                                     <ArrowRight className="size-4" />
                                 </Link>
                             </Button>
-                        </div>
-                    </div>
-                </header>
+                        </>
+                    }
+                />
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    {stats.map(({ label, value, icon: Icon, href }) => (
-                        <Link
-                            key={label}
-                            href={href}
-                            className="rounded-[8px] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:bg-blue-50/40"
-                        >
-                            <div className="flex items-center justify-between gap-3">
-                                <p className="text-sm font-medium text-slate-500">
-                                    {label}
-                                </p>
-                                <span className="grid size-9 shrink-0 place-items-center rounded-[8px] bg-blue-50 text-blue-700">
-                                    <Icon className="size-5" />
-                                </span>
-                            </div>
-                            <p className="mt-4 text-2xl font-semibold break-words text-slate-950 tabular-nums">
-                                {value}
-                            </p>
-                        </Link>
-                    ))}
-                </section>
-
-                <section
-                    className={cn(
-                        'flex items-start gap-3 rounded-[8px] border p-4 text-sm',
-                        dashboard.report_status.code === 'submitted'
-                            ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-                            : dashboard.report_status.code === 'not_submitted'
-                              ? 'border-amber-200 bg-amber-50 text-amber-800'
-                              : 'border-slate-200 bg-white text-slate-700',
-                    )}
-                >
-                    <FileCheck2 className="mt-0.5 size-5 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                        <p className="font-semibold">Laporan Hari Ini</p>
-                        <p className="mt-1">
-                            {dashboard.report_status.code === 'submitted' &&
-                            dashboard.report_status.submitted_at
-                                ? `${dashboard.report_status.picket_name} mengirim laporan pukul ${formatTime(dashboard.report_status.submitted_at)}.`
+                    <StatCard
+                        label="Penjualan UP Hari Ini"
+                        value={formatRupiah(dashboard.today_sales)}
+                        hint="Omzet gross + komisi titipan"
+                        icon={Banknote}
+                        tone="blue"
+                        href="/admin-jurusan/reports"
+                    />
+                    <StatCard
+                        label="Menunggu Persetujuan"
+                        value={dashboard.pending_requests}
+                        hint="Butuh aksi admin jurusan"
+                        icon={ClipboardCheck}
+                        tone={
+                            dashboard.pending_requests > 0 ? 'amber' : 'slate'
+                        }
+                        href="/admin-jurusan/consignments"
+                    />
+                    <StatCard
+                        label="Menunggu Diterima"
+                        value={dashboard.awaiting_receive}
+                        hint="Sudah di-approve, belum diterima picket"
+                        icon={PackageCheck}
+                        tone={dashboard.awaiting_receive > 0 ? 'blue' : 'slate'}
+                        href="/admin-jurusan/consignments"
+                    />
+                    <StatCard
+                        label="Laporan Hari Ini"
+                        value={dashboard.report_status.label}
+                        hint={
+                            dashboard.report_status.picket_name ??
+                            'Belum ada picket'
+                        }
+                        icon={FileCheck2}
+                        tone={
+                            dashboard.report_status.code === 'submitted'
+                                ? 'emerald'
                                 : dashboard.report_status.code ===
                                     'not_submitted'
-                                  ? `${dashboard.report_status.picket_name} belum mengirim laporan hari ini.`
-                                  : 'Belum ada picket yang ditugaskan ke UP Jurusan.'}
-                        </p>
-                    </div>
-                    <Button asChild size="sm" variant="outline">
-                        <Link href="/admin-jurusan/reports">Buka laporan</Link>
-                    </Button>
+                                  ? 'amber'
+                                  : 'slate'
+                        }
+                        href="/admin-jurusan/reports"
+                    />
                 </section>
 
-                <section className="overflow-hidden rounded-[8px] border border-slate-200 bg-white shadow-sm">
-                    <div className="flex items-center justify-between gap-4 border-b border-slate-100 p-4">
-                        <div>
-                            <h2 className="font-semibold text-slate-950">
-                                Tindakan Titipan
-                            </h2>
-                            <p className="mt-1 text-sm text-slate-500">
-                                Request pending tertua ditampilkan lebih dahulu.
-                            </p>
+                <Card
+                    className={cn(
+                        'rounded-xl shadow-sm',
+                        dashboard.report_status.code === 'submitted'
+                            ? 'border-emerald-200 bg-emerald-50'
+                            : dashboard.report_status.code === 'not_submitted'
+                              ? 'border-amber-200 bg-amber-50'
+                              : 'border-slate-200 bg-white',
+                    )}
+                >
+                    <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-start gap-3">
+                            <span
+                                className={cn(
+                                    'grid size-10 shrink-0 place-items-center rounded-xl',
+                                    dashboard.report_status.code === 'submitted'
+                                        ? 'bg-emerald-100 text-emerald-700'
+                                        : dashboard.report_status.code ===
+                                            'not_submitted'
+                                          ? 'bg-amber-100 text-amber-700'
+                                          : 'bg-slate-100 text-slate-600',
+                                )}
+                            >
+                                <FileCheck2 className="size-5" />
+                            </span>
+                            <div className="min-w-0">
+                                <p
+                                    className={cn(
+                                        'text-sm font-semibold',
+                                        dashboard.report_status.code ===
+                                            'submitted'
+                                            ? 'text-emerald-900'
+                                            : dashboard.report_status.code ===
+                                                'not_submitted'
+                                              ? 'text-amber-900'
+                                              : 'text-slate-900',
+                                    )}
+                                >
+                                    Laporan Hari Ini{' '}
+                                    <Badge
+                                        variant="secondary"
+                                        className={cn(
+                                            'ml-2 rounded-md text-xs',
+                                            dashboard.report_status.code ===
+                                                'submitted'
+                                                ? 'bg-emerald-100 text-emerald-700'
+                                                : dashboard.report_status
+                                                        .code ===
+                                                    'not_submitted'
+                                                  ? 'bg-amber-100 text-amber-700'
+                                                  : 'bg-slate-100 text-slate-600',
+                                        )}
+                                    >
+                                        {dashboard.report_status.label}
+                                    </Badge>
+                                </p>
+                                <p
+                                    className={cn(
+                                        'mt-1 text-sm leading-6',
+                                        dashboard.report_status.code ===
+                                            'submitted'
+                                            ? 'text-emerald-800'
+                                            : dashboard.report_status.code ===
+                                                'not_submitted'
+                                              ? 'text-amber-800'
+                                              : 'text-slate-600',
+                                    )}
+                                >
+                                    {dashboard.report_status.code ===
+                                        'submitted' &&
+                                    dashboard.report_status.submitted_at
+                                        ? `${dashboard.report_status.picket_name} mengirim laporan pukul ${formatTime(dashboard.report_status.submitted_at)}.`
+                                        : dashboard.report_status.code ===
+                                            'not_submitted'
+                                          ? `${dashboard.report_status.picket_name} belum mengirim laporan hari ini. Segera ingatkan picket untuk tutup harian.`
+                                          : 'Belum ada picket yang ditugaskan ke UP Jurusan. Buat picket di halaman UP Jurusan agar operasional bisa berjalan.'}
+                                </p>
+                            </div>
                         </div>
-                        <Button asChild variant="outline" size="sm">
+                        <Button
+                            asChild
+                            size="sm"
+                            variant={
+                                dashboard.report_status.code === 'submitted'
+                                    ? 'outline'
+                                    : 'default'
+                            }
+                            className="shrink-0 rounded-lg"
+                        >
+                            <Link href="/admin-jurusan/reports">
+                                Buka laporan
+                            </Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                <Card className="overflow-hidden rounded-xl border-slate-200 shadow-sm">
+                    <CardHeader className="flex flex-col gap-3 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <CardTitle>Tindakan Titipan</CardTitle>
+                            <CardDescription>
+                                Request pending tertua ditampilkan lebih dahulu.
+                                Selesaikan 5 teratas untuk jaga SLA.
+                            </CardDescription>
+                        </div>
+                        <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            className="rounded-lg"
+                        >
                             <Link href="/admin-jurusan/consignments">
                                 Lihat Semua
                             </Link>
                         </Button>
-                    </div>
-                    {dashboard.recent_requests.map((item) => (
-                        <Link
-                            key={item.id}
-                            href={item.href}
-                            className="grid gap-3 border-b border-slate-100 p-4 text-sm transition last:border-b-0 hover:bg-slate-50 md:grid-cols-[1.4fr_1fr_auto] md:items-center"
-                        >
-                            <div>
-                                <p className="font-medium text-slate-950">
-                                    {item.product_name}
-                                </p>
-                                <p className="text-slate-500">
-                                    {item.seller_name} - {item.up_jurusan_name}
-                                </p>
-                            </div>
-                            <p className="text-slate-600 tabular-nums">
-                                {item.requested_quantity} item
-                            </p>
-                            <Badge
-                                className={cn(
-                                    'w-fit rounded-[6px] ring-1',
-                                    statusStyles[item.status.code] ??
-                                        'bg-slate-100 text-slate-600 ring-slate-200',
-                                )}
-                            >
-                                {item.status.label}
-                            </Badge>
-                        </Link>
-                    ))}
-                    {dashboard.recent_requests.length === 0 && (
-                        <div className="p-8 text-center text-sm text-slate-500">
-                            Belum ada request titip barang.
-                        </div>
-                    )}
-                </section>
-            </main>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        {dashboard.recent_requests.length === 0 ? (
+                            <EmptyState
+                                icon={Inbox}
+                                title="Belum ada request titip barang"
+                                description="Request seller akan muncul di sini setelah mereka memilih titip ke UP Jurusan. Pastikan UP sudah punya produk & picket."
+                            />
+                        ) : (
+                            <>
+                                {/* Desktop table */}
+                                <div className="hidden md:block">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="bg-slate-50">
+                                                <TableHead>Produk</TableHead>
+                                                <TableHead>Seller</TableHead>
+                                                <TableHead>UP</TableHead>
+                                                <TableHead className="text-right">
+                                                    Qty
+                                                </TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead className="text-right">
+                                                    Aksi
+                                                </TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {dashboard.recent_requests.map(
+                                                (item) => (
+                                                    <TableRow
+                                                        key={item.id}
+                                                        className="hover:bg-slate-50"
+                                                    >
+                                                        <TableCell className="font-medium text-slate-900">
+                                                            {item.product_name}
+                                                        </TableCell>
+                                                        <TableCell className="text-slate-600">
+                                                            {item.seller_name}
+                                                        </TableCell>
+                                                        <TableCell className="text-slate-600">
+                                                            {
+                                                                item.up_jurusan_name
+                                                            }
+                                                        </TableCell>
+                                                        <TableCell className="text-right tabular-nums">
+                                                            {
+                                                                item.requested_quantity
+                                                            }{' '}
+                                                            item
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <StatusBadge
+                                                                code={
+                                                                    item.status
+                                                                        .code
+                                                                }
+                                                                label={
+                                                                    item.status
+                                                                        .label
+                                                                }
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <Button
+                                                                asChild
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="rounded-lg"
+                                                            >
+                                                                <Link
+                                                                    href={
+                                                                        item.href
+                                                                    }
+                                                                >
+                                                                    Detail
+                                                                </Link>
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ),
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                                {/* Mobile cards */}
+                                <div className="divide-y divide-slate-100 md:hidden">
+                                    {dashboard.recent_requests.map((item) => (
+                                        <Link
+                                            key={item.id}
+                                            href={item.href}
+                                            className="flex flex-col gap-3 p-4 transition hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    <p className="truncate font-medium text-slate-900">
+                                                        {item.product_name}
+                                                    </p>
+                                                    <p className="truncate text-sm text-slate-500">
+                                                        {item.seller_name} •{' '}
+                                                        {item.up_jurusan_name}
+                                                    </p>
+                                                </div>
+                                                <StatusBadge
+                                                    code={item.status.code}
+                                                    label={item.status.label}
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-slate-600 tabular-nums">
+                                                    {item.requested_quantity}{' '}
+                                                    item
+                                                </span>
+                                                <span className="text-xs font-medium text-blue-700">
+                                                    Lihat detail →
+                                                </span>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
         </>
     );
 }

@@ -118,6 +118,30 @@ export function getSearchConfig(role: string | undefined, query: string) {
         };
     }
 
+    if (role === 'picket_officer') {
+        return {
+            ariaLabel: 'Pencarian picket',
+            placeholder: 'Cari produk POS, pesanan, laporan...',
+            targets: [
+                {
+                    label: 'POS',
+                    icon: ShoppingCart,
+                    href: `/picket/pos`,
+                },
+                {
+                    label: 'Pesanan',
+                    icon: Package,
+                    href: `/picket/orders`,
+                },
+                {
+                    label: 'Terima Barang',
+                    icon: Boxes,
+                    href: `/picket/receiving`,
+                },
+            ],
+        };
+    }
+
     return null;
 }
 
