@@ -61,24 +61,26 @@ export function NotificationDropdown({
                 style={notificationMenuStyle}
                 sideOffset={8}
             >
-                <div className="sticky top-0 z-10 flex items-center justify-between gap-2 rounded-t-[inherit] border-b border-slate-100 bg-white px-4 py-3">
-                    <h3 className="text-sm font-semibold text-slate-900">
-                        {ariaLabel}
+                <div className="sticky top-0 z-10 flex flex-col gap-1.5 rounded-t-[inherit] border-b border-slate-100 bg-white px-4 py-3">
+                    <div className="flex items-center justify-between gap-2">
+                        <h3 className="min-w-0 truncate text-sm font-semibold text-slate-900">
+                            {ariaLabel}
+                        </h3>
                         {unreadCount > 0 && (
-                            <span className="ml-2 rounded-[6px] bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-700">
-                                {unreadCount > 99 ? '99+' : unreadCount} belum
-                                dibaca
-                            </span>
+                            <button
+                                type="button"
+                                onClick={markAllAsRead}
+                                className="shrink-0 text-xs font-medium whitespace-nowrap text-blue-600 transition-colors hover:text-blue-700"
+                            >
+                                Tandai semua dibaca
+                            </button>
                         )}
-                    </h3>
+                    </div>
                     {unreadCount > 0 && (
-                        <button
-                            type="button"
-                            onClick={markAllAsRead}
-                            className="shrink-0 text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
-                        >
-                            Tandai semua dibaca
-                        </button>
+                        <span className="w-fit rounded-[6px] bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap text-blue-700">
+                            {unreadCount > 99 ? '99+' : unreadCount} belum
+                            dibaca
+                        </span>
                     )}
                 </div>
 

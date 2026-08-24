@@ -1,3 +1,11 @@
+type TimestampFormatOptions = {
+    /**
+     * Short form for tight surfaces (header popup): "51 mnt", "2 jam",
+     * "Kemarin", "17 Agu 2025".
+     */
+    compact?: boolean;
+};
+
 /**
  * Format notification timestamp with mixed localized timestamps.
  *
@@ -6,8 +14,11 @@
  * - Older than yesterday: "17 Agu 2025, 14:30"
  * - Very recent (< 1 minute): "Baru saja"
  */
-
-export function formatNotificationTimestamp(dateString: string): string {
+export function formatNotificationTimestamp(
+    dateString: string,
+    options: TimestampFormatOptions = {},
+): string {
+    const { compact = false } = options;
     const now = new Date();
     const date = new Date(dateString);
 
@@ -24,12 +35,14 @@ export function formatNotificationTimestamp(dateString: string): string {
 
     // Within last hour
     if (diffMinutes < 60) {
-        return `${diffMinutes} menit yang lalu`;
+        return compact
+            ? `${diffMinutes} mnt`
+            : `${diffMinutes} menit yang lalu`;
     }
 
     // Within last 24 hours
     if (diffDays < 1) {
-        return `${diffHours} jam yang lalu`;
+        return compact ? `${diffHours} jam` : `${diffHours} jam yang lalu`;
     }
 
     // Yesterday
@@ -39,15 +52,17 @@ export function formatNotificationTimestamp(dateString: string): string {
 
     // Older: Use localized Indonesian date format
     // Example: "17 Agu 2025, 14:30"
-    const options: Intl.DateTimeFormatOptions = {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    };
+    const intlOptions: Intl.DateTimeFormatOptions = compact
+        ? { day: 'numeric', month: 'short', year: 'numeric' }
+        : {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+          };
 
-    return date.toLocaleDateString('id-ID', options);
+    return date.toLocaleDateString('id-ID', intlOptions);
 }
 
 /**

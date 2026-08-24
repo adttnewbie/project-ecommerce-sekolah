@@ -13,7 +13,6 @@ import { createElement } from 'react';
 import { toast } from 'sonner';
 
 import { formatNotificationTimestamp } from '@/lib/formatNotificationTimestamp';
-import { cn } from '@/lib/utils';
 import { NOTIFICATION_TYPE_CONFIG } from '@/types/notification';
 import type { NotificationForDropdown } from '@/types/notifications';
 
@@ -109,38 +108,41 @@ export function HeaderNotificationItem({
             <Link
                 href={notification.href}
                 onClick={handleClick}
-                className={cn(
-                    'relative z-0 flex min-w-0 flex-1 flex-col items-start gap-0.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
-                )}
+                className="flex min-w-0 flex-1 flex-col items-start gap-0.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
-                <span className="flex w-full items-center justify-between gap-2">
+                <span className="line-clamp-2 w-full text-sm leading-5 text-slate-900">
                     <span
-                        className={cn(
-                            'max-w-full truncate text-sm text-slate-900',
-                            !notification.is_read && 'font-semibold',
-                        )}
+                        className={
+                            notification.is_read
+                                ? 'font-normal'
+                                : 'font-semibold'
+                        }
                     >
                         {notification.title}
                     </span>
-                    <span className="shrink-0 text-[11px] leading-none text-slate-400">
+                </span>
+                {notification.description && (
+                    <span className="line-clamp-2 w-full text-xs leading-5 text-slate-500">
+                        {notification.description}
+                    </span>
+                )}
+                <span className="flex w-full items-center gap-1.5 text-[11px] leading-none">
+                    <span
+                        className={
+                            notification.is_read
+                                ? 'text-slate-400'
+                                : 'font-medium text-blue-700'
+                        }
+                    >
+                        {label}
+                        {!notification.is_read && ' • belum dibaca'}
+                    </span>
+                    <span className="ml-auto shrink-0 text-slate-400">
                         {formatNotificationTimestamp(
                             notification.created_at ?? '',
+                            { compact: true },
                         )}
                     </span>
-                </span>
-                <span className="line-clamp-2 w-full text-xs leading-5 text-slate-500">
-                    {notification.description}
-                </span>
-                <span
-                    className={cn(
-                        'text-[11px] font-medium',
-                        !notification.is_read
-                            ? 'text-blue-700'
-                            : 'text-slate-400',
-                    )}
-                >
-                    {label}
-                    {!notification.is_read && ' • belum dibaca'}
                 </span>
             </Link>
         </div>
