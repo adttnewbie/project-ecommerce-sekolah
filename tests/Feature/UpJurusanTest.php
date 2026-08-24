@@ -426,7 +426,7 @@ test('seller can request consignment through product creation', function () {
 test('admin jurusan can approve own up jurusan consignment request', function () {
     $adminJurusan = User::factory()->create(['role' => UserRole::AdminJurusan]);
     $upJurusan = UpJurusan::factory()->create(['admin_jurusan_id' => $adminJurusan->id]);
-    $product = Product::factory()->create(['status' => ProductStatus::Draft]);
+    $product = Product::factory()->create(['status' => ProductStatus::Approved]);
     $consignment = UpJurusanConsignment::factory()->create([
         'product_id' => $product->id,
         'up_jurusan_id' => $upJurusan->id,

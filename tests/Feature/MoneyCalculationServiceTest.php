@@ -37,7 +37,7 @@ test('money calculation service is single source for consignment splits', functi
 test('admin jurusan must explicitly set commission rate on approve including zero', function () {
     $adminJurusan = User::factory()->create(['role' => UserRole::AdminJurusan]);
     $upJurusan = UpJurusan::factory()->create(['admin_jurusan_id' => $adminJurusan->id]);
-    $product = Product::factory()->create(['status' => ProductStatus::Draft]);
+    $product = Product::factory()->create(['status' => ProductStatus::Approved]);
     $consignment = UpJurusanConsignment::factory()->create([
         'product_id' => $product->id,
         'up_jurusan_id' => $upJurusan->id,

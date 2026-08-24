@@ -20,7 +20,8 @@ function makeConsignment(array $overrides = []): UpJurusanConsignment
 {
     $seller = User::factory()->create(['role' => UserRole::Seller]);
     $product = Product::factory()->for($seller, 'seller')->create([
-        'status' => ProductStatus::Pending,
+        // Two-stage moderation: jurusan approval requires a published product.
+        'status' => ProductStatus::Approved,
         'stock' => 0,
     ]);
     $up = UpJurusan::factory()->create();
@@ -314,3 +315,21 @@ test('illegal transitions from terminal states are rejected', function (UpJurusa
     [UpJurusanConsignmentStatus::Approved, UpJurusanConsignmentStatus::Completed],
     [UpJurusanConsignmentStatus::Received, UpJurusanConsignmentStatus::Cancelled],
 ])->throws(ValidationException::class);
+
+test('approve refuses to publish when product moderation has not approved the product', function () {
+    $consignment = makeConsignment([
+        'status' => UpJurusanConsignmentStatus::PendingApproval,
+    ]);
+
+    // Fixture product is published; force it back to the pre-moderation state.
+    Product::query()->whereKey($consignment->product_id)->update([
+        'status' => ProductStatus::Pending->value,
+    ]);
+
+    expect(fn () => ConsignmentTransitionService::approve($consignment, 10))
+        ->toThrow(ValidationException::class);
+
+    expect($consignment->fresh()->status)->toBe(UpJurusanConsignmentStatus::PendingApproval)
+        ->and(Product::query()->find($consignment->product_id)->status)
+            ->toBe(ProductStatus::Pending);
+});

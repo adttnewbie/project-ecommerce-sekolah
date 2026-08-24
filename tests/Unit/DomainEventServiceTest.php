@@ -106,7 +106,7 @@ test('duplicate payment transition does not emit duplicate events', function () 
 
 test('consignment transitions emit domain events', function () {
     $seller = User::factory()->create(['role' => UserRole::Seller]);
-    $product = Product::factory()->for($seller, 'seller')->create();
+    $product = Product::factory()->for($seller, 'seller')->approved()->create();
     $up = UpJurusan::factory()->create();
     $actor = User::factory()->create(['role' => UserRole::PicketOfficer, 'up_jurusan_id' => $up->id]);
     $consignment = UpJurusanConsignment::factory()->create([

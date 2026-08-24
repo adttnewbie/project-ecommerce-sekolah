@@ -38,6 +38,12 @@ test('seller create then admin approve then picket receive and complete flow', f
 
     expect($consignment->status)->toBe(UpJurusanConsignmentStatus::PendingApproval);
 
+    // Stage 1 of the two-stage moderation: product moderation publishes
+    // the item before the jurusan may approve the consignment.
+    Product::query()
+        ->whereKey($consignment->product_id)
+        ->update(['status' => ProductStatus::Approved]);
+
     $this->actingAs($admin)
         ->post(route('admin-jurusan.consignments.approve', $consignment), [
             'commission_rate' => 10,
@@ -108,7 +114,7 @@ test('admin jurusan cancel approved consignment', function () {
 test('illegal http approve twice and cancel after receive fail', function () {
     $admin = User::factory()->create(['role' => UserRole::AdminJurusan]);
     $up = UpJurusan::factory()->create(['admin_jurusan_id' => $admin->id]);
-    $product = Product::factory()->create(['status' => ProductStatus::Pending]);
+    $product = Product::factory()->create(['status' => ProductStatus::Approved]);
     $consignment = UpJurusanConsignment::factory()->create([
         'product_id' => $product->id,
         'up_jurusan_id' => $up->id,
