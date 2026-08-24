@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\NotificationType;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -259,3 +260,19 @@ class NotificationModelTest extends TestCase
         $this->assertEquals(1, $ownNotifications);
     }
 }
+
+test('notification key accepts prefixed identifiers longer than a uuid', function () {
+    $user = User::factory()->create();
+
+    $notification = Notification::createNotification(
+        userId: $user->id,
+        type: NotificationType::Order->value,
+        stableKey: sprintf('order-pending:%d:%d', 987654321098765432, 123456789012345678),
+        title: 'Pesanan baru',
+        description: '',
+        href: '/seller/orders',
+    );
+
+    expect($notification->exists)->toBeTrue()
+        ->and(strlen($notification->key))->toBeGreaterThan(36);
+});
