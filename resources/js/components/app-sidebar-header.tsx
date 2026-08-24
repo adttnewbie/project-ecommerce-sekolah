@@ -9,10 +9,9 @@ import {
     ShoppingCart,
     Tags,
     Users,
-    X,
 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { HeaderNotificationItem } from '@/components/notifications/header-notification-item';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,27 +48,12 @@ const roleLabels: Record<string, string> = {
     picket_officer: 'Picket Officer',
 };
 
-const typeToBorderColors: Record<string, string> = {
-    success: 'border-l-emerald-500',
-    error: 'border-l-red-500',
-    warning: 'border-l-amber-500',
-    info: 'border-l-blue-500',
-};
-
 const userMenuClassName =
     'w-56 rounded-[8px] bg-white text-slate-900 ring-slate-200 [&_[data-slot=dropdown-menu-item]]:text-slate-700 [&_[data-slot=dropdown-menu-item]]:focus:bg-slate-100 [&_[data-slot=dropdown-menu-item]]:focus:text-slate-900 [&_[data-slot=dropdown-menu-label]]:text-slate-500 [&_[data-slot=dropdown-menu-separator]]:bg-slate-200';
 const notificationMenuClassName =
     'w-80 max-h-[24rem] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300';
 const notificationMenuStyle = {
     maxHeight: 'var(--radix-dropdown-menu-content-available-height)',
-};
-
-type HeaderNotification = {
-    key: string;
-    type: string;
-    title: string;
-    description: string | null;
-    href: string;
 };
 
 export function getSearchConfig(role: string | undefined, query: string) {
@@ -298,7 +282,7 @@ export function AppSidebarHeader({
                                     <>
                                         {buyerHeader.notifications.map(
                                             (notification) => (
-                                                <NotificationItem
+                                                <HeaderNotificationItem
                                                     key={notification.key}
                                                     notification={notification}
                                                 />
@@ -403,7 +387,7 @@ export function AppSidebarHeader({
                                 sellerHeader.notifications?.length ? (
                                     sellerHeader.notifications.map(
                                         (notification) => (
-                                            <NotificationItem
+                                            <HeaderNotificationItem
                                                 key={notification.key}
                                                 notification={notification}
                                             />
@@ -552,7 +536,7 @@ export function AppSidebarHeader({
                                 adminHeader.notifications?.length ? (
                                     adminHeader.notifications.map(
                                         (notification) => (
-                                            <NotificationItem
+                                            <HeaderNotificationItem
                                                 key={notification.key}
                                                 notification={notification}
                                             />
@@ -672,7 +656,7 @@ export function AppSidebarHeader({
                                 picketOfficerHeader.notifications?.length ? (
                                     picketOfficerHeader.notifications.map(
                                         (notification) => (
-                                            <NotificationItem
+                                            <HeaderNotificationItem
                                                 key={notification.key}
                                                 notification={notification}
                                             />
@@ -794,7 +778,7 @@ export function AppSidebarHeader({
                                 adminJurusanHeader.notifications?.length ? (
                                     adminJurusanHeader.notifications.map(
                                         (notification) => (
-                                            <NotificationItem
+                                            <HeaderNotificationItem
                                                 key={notification.key}
                                                 notification={notification}
                                             />
@@ -879,53 +863,5 @@ export function AppSidebarHeader({
                 )}
             </div>
         </header>
-    );
-}
-
-function NotificationItem({
-    notification,
-}: {
-    notification: HeaderNotification;
-}) {
-    const dismiss = (event: React.MouseEvent<HTMLButtonElement>) => {
-        event.preventDefault();
-        event.stopPropagation();
-
-        router.delete(
-            `/notifications/${encodeURIComponent(notification.key)}`,
-            {
-                preserveScroll: true,
-                onError: () => toast.error('Notifikasi gagal dihapus.'),
-            },
-        );
-    };
-
-    const borderClass =
-        typeToBorderColors[notification.type] || 'border-l-blue-500';
-
-    return (
-        <div
-            className={`group flex items-start gap-3 ${borderClass} relative rounded-[6px] transition-colors duration-150 hover:bg-blue-50`}
-        >
-            <button
-                type="button"
-                onClick={dismiss}
-                className="absolute top-2 right-2 z-10 -mt-1 -mr-1 rounded-lg p-1.5 text-slate-400 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-white hover:text-rose-600 focus:opacity-100"
-                aria-label={`Hapus notifikasi ${notification.title}`}
-            >
-                <X className="size-3.5" />
-            </button>
-            <Link
-                href={notification.href}
-                className="relative z-0 flex min-w-0 flex-1 flex-col items-start gap-1 px-3 py-3 outline-none"
-            >
-                <span className="max-w-full truncate font-medium text-slate-900 transition-colors group-hover:text-blue-900">
-                    {notification.title}
-                </span>
-                <span className="line-clamp-2 text-xs leading-5 text-slate-500 transition-colors group-hover:text-blue-900">
-                    {notification.description}
-                </span>
-            </Link>
-        </div>
     );
 }

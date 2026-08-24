@@ -1,5 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
+    Bell,
     ChevronDown,
     Home as HomeIcon,
     Menu,
@@ -10,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import AppLogo from '@/components/app-logo';
+import { HeaderNotificationItem } from '@/components/notifications/header-notification-item';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -146,21 +148,120 @@ export function AppHeader() {
 
                 <div className="flex shrink-0 items-center justify-end gap-1 sm:gap-2">
                     {isBuyer && (
-                        <Button
-                            asChild
-                            variant="ghost"
-                            size="icon"
-                            className="relative size-11 rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600"
-                        >
-                            <Link href={cartIndex()} aria-label="Cart">
-                                <ShoppingCart className="size-5" />
-                                {Boolean(buyerHeader?.cartItemsCount) && (
-                                    <span className="absolute -top-0.5 -right-0.5 min-w-5 rounded-full bg-blue-600 px-1.5 text-center text-[11px] leading-5 font-semibold text-white ring-2 ring-white">
-                                        {buyerHeader?.cartItemsCount}
-                                    </span>
-                                )}
-                            </Link>
-                        </Button>
+                        <>
+                            <Button
+                                asChild
+                                variant="ghost"
+                                size="icon"
+                                className="relative size-11 rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600"
+                            >
+                                <Link href={cartIndex()} aria-label="Cart">
+                                    <ShoppingCart className="size-5" />
+                                    {Boolean(buyerHeader?.cartItemsCount) && (
+                                        <span className="absolute -top-0.5 -right-0.5 min-w-5 rounded-full bg-blue-600 px-1.5 text-center text-[11px] leading-5 font-semibold text-white ring-2 ring-white">
+                                            {buyerHeader?.cartItemsCount}
+                                        </span>
+                                    )}
+                                </Link>
+                            </Button>
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="relative size-11 rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600"
+                                        aria-label="Notifikasi"
+                                    >
+                                        <Bell className="size-5" />
+                                        {buyerHeader?.notifications &&
+                                            buyerHeader.notifications.length >
+                                                0 && (
+                                                <span
+                                                    className={`absolute top-2 right-2 size-2.5 rounded-full ring-2 ring-white ${buyerHeader.notifications.some((n) => !n.is_read) ? 'bg-red-500' : 'bg-slate-300'}`}
+                                                />
+                                            )}
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    align="end"
+                                    className="max-h-[24rem] w-80 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent overflow-y-auto hover:scrollbar-thumb-slate-300"
+                                    style={{
+                                        maxHeight:
+                                            'var(--radix-dropdown-menu-content-available-height)',
+                                    }}
+                                    sideOffset={8}
+                                >
+                                    <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-[inherit] border-b border-slate-100 bg-white px-3 py-3">
+                                        <h3 className="text-sm font-semibold text-slate-900">
+                                            Notifikasi
+                                        </h3>
+                                        {buyerHeader &&
+                                            buyerHeader.notifications &&
+                                            buyerHeader.notifications.length >
+                                                0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        router.post(
+                                                            '/notifications/mark-all-as-read',
+                                                            {},
+                                                            {
+                                                                preserveScroll: true,
+                                                            },
+                                                        );
+                                                    }}
+                                                    className="text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
+                                                >
+                                                    Mark all as read
+                                                </button>
+                                            )}
+                                    </div>
+                                    {buyerHeader &&
+                                    buyerHeader.notifications?.length ? (
+                                        <>
+                                            {buyerHeader.notifications.map(
+                                                (notification) => (
+                                                    <HeaderNotificationItem
+                                                        key={notification.key}
+                                                        notification={
+                                                            notification
+                                                        }
+                                                    />
+                                                ),
+                                            )}
+                                            <div className="border-t border-slate-100 p-2">
+                                                <Button
+                                                    asChild
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="w-full text-xs text-blue-600"
+                                                >
+                                                    <Link href="/notifications">
+                                                        Lihat semua notifikasi
+                                                    </Link>
+                                                </Button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
+                                            <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-slate-50">
+                                                <Bell className="size-5 text-slate-400" />
+                                            </div>
+                                            <p className="mb-1 text-sm font-medium text-slate-900">
+                                                Tidak ada notifikasi baru
+                                            </p>
+                                            <p className="text-xs text-slate-500">
+                                                Kabar terbaru soal pesanan Anda
+                                                akan muncul di sini
+                                            </p>
+                                        </div>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </>
                     )}
 
                     {!auth.user && (
