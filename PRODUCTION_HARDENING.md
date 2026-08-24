@@ -236,3 +236,34 @@ Everything else reviewed (MoneyCalculationService, ConsignmentTransition/Payout,
 
 - Full suite: 551 tests / 549 passed / 2 skipped (pcntl-gated) / 0 failed.
 - pint ✓ phpstan 0 ✓ tsc ✓.
+
+---
+
+## 14. Buyer notifications (2026-08-24)
+
+### Added
+
+Buyers now receive persisted in-app notifications through the same preference-gated, idempotent dispatch pipeline as the other roles:
+
+| Trigger | Key | Source |
+|---------|-----|--------|
+| Seller marks item packed/sent | `buyer-order-item:{id}:{status}` | NEW dispatch in `SellerOrderController::updateStatus` |
+| Picket advances item status (incl. consigned) | same | extended picket dispatch (`itemStatus` field) |
+| Payment approved by picket | `buyer-payment:{id}:approved` | `OrderPaymentApproved` |
+| Payment rejected (+ reason) | `buyer-payment:{id}:rejected` | idem, `rejectionReason` added to event |
+| Auto-expiry of unpaid order | `buyer-order-state:{orderId}:cancelled_auto` | `expireUnpaidOrders` per-order notice |
+| Admin force-cancel / force-complete | `...cancelled_admin` / `...completed_admin` | controller-side dispatch with admin's reason |
+
+New events/listeners: `BuyerOrderStateChanged` → `PersistBuyerOrderNotice`, plus `BuyerOrderStatusNotify` and `BuyerPaymentDecidedNotify`. Buyer-initiated cancellations stay silent (self-action).
+
+### UI
+
+`buyerHeader` now carries the buyer's latest persisted notifications (dismissal-aware) and the header buyer branch gained a bell dropdown (mark-all-read, empty state, link to `/notifications`) mirroring the seller pattern.
+
+### Tests added
+
+`BuyerNotificationTest` (6): packed/sent notify with accessible href; consignment-style dispatches without `itemStatus` ignored; payment rejected/approved rows incl. reason; auto-expiry notice; forced-cancellation reason surfaced; preference gate blocks `order` while `payment` still delivers.
+
+### Verification status
+
+- Full suite: 557 tests / 555 passed / 2 skipped (pcntl) / 0 failed; pint ✓ phpstan 0 ✓ tsc/eslint/prettier ✓.

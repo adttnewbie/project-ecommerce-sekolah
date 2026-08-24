@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Enums\OrderItemStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
+use App\Events\BuyerOrderStateChanged;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
@@ -308,6 +309,8 @@ class OrderLivenessService
                     && ! $item->status->isTerminal()
             );
 
+            $orderCancelled = false;
+
             foreach ($items as $item) {
                 try {
                     OrderItemCancellation::cancelItem(
@@ -317,6 +320,7 @@ class OrderLivenessService
                         true,
                     );
                     $cancelled++;
+                    $orderCancelled = true;
                 } catch (ValidationException $exception) {
                     // The item changed state between the pre-read above and the
                     // locked re-read inside cancelItem (e.g. a concurrent
@@ -327,6 +331,14 @@ class OrderLivenessService
                         'reason' => $exception->getMessage(),
                     ]);
                 }
+            }
+
+            if ($orderCancelled) {
+                BuyerOrderStateChanged::dispatch(
+                    orderId: $order->id,
+                    state: 'cancelled_auto',
+                    reason: 'Melewati batas waktu pembayaran',
+                );
             }
         }
 

@@ -16,5 +16,6 @@ class OrderPaymentApproved
         public readonly int $amount,
         public readonly string $status, // 'approved' or 'rejected'
         public readonly ?int $processedBy = null,
+        public readonly ?string $rejectionReason = null,
     ) {}
 }

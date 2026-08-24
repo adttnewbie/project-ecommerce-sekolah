@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\AdminNotificationTriggered;
+use App\Events\BuyerOrderStateChanged;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
@@ -36,6 +37,12 @@ class AdminOrderController extends Controller
             $validated['cancel_reason'] ?? 'Dibatalkan oleh admin',
         );
 
+        BuyerOrderStateChanged::dispatch(
+            orderId: $order->id,
+            state: 'cancelled_admin',
+            reason: $validated['cancel_reason'] ?? null,
+        );
+
         AdminNotificationTriggered::dispatch(
             adminId: $admin->id,
             type: 'order',
@@ -66,6 +73,12 @@ class AdminOrderController extends Controller
             $order,
             $admin,
             $validated['reason'] ?? 'Diselesaikan paksa oleh admin',
+        );
+
+        BuyerOrderStateChanged::dispatch(
+            orderId: $order->id,
+            state: 'completed_admin',
+            reason: $validated['reason'] ?? null,
         );
 
         AdminNotificationTriggered::dispatch(

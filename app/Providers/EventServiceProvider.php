@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Events\AdminNotificationTriggered;
+use App\Events\BuyerOrderStateChanged;
 use App\Events\DailyReportSubmitted;
 use App\Events\LowStockDetected;
 use App\Events\OrderItemStatusChanged;
@@ -17,10 +18,13 @@ use App\Listeners\AdminNotificationNotify;
 use App\Listeners\AdminOrderNotify;
 use App\Listeners\AdminProductModerationNotify;
 use App\Listeners\AdminSellerApplicationNotify;
+use App\Listeners\BuyerOrderStatusNotify;
+use App\Listeners\BuyerPaymentDecidedNotify;
 use App\Listeners\CreateLowStockNotification;
 use App\Listeners\CreateModerationResultNotification;
 use App\Listeners\CreatePendingOrderNotification;
 use App\Listeners\CreateProductModerationNotification;
+use App\Listeners\PersistBuyerOrderNotice;
 use App\Listeners\PicketOfficerOrderNotify;
 use App\Listeners\SellerPaymentPaidNotify;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -53,6 +57,7 @@ class EventServiceProvider extends ServiceProvider
         OrderItemStatusChanged::class => [
             AdminJurusanConsignmentNotify::class,
             PicketOfficerOrderNotify::class,
+            BuyerOrderStatusNotify::class,
         ],
 
         DailyReportSubmitted::class => [
@@ -61,6 +66,11 @@ class EventServiceProvider extends ServiceProvider
 
         OrderPaymentApproved::class => [
             SellerPaymentPaidNotify::class,
+            BuyerPaymentDecidedNotify::class,
+        ],
+
+        BuyerOrderStateChanged::class => [
+            PersistBuyerOrderNotice::class,
         ],
 
         AdminNotificationTriggered::class => [

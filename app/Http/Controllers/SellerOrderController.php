@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\OrderItemStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Events\OrderItemStatusChanged;
 use App\Http\Requests\Seller\UpdateOrderItemStatusRequest;
 use App\Models\OrderItem;
 use App\Models\UpJurusanStockMovement;
@@ -230,7 +231,7 @@ class SellerOrderController extends Controller
 
         $newStatus = OrderItemStatus::from($request->string('status')->toString());
 
-        DB::transaction(function () use ($orderItem, $newStatus) {
+        DB::transaction(function () use ($orderItem, $newStatus, $seller) {
             /** @var OrderItem $current */
             $current = OrderItem::query()
                 ->with('order:id')
@@ -241,6 +242,20 @@ class SellerOrderController extends Controller
 
             $current->update(['status' => $newStatus]);
             OrderStatusSync::sync($current->order);
+
+            OrderItemStatusChanged::dispatch(
+                orderItemId: $current->id,
+                orderId: $current->order_id,
+                productId: $current->product_id,
+                consignmentId: null,
+                productName: $current->product_name,
+                sellerName: $seller->name,
+                buyerName: $current->order->user->name ?? 'Buyer',
+                action: "status diubah ke {$newStatus->label()}",
+                picketId: null,
+                consignmentStatus: null,
+                itemStatus: $newStatus->value,
+            );
         });
 
         return to_route('seller.orders.index')

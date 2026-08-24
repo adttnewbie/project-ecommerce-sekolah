@@ -489,7 +489,9 @@ class PicketUpJurusanConsignmentController extends Controller
                 sellerName: $sellerName,
                 buyerName: $current->order->user->name,
                 action: "status diubah ke {$newStatus->label()}",
-                picketId: $picket->id
+                picketId: $picket->id,
+                consignmentStatus: null,
+                itemStatus: $newStatus->value,
             );
         });
 
@@ -541,7 +543,8 @@ class PicketUpJurusanConsignmentController extends Controller
             orderNumber: $orderItem->order_code ?? "TRX-{$orderItem->order_id}",
             amount: $orderItem->subtotal,
             status: 'rejected',
-            processedBy: $picket->id
+            processedBy: $picket->id,
+            rejectionReason: $orderItem->fresh()->payment_rejection_reason,
         );
 
         return back()->with('success', 'Pembayaran item ditolak.');

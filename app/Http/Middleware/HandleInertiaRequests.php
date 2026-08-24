@@ -336,11 +336,43 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
+        $dismissedKeys = $this->dismissedNotificationKeys($buyer);
+
+        // Persisted notifications addressed to this buyer (order progress,
+        // payment decisions, cancellations), newest first.
+        $notifications = Notification::query()
+            ->where('user_id', $buyer->id)
+            ->active()
+            ->orderBy('created_at', 'desc')
+            ->limit(self::HEADER_NOTIFICATION_LIMIT)
+            ->get([
+                'key',
+                'type',
+                'title',
+                'description',
+                'href',
+                'read_at',
+                'created_at',
+            ])
+            ->map(fn (Notification $notification) => [
+                'key' => $notification->key,
+                'type' => $notification->type,
+                'title' => $notification->title,
+                'description' => $notification->description,
+                'href' => $notification->href,
+                'is_read' => $notification->read_at !== null,
+                'created_at' => $notification->created_at->toISOString(),
+            ])
+            ->reject(fn (array $notification) => in_array($notification['key'], $dismissedKeys, true))
+            ->values()
+            ->all();
+
         return [
             'id' => $buyer->id,
             'cartItemsCount' => (int) CartItem::query()
                 ->where('user_id', $buyer->id)
                 ->count(),
+            'notifications' => $notifications,
         ];
     }
 }

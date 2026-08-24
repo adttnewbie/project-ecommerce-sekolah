@@ -20,6 +20,7 @@ declare module '@inertiajs/core' {
         picketOfficerHeader: HeaderNotificationData | null;
         buyerHeader: {
             cartItemsCount: number;
+            notifications: HeaderNotificationData['notifications'];
         } | null;
         sidebarOpen: boolean;
     }
