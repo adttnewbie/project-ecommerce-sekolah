@@ -36,7 +36,13 @@ import {
 } from '@/routes/seller/orders';
 
 type OrderStatus =
-    'pending' | 'in_production' | 'ready' | 'packed' | 'sent' | 'completed';
+    | 'pending'
+    | 'in_production'
+    | 'ready'
+    | 'packed'
+    | 'sent'
+    | 'completed'
+    | 'cancelled';
 
 type PaymentStatus = 'unpaid' | 'pending_confirmation' | 'paid' | 'rejected';
 
@@ -66,6 +72,7 @@ type SellerOrderItem = {
         rejection_reason: string | null;
     };
     created_at: string;
+    cancelled_at: string | null;
 };
 
 type SellerOrdersProps = {
@@ -89,6 +96,7 @@ const statusStyles: Record<OrderStatus, string> = {
     packed: 'bg-amber-50 text-amber-700',
     sent: 'bg-indigo-50 text-indigo-700',
     completed: 'bg-emerald-50 text-emerald-700',
+    cancelled: 'bg-rose-50 text-rose-700',
 };
 
 const paymentStatusStyles: Record<PaymentStatus, string> = {
@@ -99,7 +107,7 @@ const paymentStatusStyles: Record<PaymentStatus, string> = {
 };
 
 const nextStatus: Record<
-    Exclude<OrderStatus, 'sent' | 'completed'>,
+    Exclude<OrderStatus, 'sent' | 'completed' | 'cancelled'>,
     { code: OrderStatus; action: string }
 > = {
     pending: { code: 'packed', action: 'Tandai dikemas' },
@@ -109,7 +117,11 @@ const nextStatus: Record<
 };
 
 const nextActionFor = (item: SellerOrderItem) => {
-    if (item.status.code === 'sent' || item.status.code === 'completed') {
+    if (
+        item.status.code === 'sent' ||
+        item.status.code === 'completed' ||
+        item.status.code === 'cancelled'
+    ) {
         return null;
     }
 
@@ -493,7 +505,8 @@ export default function SellerOrdersIndex({
                                                             !item.managed_by_up_jurusan &&
                                                             item.payment.status
                                                                 .code !==
-                                                                'paid' && (
+                                                                'paid' &&
+                                                            !item.cancelled_at && (
                                                                 <Button
                                                                     type="button"
                                                                     size="sm"
