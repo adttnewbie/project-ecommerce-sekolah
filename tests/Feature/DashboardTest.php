@@ -722,3 +722,46 @@ test('non seller users cannot visit the seller dashboard', function (UserRole $r
     UserRole::Buyer,
     UserRole::PicketOfficer,
 ]);
+
+test('admin order trend aggregates per month and excludes rejected payments', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+
+    $current = now();
+    Order::factory()->for($buyer)->create([
+        'created_at' => $current->copy()->startOfMonth(),
+        'total_price' => 50000,
+        'payment_status' => PaymentStatus::Paid,
+    ]);
+    Order::factory()->for($buyer)->create([
+        'created_at' => $current->copy()->startOfMonth()->addDays(2),
+        'total_price' => 20000,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    Order::factory()->for($buyer)->create([
+        'created_at' => $current->copy()->subMonthsNoOverflow(1),
+        'total_price' => 7000,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    // Rejected orders never enter the trend.
+    Order::factory()->for($buyer)->create([
+        'created_at' => $current->copy()->startOfMonth(),
+        'total_price' => 999999,
+        'payment_status' => PaymentStatus::Rejected,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('dashboard')
+            ->has('dashboard.orderTrendData', 8)
+            ->where('dashboard.orderTrendData.7.month', $current->translatedFormat('M'))
+            ->where('dashboard.orderTrendData.7.orders', 2)
+            ->where('dashboard.orderTrendData.7.revenue', 70000)
+            ->where('dashboard.orderTrendData.6.orders', 1)
+            ->where('dashboard.orderTrendData.6.revenue', 7000)
+            ->where('dashboard.orderTrendData.5.orders', 0)
+            ->where('dashboard.orderTrendData.5.revenue', 0)
+        );
+});

@@ -84,21 +84,36 @@ class AdminDashboardController extends Controller
     {
         $start = now()->startOfMonth()->subMonths(7);
 
-        $totals = Order::query()
+        // Two grouped aggregates instead of materialising eight months of
+        // rows into PHP. substr(created_at, 1, 7) is portable across
+        // SQLite/MySQL/PostgreSQL because timestamps render as Y-m-d.
+        $ordersByMonth = Order::query()
             ->where('payment_status', '!=', PaymentStatus::Rejected->value)
             ->where('created_at', '>=', $start)
-            ->get(['created_at', 'total_price'])
-            ->groupBy(fn (Order $order) => $order->created_at?->format('Y-n') ?? '');
+            ->selectRaw('substr(created_at, 1, 7) as month_key')
+            ->selectRaw('COUNT(*) as total')
+            ->groupByRaw('substr(created_at, 1, 7)')
+            ->pluck('total', 'month_key')
+            ->map(fn (mixed $total): int => (int) $total);
+
+        $revenueByMonth = Order::query()
+            ->where('payment_status', '!=', PaymentStatus::Rejected->value)
+            ->where('created_at', '>=', $start)
+            ->selectRaw('substr(created_at, 1, 7) as month_key')
+            ->selectRaw('COALESCE(SUM(total_price), 0) as total')
+            ->groupByRaw('substr(created_at, 1, 7)')
+            ->pluck('total', 'month_key')
+            ->map(fn (mixed $total): int => (int) $total);
 
         return collect(range(0, 7))
-            ->map(function (int $offset) use ($start, $totals) {
+            ->map(function (int $offset) use ($start, $ordersByMonth, $revenueByMonth): array {
                 $month = $start->copy()->addMonths($offset);
-                $items = $totals->get($month->format('Y-n'), collect());
+                $key = $month->format('Y-m');
 
                 return [
                     'month' => $month->translatedFormat('M'),
-                    'orders' => $items->count(),
-                    'revenue' => (int) $items->sum('total_price'),
+                    'orders' => $ordersByMonth[$key] ?? 0,
+                    'revenue' => $revenueByMonth[$key] ?? 0,
                 ];
             })
             ->all();
