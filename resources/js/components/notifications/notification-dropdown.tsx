@@ -4,6 +4,7 @@ import { Bell } from 'lucide-react';
 import { HeaderNotificationItem } from '@/components/notifications/header-notification-item';
 import { Button } from '@/components/ui/button';
 import {
+    DropdownMenu,
     DropdownMenuContent,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -52,7 +53,7 @@ export function NotificationDropdown({
     };
 
     return (
-        <>
+        <DropdownMenu>
             <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
             <DropdownMenuContent
                 align="end"
@@ -114,6 +115,6 @@ export function NotificationDropdown({
                     </div>
                 )}
             </DropdownMenuContent>
-        </>
+        </DropdownMenu>
     );
 }
