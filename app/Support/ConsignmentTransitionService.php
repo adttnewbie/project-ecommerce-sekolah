@@ -194,31 +194,36 @@ class ConsignmentTransitionService
      */
     public static function complete(UpJurusanConsignment $consignment, ?User $actor = null): void
     {
-        self::assertCanTransition($consignment, UpJurusanConsignmentStatus::Completed);
+        /** @var UpJurusanConsignment $current */
+        $current = UpJurusanConsignment::query()
+            ->lockForUpdate()
+            ->findOrFail($consignment->id);
 
-        if ($consignment->received_quantity <= 0) {
+        self::assertCanTransition($current, UpJurusanConsignmentStatus::Completed);
+
+        if ($current->received_quantity <= 0) {
             throw ValidationException::withMessages([
                 'status' => 'Konsinyasi belum diterima, tidak dapat diselesaikan.',
             ]);
         }
 
-        if ($consignment->sold_quantity < $consignment->received_quantity) {
+        if ($current->sold_quantity < $current->received_quantity) {
             throw ValidationException::withMessages([
                 'status' => 'Konsinyasi hanya selesai jika seluruh stok diterima sudah terjual.',
             ]);
         }
 
-        self::assertInvariants($consignment);
+        self::assertInvariants($current);
 
-        $from = $consignment->status;
+        $from = $current->status;
 
-        $consignment->update([
+        $current->update([
             'status' => UpJurusanConsignmentStatus::Completed,
         ]);
 
         DomainEventService::record(
             DomainEventService::AGGREGATE_CONSIGNMENT,
-            $consignment->id,
+            $current->id,
             'consignment_completed',
             $actor,
             [
@@ -240,7 +245,12 @@ class ConsignmentTransitionService
             ]);
         }
 
-        if (! in_array($consignment->status, [
+        /** @var UpJurusanConsignment $current */
+        $current = UpJurusanConsignment::query()
+            ->lockForUpdate()
+            ->findOrFail($consignment->id);
+
+        if (! in_array($current->status, [
             UpJurusanConsignmentStatus::Received,
             UpJurusanConsignmentStatus::Completed,
         ], true)) {
@@ -249,7 +259,7 @@ class ConsignmentTransitionService
             ]);
         }
 
-        $available = $consignment->received_quantity - $consignment->sold_quantity;
+        $available = $current->received_quantity - $current->sold_quantity;
 
         if ($quantity > $available) {
             throw ValidationException::withMessages([
@@ -257,18 +267,18 @@ class ConsignmentTransitionService
             ]);
         }
 
-        $from = $consignment->status;
-        $newSold = $consignment->sold_quantity + $quantity;
-        $status = $newSold >= $consignment->received_quantity
+        $from = $current->status;
+        $newSold = $current->sold_quantity + $quantity;
+        $status = $newSold >= $current->received_quantity
             ? UpJurusanConsignmentStatus::Completed
             : UpJurusanConsignmentStatus::Received;
 
-        $consignment->update([
+        $current->update([
             'sold_quantity' => $newSold,
             'status' => $status,
         ]);
 
-        self::assertInvariants($consignment->fresh() ?? $consignment);
+        self::assertInvariants($current);
 
         DomainEventService::record(
             DomainEventService::AGGREGATE_CONSIGNMENT,
@@ -292,26 +302,31 @@ class ConsignmentTransitionService
             return;
         }
 
-        if (in_array($consignment->status, [
+        /** @var UpJurusanConsignment $current */
+        $current = UpJurusanConsignment::query()
+            ->lockForUpdate()
+            ->findOrFail($consignment->id);
+
+        if (in_array($current->status, [
             UpJurusanConsignmentStatus::Rejected,
             UpJurusanConsignmentStatus::Cancelled,
             UpJurusanConsignmentStatus::PendingApproval,
             UpJurusanConsignmentStatus::Approved,
-        ], true) && $consignment->received_quantity <= 0) {
+        ], true) && $current->received_quantity <= 0) {
             throw ValidationException::withMessages([
                 'status' => 'Tidak dapat merestorasi penjualan pada status konsinyasi ini.',
             ]);
         }
 
-        $from = $consignment->status;
-        $newSold = max(0, $consignment->sold_quantity - $quantity);
-        $status = $newSold >= $consignment->received_quantity && $consignment->received_quantity > 0
+        $from = $current->status;
+        $newSold = max(0, $current->sold_quantity - $quantity);
+        $status = $newSold >= $current->received_quantity && $current->received_quantity > 0
             ? UpJurusanConsignmentStatus::Completed
-            : ($consignment->received_quantity > 0
+            : ($current->received_quantity > 0
                 ? UpJurusanConsignmentStatus::Received
-                : $consignment->status);
+                : $current->status);
 
-        $consignment->update([
+        $current->update([
             'sold_quantity' => $newSold,
             'status' => $status,
         ]);
