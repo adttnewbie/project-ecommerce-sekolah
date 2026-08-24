@@ -16,7 +16,7 @@ class NotificationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->user = User::factory()->create();
     }
 
@@ -60,7 +60,7 @@ class NotificationTest extends TestCase
             ->post("/notifications/{$notification->key}/read");
 
         $response->assertRedirect();
-        
+
         $this->assertNotNull(Notification::find($notification->id)?->read_at);
     }
 
@@ -81,7 +81,7 @@ class NotificationTest extends TestCase
             ->post("/notifications/{$notification->key}/read");
 
         $response->assertStatus(404);
-        
+
         $this->assertNull(Notification::find($notification->id)?->read_at);
     }
 
@@ -111,7 +111,7 @@ class NotificationTest extends TestCase
             ->post('/notifications/mark-all-as-read');
 
         $response->assertRedirect();
-        
+
         $unread = Notification::where('user_id', $this->user->id)
             ->whereNull('read_at')
             ->active()
@@ -148,7 +148,7 @@ class NotificationTest extends TestCase
             ]);
 
         $response->assertRedirect();
-        
+
         $this->assertNotNull(Notification::where('key', $notif1->key)->first()?->read_at);
         $this->assertNotNull(Notification::where('key', $notif2->key)->first()?->read_at);
     }
@@ -169,7 +169,7 @@ class NotificationTest extends TestCase
             ->delete("/notifications/{$notification->key}");
 
         $response->assertRedirect();
-        
+
         $this->assertNotNull(Notification::find($notification->id)?->dismissed_at);
     }
 
@@ -190,7 +190,7 @@ class NotificationTest extends TestCase
             ->put("/notifications/{$notification->key}/restore");
 
         $response->assertRedirect();
-        
+
         $this->assertNull(Notification::find($notification->id)?->dismissed_at);
     }
 
@@ -211,7 +211,7 @@ class NotificationTest extends TestCase
             ->delete("/notifications/{$notification->key}");
 
         $response->assertStatus(404);
-        
+
         $this->assertNull(Notification::find($notification->id)?->dismissed_at);
     }
 
@@ -317,7 +317,7 @@ class NotificationTest extends TestCase
     public function test_idempotent_notification_creation_works(): void
     {
         $originalKey = 'idempotent-key';
-        
+
         Notification::create([
             'user_id' => $this->user->id,
             'type' => 'order',
@@ -329,7 +329,7 @@ class NotificationTest extends TestCase
         ]);
 
         $sameNotification = Notification::where('key', $originalKey)->first();
-        
+
         $this->assertNotNull($sameNotification);
         $this->assertEquals(1, Notification::where('key', $originalKey)->count());
     }

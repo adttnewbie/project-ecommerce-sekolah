@@ -96,12 +96,14 @@ class HandleInertiaRequests extends Middleware
 
     /**
      * Get unread notification count for header badge.
+     *
+     * @return array{count: int}
      */
     private function notificationBadge(Request $request): array
     {
         $user = $request->user();
-        
-        if (!$user) {
+
+        if (! $user) {
             return ['count' => 0];
         }
 
@@ -262,7 +264,7 @@ class HandleInertiaRequests extends Middleware
         $supportEmail = config('mail.from.address');
 
         return [
-            'notifications' => $notifications->map(function ($notification) use ($supportEmail) {
+            'notifications' => $notifications->map(function ($notification) {
                 return [
                     'key' => $notification->key,
                     'type' => $notification->type,
@@ -307,7 +309,7 @@ class HandleInertiaRequests extends Middleware
         $supportEmail = config('mail.from.address');
 
         return [
-            'notifications' => $notifications->map(function ($notification) use ($supportEmail) {
+            'notifications' => $notifications->map(function ($notification) {
                 return [
                     'key' => $notification->key,
                     'type' => $notification->type,

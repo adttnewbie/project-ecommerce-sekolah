@@ -201,6 +201,9 @@ class Product extends Model
      * Replaces the per-row correlated subquery (REAL_STOCK_SQL) used in
      * selectRaw/whereRaw/orderByRaw so the aggregation runs once instead of once
      * per product row.
+     *
+     * @param  Builder<Product>  $query
+     * @return Builder<Product>
      */
     public function scopeWithRealStock(Builder $query): Builder
     {

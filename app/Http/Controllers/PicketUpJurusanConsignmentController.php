@@ -473,7 +473,9 @@ class PicketUpJurusanConsignmentController extends Controller
             $newStatus = OrderItemStatus::from($validated['status']);
             OrderItemFulfillment::assertCanAdvance($current, $newStatus);
 
-            $sellerName = $current->product->seller_id ? $current->product->seller->name : ($current->product->upJurusan?->name ?? 'UP');
+            $sellerName = $current->product->seller_id
+                ? $current->product->seller->name
+                : $current->product->upJurusan->name;
 
             $current->update(['status' => $newStatus]);
             OrderStatusSync::sync($current->order);

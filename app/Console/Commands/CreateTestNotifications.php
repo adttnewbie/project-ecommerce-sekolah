@@ -9,14 +9,16 @@ use Illuminate\Console\Command;
 class CreateTestNotifications extends Command
 {
     protected $signature = 'notifications:create-test';
+
     protected $description = 'Create test notifications for admin and seller roles';
 
     public function handle(): int
     {
         $admin = User::where('role', 'admin')->first();
-        
-        if (!$admin) {
+
+        if (! $admin) {
             $this->error('No admin user found. Please create an admin user first.');
+
             return self::FAILURE;
         }
 
@@ -52,7 +54,7 @@ class CreateTestNotifications extends Command
         ]);
 
         $this->info("✅ Created {$admin->name} test notifications!");
-        
+
         // Show created count
         $count = Notification::where('user_id', $admin->id)->count();
         $this->info("   Total notifications for {$admin->name}: {$count}");

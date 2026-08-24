@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\AdminNotificationTriggered;
 use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 class AdminNotificationNotify
@@ -13,19 +14,20 @@ class AdminNotificationNotify
      */
     public function handle(AdminNotificationTriggered $event): void
     {
-        $admin = \App\Models\User::where('role', 'admin')
+        $admin = User::where('role', 'admin')
             ->with('upJurusan:id,name')
             ->first();
-        
-        if (!$admin) {
+
+        if (! $admin) {
             Log::warning('No admin user found to receive notification');
+
             return;
         }
 
         $notificationKey = "admin-notification:{$event->type}-{$event->adminId}";
-        
+
         $existing = Notification::where('key', $notificationKey)->first();
-        
+
         if ($existing) {
             return;
         }

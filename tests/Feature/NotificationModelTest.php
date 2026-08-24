@@ -17,7 +17,7 @@ class NotificationModelTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->user = User::factory()->create();
     }
 
@@ -34,7 +34,7 @@ class NotificationModelTest extends TestCase
         ]);
 
         $notification->markAsRead();
-        
+
         $this->assertNotNull($notification->fresh()->read_at);
     }
 
@@ -66,7 +66,7 @@ class NotificationModelTest extends TestCase
         ]);
 
         $notification->markAsDismissed();
-        
+
         $this->assertNotNull($notification->fresh()->dismissed_at);
     }
 
@@ -134,14 +134,14 @@ class NotificationModelTest extends TestCase
         ]);
 
         $count = Notification::countUnreadForUser($this->user->id);
-        
+
         $this->assertEquals(2, $count);
     }
 
     public function test_idempotent_notification_creation_by_key(): void
     {
         $originalKey = 'idempotent-key';
-        
+
         Notification::create([
             'user_id' => $this->user->id,
             'type' => 'order',
@@ -153,7 +153,7 @@ class NotificationModelTest extends TestCase
         ]);
 
         $sameNotification = Notification::where('key', $originalKey)->first();
-        
+
         $this->assertNotNull($sameNotification);
         $this->assertEquals(1, Notification::where('key', $originalKey)->count());
     }
@@ -232,7 +232,7 @@ class NotificationModelTest extends TestCase
     public function test_notification_can_only_access_own_records(): void
     {
         $otherUser = User::factory()->create();
-        
+
         Notification::create([
             'user_id' => $this->user->id,
             'type' => 'order',

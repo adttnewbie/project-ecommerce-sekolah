@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Enums\NotificationType;
 use App\Events\LowStockDetected;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Log;
@@ -15,22 +16,23 @@ class CreateLowStockNotification
     {
         // Use notification key for idempotency
         $notificationKey = $event->notificationKey();
-        
+
         // Check if notification already exists
         $existing = Notification::where('key', $notificationKey)->first();
-        
+
         if ($existing) {
             Log::info('Low stock notification already exists, skipping creation', [
                 'key' => $notificationKey,
                 'user_id' => $event->sellerId,
             ]);
+
             return;
         }
 
         // Create new persistent notification
         Notification::create([
             'user_id' => $event->sellerId,
-            'type' => \App\Enums\NotificationType::Stock->value,
+            'type' => NotificationType::Stock->value,
             'key' => $notificationKey,
             'title' => $event->notificationTitle(),
             'description' => $event->notificationDescription(),

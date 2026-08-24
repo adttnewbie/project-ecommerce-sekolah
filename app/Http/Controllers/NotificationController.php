@@ -4,26 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Models\Notification;
 use App\Models\NotificationDismissal;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Inertia\Response;
 
 class NotificationController extends Controller
 {
     /**
      * Display paginated notification center page.
      */
-    public function index(Request $request)
+    public function index(Request $request): RedirectResponse|Response
     {
         $user = $request->user();
-        
-        if (!$user) {
+
+        if (! $user) {
             return redirect()->route('login');
         }
 
         $page = $request->get('page', 1);
         $filter = $request->get('filter', 'all'); // all, unread, order, stock, product, payment, system, promotion
-        
+
         $query = Notification::query()
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc');
@@ -43,14 +46,14 @@ class NotificationController extends Controller
         $notifications = $query->paginate(20)->withQueryString();
 
         return inertia('Notifications/index', [
-            'notifications' => $this->transformNotifications($notifications),
+            'notifications' => $this->transformNotifications($notifications->items()),
             'meta' => [
                 'current_page' => (int) $notifications->currentPage(),
                 'last_page' => (int) $notifications->lastPage(),
                 'per_page' => (int) $notifications->perPage(),
                 'total' => (int) $notifications->total(),
-                'from' => (int) $notifications->firstItem() ?? 0,
-                'to' => (int) $notifications->lastItem() ?? 0,
+                'from' => (int) $notifications->firstItem(),
+                'to' => (int) $notifications->lastItem(),
             ],
             'filter' => $filter,
         ]);
@@ -59,9 +62,9 @@ class NotificationController extends Controller
     /**
      * Mark a specific notification as read.
      */
-    public function markAsRead(string $key)
+    public function markAsRead(Request $request, string $key): RedirectResponse
     {
-        $notification = Notification::where('user_id', auth()->id())
+        $notification = Notification::where('user_id', $request->user()?->id)
             ->where('key', $key)
             ->firstOrFail();
 
@@ -73,9 +76,9 @@ class NotificationController extends Controller
     /**
      * Mark all notifications as read for current user.
      */
-    public function markAllAsRead()
+    public function markAllAsRead(Request $request): RedirectResponse
     {
-        Notification::where('user_id', auth()->id())
+        Notification::where('user_id', $request->user()?->id)
             ->unread()
             ->active()
             ->update(['read_at' => now()]);
@@ -86,15 +89,16 @@ class NotificationController extends Controller
     /**
      * Mark selected notifications as read (batch operation).
      */
-    public function batchMarkAsRead(Request $request)
+    public function batchMarkAsRead(Request $request): RedirectResponse
     {
-        $keys = $request->input('keys', []);
-        
-        if (empty($keys)) {
+        /** @var list<string> $keys */
+        $keys = (array) $request->input('keys', []);
+
+        if ($keys === []) {
             return back();
         }
 
-        Notification::where('user_id', auth()->id())
+        Notification::where('user_id', $request->user()?->id)
             ->whereIn('key', $keys)
             ->unread()
             ->active()
@@ -121,13 +125,13 @@ class NotificationController extends Controller
             // other user's notification we must not leak its existence;
             // otherwise treat it as a derived action-item key.
             $existsForOtherUser = Notification::where('key', $key)
-                ->where('user_id', '!=', auth()->id())
+                ->where('user_id', '!=', $request->user()?->id)
                 ->exists();
 
             abort_if($existsForOtherUser, 404);
 
             NotificationDismissal::firstOrCreate([
-                'user_id' => auth()->id(),
+                'user_id' => (int) $request->user()?->id,
                 'key' => $key,
             ]);
 
@@ -135,7 +139,7 @@ class NotificationController extends Controller
         }
 
         NotificationDismissal::firstOrCreate([
-            'user_id' => auth()->id(),
+            'user_id' => (int) $request->user()?->id,
             'key' => $key,
         ]);
 
@@ -149,11 +153,11 @@ class NotificationController extends Controller
      */
     public function restore(Request $request, string $key): RedirectResponse
     {
-        NotificationDismissal::where('user_id', auth()->id())
+        NotificationDismissal::where('user_id', $request->user()?->id)
             ->where('key', $key)
             ->delete();
 
-        Notification::where('user_id', auth()->id())
+        Notification::where('user_id', $request->user()?->id)
             ->where('key', $key)
             ->whereNotNull('dismissed_at')
             ->get()
@@ -167,9 +171,9 @@ class NotificationController extends Controller
     /**
      * Get recent notifications for dropdown (max 10).
      */
-    public function getRecent()
+    public function getRecent(Request $request): JsonResponse
     {
-        $notifications = Notification::where('user_id', auth()->id())
+        $notifications = Notification::where('user_id', $request->user()?->id)
             ->active()
             ->orderBy('created_at', 'desc')
             ->limit(10)
@@ -183,19 +187,27 @@ class NotificationController extends Controller
     /**
      * Get unread count for header badge.
      */
-    public function unreadCount(): JsonResponse
+    public function unreadCount(Request $request): JsonResponse
     {
+        /** @var User|null $user */
+        $user = $request->user();
+
+        abort_unless($user instanceof User, 401);
+
         return response()->json([
-            'data' => Notification::countUnreadForUser(auth()->id()),
+            'data' => Notification::countUnreadForUser($user->id),
         ]);
     }
 
     /**
      * Transform paginated collection for frontend.
+     *
+     * @param  array<int, Notification>  $notifications
+     * @return array<int, array<string, mixed>>
      */
-    private function transformNotifications($collection): array
+    private function transformNotifications(array $notifications): array
     {
-        return collect($collection->items())->map(function ($notification) {
+        return collect($notifications)->map(function (Notification $notification) {
             return [
                 'id' => $notification->id,
                 'type' => $notification->type,
@@ -212,10 +224,13 @@ class NotificationController extends Controller
 
     /**
      * Transform collection for dropdown (no pagination).
+     *
+     * @param  Collection<int, Notification>  $collection
+     * @return array<int, array<string, mixed>>
      */
-    private function transformNotificationsCollection($collection): array
+    private function transformNotificationsCollection(Collection $collection): array
     {
-        return $collection->map(function ($notification) {
+        return $collection->map(function (Notification $notification) {
             return [
                 'key' => $notification->key,
                 'type' => $notification->type,

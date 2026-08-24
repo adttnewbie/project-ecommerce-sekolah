@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Str;
 
 class Notification extends Model
 {
@@ -29,7 +29,9 @@ class Notification extends Model
     ];
 
     /**
-     * Generate a new notification with a stable UUID key.
+     * Generate a new notification with a stable key.
+     *
+     * @param  array<string, mixed>|null  $extraData
      */
     public static function createNotification(
         int $userId,
@@ -90,6 +92,8 @@ class Notification extends Model
 
     /**
      * Get user relationship.
+     *
+     * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
     {
@@ -99,7 +103,8 @@ class Notification extends Model
     /**
      * Scope for unread notifications only.
      */
-    public function scopeUnread($query): void
+    /** @param  Builder<Notification>  $query */
+    public function scopeUnread(Builder $query): void
     {
         $query->whereNull('read_at');
     }
@@ -107,7 +112,8 @@ class Notification extends Model
     /**
      * Scope for read notifications only.
      */
-    public function scopeRead($query): void
+    /** @param  Builder<Notification>  $query */
+    public function scopeRead(Builder $query): void
     {
         $query->whereNotNull('read_at');
     }
@@ -115,7 +121,8 @@ class Notification extends Model
     /**
      * Scope for unread notifications of specific type.
      */
-    public function scopeUnreadOfType($query, string $type): void
+    /** @param  Builder<Notification>  $query */
+    public function scopeUnreadOfType(Builder $query, string $type): void
     {
         $query->unread()->where('type', $type);
     }
@@ -123,7 +130,8 @@ class Notification extends Model
     /**
      * Scope to exclude dismissed notifications.
      */
-    public function scopeActive($query): void
+    /** @param  Builder<Notification>  $query */
+    public function scopeActive(Builder $query): void
     {
         $query->whereNull('dismissed_at');
     }
@@ -145,9 +153,10 @@ class Notification extends Model
     public static function createOrGetByKey(string $key, ?int &$notificationId): ?self
     {
         $notification = static::where('key', $key)->first();
-        
+
         if ($notification) {
             $notificationId = $notification->id;
+
             return $notification;
         }
 

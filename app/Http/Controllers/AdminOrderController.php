@@ -40,7 +40,7 @@ class AdminOrderController extends Controller
             adminId: $admin->id,
             type: 'order',
             title: "Pesanan {$order->code} dibatalkan",
-            description: "Total: Rp ".number_format($order->total_price, 0, ',', '.').''.$validated['cancel_reason'],
+            description: 'Total: Rp '.number_format($order->total_price, 0, ',', '.').''.$validated['cancel_reason'],
             href: route('admin.orders.index', false),
             data: [
                 'order_id' => $order->id,

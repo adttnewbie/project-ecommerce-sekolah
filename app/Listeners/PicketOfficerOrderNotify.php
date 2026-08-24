@@ -4,7 +4,6 @@ namespace App\Listeners;
 
 use App\Events\OrderItemStatusChanged;
 use App\Models\Notification;
-use Illuminate\Support\Facades\Log;
 
 class PicketOfficerOrderNotify
 {
@@ -13,14 +12,14 @@ class PicketOfficerOrderNotify
      */
     public function handle(OrderItemStatusChanged $event): void
     {
-        if (!$event->picketId) {
+        if (! $event->picketId) {
             return;
         }
 
         $notificationKey = "picket-officer-order:{$event->orderItemId}-notif";
-        
+
         $existing = Notification::where('key', $notificationKey)->first();
-        
+
         if ($existing) {
             return;
         }

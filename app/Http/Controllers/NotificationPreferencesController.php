@@ -3,18 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\NotificationPreference;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class NotificationPreferencesController extends Controller
 {
     /**
      * Display notification preferences page.
      */
-    public function index()
+    public function index(Request $request): Response
     {
-        $user = auth()->user();
-        
+        /** @var User $user */
+        $user = $request->user();
+
         $preferences = NotificationPreference::where('user_id', $user->id)
             ->get()
             ->keyBy('type');
@@ -22,7 +26,7 @@ class NotificationPreferencesController extends Controller
         // Fill in missing types with defaults
         $allTypes = ['order', 'stock', 'product', 'payment', 'system', 'promotion'];
         foreach ($allTypes as $type) {
-            if (!$preferences->has($type)) {
+            if (! $preferences->has($type)) {
                 $preferences[$type] = new NotificationPreference([
                     'type' => $type,
                     'in_app_enabled' => true,
@@ -39,24 +43,28 @@ class NotificationPreferencesController extends Controller
     /**
      * Update notification preferences.
      */
-    public function update(Request $request)
+    public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'preferences.*.in_app_enabled' => 'boolean',
             'preferences.*.email_enabled' => 'boolean',
         ]);
 
-        $user = auth()->user();
+        /** @var User $user */
+        $user = $request->user();
 
-        collect($validated['preferences'])->each(function ($prefData, $type) use ($user) {
+        /** @var array<string, array<string, bool>> $preferences */
+        $preferences = $validated['preferences'] ?? [];
+
+        collect($preferences)->each(function (array $prefData, string $type) use ($user): void {
             NotificationPreference::updateOrCreate(
                 [
                     'user_id' => $user->id,
                     'type' => $type,
                 ],
                 [
-                    'in_app_enabled' => $prefData['in_app_enabled'],
-                    'email_enabled' => $prefData['email_enabled'],
+                    'in_app_enabled' => (bool) ($prefData['in_app_enabled'] ?? true),
+                    'email_enabled' => (bool) ($prefData['email_enabled'] ?? false),
                 ]
             );
         });

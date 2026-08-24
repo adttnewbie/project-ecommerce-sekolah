@@ -2,6 +2,12 @@
 
 use App\Enums\ProductSalesMethod;
 use App\Enums\ProductStatus;
+use App\Enums\UserRole;
+use App\Models\Category;
+use App\Models\DomainEvent;
+use App\Models\Product;
+use App\Models\User;
+use App\Support\DomainEventService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +23,6 @@ use Illuminate\Support\Facades\DB;
  * Each forked child mirrors the controller's transition statement so the test
  * exercises the same SQL atomicity the endpoints rely on.
  */
-
 function moderationDb(): string
 {
     $dir = sys_get_temp_dir().'/product_moderation_'.uniqid();
@@ -39,10 +44,10 @@ function moderationDb(): string
 
 function moderationProduct(): int
 {
-    $category = \App\Models\Category::factory()->create();
-    $seller = \App\Models\User::factory()->create(['role' => \App\Enums\UserRole::Seller]);
+    $category = Category::factory()->create();
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
 
-    return \App\Models\Product::factory()
+    return Product::factory()
         ->for($seller, 'seller')
         ->for($category)
         ->create([
@@ -59,7 +64,7 @@ function moderationTransition(int $productId, ProductStatus $status, ?string $re
         DB::statement('PRAGMA busy_timeout = 10000');
         DB::statement('PRAGMA journal_mode = WAL');
 
-        $affected = \App\Models\Product::query()
+        $affected = Product::query()
             ->whereKey($productId)
             ->where('status', ProductStatus::Pending)
             ->where('sales_method', ProductSalesMethod::SelfManaged)
@@ -69,8 +74,8 @@ function moderationTransition(int $productId, ProductStatus $status, ?string $re
             ]);
 
         if ($affected === 1) {
-            \App\Support\DomainEventService::record(
-                \App\Support\DomainEventService::AGGREGATE_PRODUCT,
+            DomainEventService::record(
+                DomainEventService::AGGREGATE_PRODUCT,
                 $productId,
                 $status === ProductStatus::Approved ? 'product_approved' : 'product_rejected',
                 null,
@@ -152,7 +157,7 @@ test('concurrent approve + reject: exactly one transition wins pending', functio
         DB::purge('concurrency');
         DB::reconnect('concurrency');
 
-        $final = \App\Models\Product::findOrFail($productId);
+        $final = Product::findOrFail($productId);
 
         if ($affectedA === 1) {
             expect($final->status)->toBe(ProductStatus::Approved)
@@ -163,7 +168,7 @@ test('concurrent approve + reject: exactly one transition wins pending', functio
         }
 
         expect(
-            \App\Models\DomainEvent::query()
+            DomainEvent::query()
                 ->where('aggregate_type', 'product')
                 ->where('aggregate_id', $productId)
                 ->count(),
@@ -244,12 +249,12 @@ test('concurrent approve + approve: exactly one wins, no duplicate success', fun
         DB::purge('concurrency');
         DB::reconnect('concurrency');
 
-        $final = \App\Models\Product::findOrFail($productId);
+        $final = Product::findOrFail($productId);
 
         expect($final->status)->toBe(ProductStatus::Approved)
             ->and($final->rejection_reason)->toBeNull()
             ->and(
-                \App\Models\DomainEvent::query()
+                DomainEvent::query()
                     ->where('aggregate_type', 'product')
                     ->where('aggregate_id', $productId)
                     ->count(),
@@ -330,12 +335,12 @@ test('concurrent reject + reject: exactly one reason persists, no stale override
         DB::purge('concurrency');
         DB::reconnect('concurrency');
 
-        $final = \App\Models\Product::findOrFail($productId);
+        $final = Product::findOrFail($productId);
 
         expect($final->status)->toBe(ProductStatus::Rejected)
             ->and(in_array($final->rejection_reason, ['Reason Alpha', 'Reason Beta'], true))->toBeTrue()
             ->and(
-                \App\Models\DomainEvent::query()
+                DomainEvent::query()
                     ->where('aggregate_type', 'product')
                     ->where('aggregate_id', $productId)
                     ->count(),

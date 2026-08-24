@@ -70,7 +70,7 @@ class AdminUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)],
             'password' => ['required', 'confirmed', Password::defaults()],
-            'role' => [Rule::enum(UserRole::class), 'in:' . UserRole::AdminJurusan->value],
+            'role' => [Rule::enum(UserRole::class), 'in:'.UserRole::AdminJurusan->value],
         ]);
 
         try {

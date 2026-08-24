@@ -185,3 +185,31 @@ Everything else reviewed (MoneyCalculationService, ConsignmentTransition/Payout,
 
 - **N1-3** (per-row livenessLabel EXISTS on admin orders index) → Fase 4.
 - Seller consignment index pagination → later pass (list is small; aggregates already fixed).
+
+---
+
+## 12. Fase 4 — Pra-migrasi PostgreSQL & hardening (2026-08-24)
+
+### Fixed
+
+1. **M8a — two-stage moderation enforced.** `ConsignmentTransitionService::approve()` refuses while the linked product is not yet published by the admin product-moderation gate ("Produk belum disetujui moderator…"), so a jurusan approval can no longer bypass product review; state stays `PendingApproval`.
+2. **M3 — notifications.key widened to string(100).** PostgreSQL `uuid` columns reject prefixed keys (`order-pending:{order}:{seller}`); unique index dropped/re-added around the change because SQLite's rebuild collides with the surviving index name. Long-key regression test included.
+3. **M7 — rate limits.** Checkout POST throttled at 10/min per user|ip (`throttle:checkout`); registration capped at 3/min per ip inside Fortify's `CreateNewUser`, counting successful signups toward the ip budget.
+4. **N1-3 — batched liveness labels.** `OrderLivenessService::primeForOrders()` fills the reason cache with three `whereKey` queries per page; admin orders index dropped from ~40 queries to **13**.
+5. **N1-4 — chunked stuck detection.** `detectAndMarkStuck` walks matched orders via `chunkById(200)` instead of materialising the whole set.
+6. **§7.8 — benchmark is a real assertion now.** Each route's measured count must stay ≤ its documented pre-optimisation baseline; measured values still print for drift tracking.
+
+### CI debt cleared
+
+- **PHPStan 34 → 0**: return types and null-safe user resolution in NotificationController/PreferencesController, `Builder<Notification>` scope generics (+ Product), BelongsTo generics, iterable value types on events/helpers, redundant nullsafe removals.
+- **Pint repo-wide clean** (~30 files formatted).
+- `.php-cs-fixer.*` strays gitignored.
+
+### Verification status
+
+- **`composer ci:check` fully green** (eslint, prettier, tsc, pint, phpstan 0, 544 tests / 542 passed / 2 skipped pre-existing pcntl-gated / 0 failed).
+
+### Remaining known items
+
+- Seller consignment index pagination (deferred from Fase 3).
+- 2 skipped concurrency tests require the pcntl extension by design.

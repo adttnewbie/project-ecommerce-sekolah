@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\OrderItemStatusChanged;
 use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 class AdminJurusanConsignmentNotify
@@ -13,22 +14,23 @@ class AdminJurusanConsignmentNotify
      */
     public function handle(OrderItemStatusChanged $event): void
     {
-        if (!$event->consignmentId) {
+        if (! $event->consignmentId) {
             return;
         }
 
-        $adminJurusan = \App\Models\User::where('role', 'admin_jurusan')
+        $adminJurusan = User::where('role', 'admin_jurusan')
             ->first();
-        
-        if (!$adminJurusan) {
+
+        if (! $adminJurusan) {
             Log::warning('No admin jurusan user found to receive consignment notification');
+
             return;
         }
 
         $notificationKey = "admin-jurusan-consignment:{$event->consignmentId}-notif";
-        
+
         $existing = Notification::where('key', $notificationKey)->first();
-        
+
         if ($existing) {
             return;
         }

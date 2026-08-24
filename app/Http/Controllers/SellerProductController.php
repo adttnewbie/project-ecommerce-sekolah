@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\ProductPendingModeration;
 use App\Enums\ProductFulfillmentType;
 use App\Enums\ProductSalesMethod;
 use App\Enums\ProductStatus;
 use App\Enums\UpJurusanConsignmentStatus;
+use App\Events\ProductPendingModeration;
 use App\Http\Requests\Seller\StoreProductRequest;
 use App\Http\Requests\Seller\UpdateProductRequest;
 use App\Models\Category;

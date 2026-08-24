@@ -116,7 +116,7 @@ class AdminJurusanConsignmentController extends Controller
                 productName: $consignment->product->name,
                 sellerName: $consignment->seller->name,
                 buyerName: 'Admin Jurusan',
-                action: 'disetujui dengan komisi ' . $validated['commission_rate'] . '%',
+                action: 'disetujui dengan komisi '.$validated['commission_rate'].'%',
                 picketId: null
             );
         });
@@ -148,7 +148,7 @@ class AdminJurusanConsignmentController extends Controller
                 productName: $consignment->product->name,
                 sellerName: $consignment->seller->name,
                 buyerName: 'Admin Jurusan',
-                action: 'ditolak: ' . $validated['rejection_reason'],
+                action: 'ditolak: '.$validated['rejection_reason'],
                 picketId: null
             );
         });
@@ -180,7 +180,7 @@ class AdminJurusanConsignmentController extends Controller
                 productName: $consignment->product->name,
                 sellerName: $consignment->seller->name,
                 buyerName: 'Admin Jurusan',
-                action: 'dibatalkan' . ($validated['note'] ? ': ' . $validated['note'] : ''),
+                action: 'dibatalkan'.($validated['note'] ? ': '.$validated['note'] : ''),
                 picketId: null
             );
         });

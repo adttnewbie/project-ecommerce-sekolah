@@ -24,7 +24,7 @@ return new class extends Migration
             $table->timestamp('dismissed_at')->nullable();
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
-            
+
             // Indexes for efficient queries
             $table->index(['user_id', 'read_at']);
             $table->index(['user_id', 'dismissed_at']);

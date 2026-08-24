@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\ProductPendingModeration;
 use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 class AdminProductModerationNotify
@@ -13,17 +14,18 @@ class AdminProductModerationNotify
      */
     public function handle(ProductPendingModeration $event): void
     {
-        $admin = \App\Models\User::where('role', 'admin')->first();
-        
-        if (!$admin) {
+        $admin = User::where('role', 'admin')->first();
+
+        if (! $admin) {
             Log::warning('No admin user found to receive product moderation notification');
+
             return;
         }
 
         $notificationKey = "admin-product-moderation:{$event->productId}";
-        
+
         $existing = Notification::where('key', $notificationKey)->first();
-        
+
         if ($existing) {
             return;
         }

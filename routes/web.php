@@ -50,7 +50,6 @@ Route::middleware('auth')->group(function () {
     Route::put('/notifications/{key}/restore', [NotificationController::class, 'restore'])->name('notifications.restore');
 });
 
-
 Route::middleware(['auth', EnsureUserIsBuyer::class])->group(function () {
     Route::get('cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('cart/items/{product:slug}', [CartController::class, 'store'])->name('cart.items.store');

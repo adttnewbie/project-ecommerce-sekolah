@@ -207,7 +207,6 @@ class OrderLivenessService
 
         // Instances already carrying cached reasons keep them.
         $pending = collect($orders)
-            ->filter(fn ($order) => $order instanceof Order)
             ->reject(fn (Order $order) => isset(self::stuckReasonsCache()[$order]));
 
         if ($pending->isEmpty()) {

@@ -30,3 +30,6 @@ yarn-error.log
 /.vscode
 /.zed
 /.agents
+
+.php-cs-fixer.cache
+.php-cs-fixer.dist.php

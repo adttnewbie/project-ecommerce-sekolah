@@ -331,5 +331,5 @@ test('approve refuses to publish when product moderation has not approved the pr
 
     expect($consignment->fresh()->status)->toBe(UpJurusanConsignmentStatus::PendingApproval)
         ->and(Product::query()->find($consignment->product_id)->status)
-            ->toBe(ProductStatus::Pending);
+        ->toBe(ProductStatus::Pending);
 });

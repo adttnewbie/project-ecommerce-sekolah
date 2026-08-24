@@ -10,6 +10,9 @@ class AdminNotificationTriggered
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function __construct(
         public readonly int $adminId,
         public readonly string $type,
@@ -21,6 +24,6 @@ class AdminNotificationTriggered
 
     public function notificationKey(): string
     {
-        return "admin-{$this->type}-{$this->adminId}-" . md5($this->title);
+        return "admin-{$this->type}-{$this->adminId}-".md5($this->title);
     }
 }

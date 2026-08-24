@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\OrderPaymentApproved;
 use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 class PicketOrderPaymentNotify
@@ -17,19 +18,20 @@ class PicketOrderPaymentNotify
             return;
         }
 
-        $picket = \App\Models\User::where('id', $event->processedBy)
+        $picket = User::where('id', $event->processedBy)
             ->where('role', 'picket_officer')
             ->first();
-        
-        if (!$picket) {
+
+        if (! $picket) {
             Log::warning('Picket officer not found for payment notification');
+
             return;
         }
 
         $notificationKey = "picket-payment-approved:{$event->orderItemId}";
-        
+
         $existing = Notification::where('key', $notificationKey)->first();
-        
+
         if ($existing) {
             return;
         }
@@ -39,7 +41,7 @@ class PicketOrderPaymentNotify
             'type' => 'payment',
             'key' => $notificationKey,
             'title' => "Pembayaran order {$event->orderNumber} disetujui",
-            'description' => "Total: Rp " . number_format($event->amount, 0, ',', '.').'',
+            'description' => 'Total: Rp '.number_format($event->amount, 0, ',', '.').'',
             'href' => route('picket.orders', absolute: false),
             'data' => [
                 'order_item_id' => $event->orderItemId,
