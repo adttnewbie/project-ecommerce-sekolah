@@ -135,6 +135,17 @@ class BuyerOrderController extends Controller
                     && $item->status !== OrderItemStatus::Completed
                     && $item->payment_status !== PaymentStatus::Paid
             ),
+            'cancelled_at' => $order->cancelled_at?->toIso8601String(),
+            'cancel_reason' => $order->cancel_reason,
+            'cancellable_items' => $order->items
+                ->filter(fn (OrderItem $item) => $item->payment_status !== PaymentStatus::Paid)
+                ->map(fn (OrderItem $item) => [
+                    'id' => $item->id,
+                    'name' => $item->product_name,
+                    'quantity' => $item->quantity,
+                ])
+                ->values()
+                ->all(),
             'total_price' => $order->total_price,
             'payment' => [
                 'status' => [

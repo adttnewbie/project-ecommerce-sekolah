@@ -12,6 +12,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class OrderLivenessService
@@ -277,13 +278,24 @@ class OrderLivenessService
             );
 
             foreach ($items as $item) {
-                OrderItemCancellation::cancelItem(
-                    $item,
-                    $actor,
-                    'Otomatis dibatalkan karena melewati batas waktu pembayaran',
-                    true,
-                );
-                $cancelled++;
+                try {
+                    OrderItemCancellation::cancelItem(
+                        $item,
+                        $actor,
+                        'Otomatis dibatalkan karena melewati batas waktu pembayaran',
+                        true,
+                    );
+                    $cancelled++;
+                } catch (ValidationException $exception) {
+                    // The item changed state between the pre-read above and the
+                    // locked re-read inside cancelItem (e.g. a concurrent
+                    // payment approval). Skip it so one raced item never aborts
+                    // the whole expiry batch.
+                    Log::warning('Skipped expiring order item that changed state', [
+                        'order_item_id' => $item->id,
+                        'reason' => $exception->getMessage(),
+                    ]);
+                }
             }
         }
 

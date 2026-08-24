@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
+use App\Events\SellerApplicationPending;
 use App\Models\SellerApplication;
 use App\Models\User;
 use App\Support\ActorLifecycle;
@@ -72,6 +73,17 @@ class SellerApplicationController extends Controller
             'user_id' => $user->id,
             'status' => SellerApplication::PENDING,
         ]);
+
+        $application = SellerApplication::query()
+            ->where('user_id', $user->id)
+            ->latest()
+            ->first();
+
+        SellerApplicationPending::dispatch(
+            applicationId: $application->id,
+            applicantName: $user->name,
+            storeName: $validated['store_name']
+        );
 
         return to_route('seller-application.index')
             ->with('success', 'Pengajuan seller berhasil dikirim.');

@@ -8,7 +8,11 @@ export default function PasswordInput({
     className,
     ref,
     ...props
-}: Omit<ComponentProps<'input'>, 'type'> & { ref?: Ref<HTMLInputElement> }) {
+}: Omit<ComponentProps<'input'>, 'type'> & {
+    ref?: Ref<HTMLInputElement>;
+    /** Non-standard iOS Safari attribute (webkit autofill hint). */
+    passwordrules?: string;
+}) {
     const [showPassword, setShowPassword] = useState(false);
 
     return (

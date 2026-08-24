@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\OrderItemStatusChanged;
 use App\Models\UpJurusanConsignment;
 use App\Models\User;
 use App\Support\ConsignmentPayoutService;
@@ -106,6 +107,18 @@ class AdminJurusanConsignmentController extends Controller
                 (int) $validated['commission_rate'],
                 $request->user(),
             );
+
+            OrderItemStatusChanged::dispatch(
+                orderItemId: null,
+                orderId: null,
+                productId: $consignment->product_id,
+                consignmentId: $consignment->id,
+                productName: $consignment->product->name,
+                sellerName: $consignment->seller->name,
+                buyerName: 'Admin Jurusan',
+                action: 'disetujui dengan komisi ' . $validated['commission_rate'] . '%',
+                picketId: null
+            );
         });
 
         return to_route('admin-jurusan.consignments.index')
@@ -126,6 +139,18 @@ class AdminJurusanConsignmentController extends Controller
                 $validated['rejection_reason'],
                 $request->user(),
             );
+
+            OrderItemStatusChanged::dispatch(
+                orderItemId: null,
+                orderId: null,
+                productId: $consignment->product_id,
+                consignmentId: $consignment->id,
+                productName: $consignment->product->name,
+                sellerName: $consignment->seller->name,
+                buyerName: 'Admin Jurusan',
+                action: 'ditolak: ' . $validated['rejection_reason'],
+                picketId: null
+            );
         });
 
         return to_route('admin-jurusan.consignments.index')
@@ -145,6 +170,18 @@ class AdminJurusanConsignmentController extends Controller
                 $consignment,
                 $validated['note'] ?? null,
                 $request->user(),
+            );
+
+            OrderItemStatusChanged::dispatch(
+                orderItemId: null,
+                orderId: null,
+                productId: $consignment->product_id,
+                consignmentId: $consignment->id,
+                productName: $consignment->product->name,
+                sellerName: $consignment->seller->name,
+                buyerName: 'Admin Jurusan',
+                action: 'dibatalkan' . ($validated['note'] ? ': ' . $validated['note'] : ''),
+                picketId: null
             );
         });
 

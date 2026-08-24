@@ -8,6 +8,7 @@ use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
 use App\Enums\StockMovementSource;
+use App\Events\PendingOrderCreated;
 use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -115,8 +116,12 @@ class CheckoutController extends Controller
         $maxAttempts = 3;
 
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            // Reset per attempt so a retried transaction never dispatches
+            // notifications for work that was rolled back.
+            $pendingBySeller = [];
+
             try {
-                return DB::transaction(function () use ($user, $validated, $selectedIds) {
+                $order = DB::transaction(function () use ($user, $validated, $selectedIds, &$pendingBySeller) {
                     // Serialize concurrent checkouts for the same buyer by
                     // locking their user row; the unpaid-order limit is then
                     // checked inside the same transaction so two parallel
@@ -154,50 +159,56 @@ class CheckoutController extends Controller
                         }
                         $quantity = (int) $validated['buy_now_quantity'];
 
-                        $totalPrice = $this->createOrderItem($order, $product, $quantity, $user);
+                        $totalPrice = $this->createOrderItem($order, $product, $quantity, $user, $pendingBySeller);
 
                         $order->update(['total_price' => $totalPrice]);
 
                         return $order;
                     }
 
-                        $cartItems = CartItem::query()
-                            ->where('user_id', $user->id)
-                            ->when($selectedIds !== [], fn ($query) => $query->whereIn('id', $selectedIds))
-                            ->orderBy('id')
-                            ->get();
+                    $cartItems = CartItem::query()
+                        ->where('user_id', $user->id)
+                        ->when($selectedIds !== [], fn ($query) => $query->whereIn('id', $selectedIds))
+                        ->orderBy('id')
+                        ->get();
 
-                        if ($cartItems->isEmpty()) {
+                    if ($cartItems->isEmpty()) {
+                        throw ValidationException::withMessages([
+                            'cart' => 'Cart masih kosong.',
+                        ]);
+                    }
+
+                    foreach ($cartItems as $cartItem) {
+                        $product = Product::query()
+                            ->lockForUpdate()
+                            ->find($cartItem->product_id);
+                        if ($product === null) {
                             throw ValidationException::withMessages([
-                                'cart' => 'Cart masih kosong.',
+                                'cart' => 'Salah satu produk di keranjang sudah tidak tersedia. Silakan periksa kembali keranjang Anda.',
                             ]);
                         }
 
-                        foreach ($cartItems as $cartItem) {
-                            $product = Product::query()
-                                ->lockForUpdate()
-                                ->find($cartItem->product_id);
-                            if ($product === null) {
-                                throw ValidationException::withMessages([
-                                    'cart' => 'Salah satu produk di keranjang sudah tidak tersedia. Silakan periksa kembali keranjang Anda.',
-                                ]);
-                            }
+                        $totalPrice += $this->createOrderItem($order, $product, $cartItem->quantity, $user, $pendingBySeller);
+                        $processedIds[] = $cartItem->id;
+                    }
 
-                            $totalPrice += $this->createOrderItem($order, $product, $cartItem->quantity, $user);
-                            $processedIds[] = $cartItem->id;
-                        }
+                    $order->update([
+                        'total_price' => $totalPrice,
+                    ]);
 
-                        $order->update([
-                            'total_price' => $totalPrice,
-                        ]);
+                    CartItem::query()
+                        ->where('user_id', $user->id)
+                        ->whereIn('id', $processedIds)
+                        ->delete();
 
-                        CartItem::query()
-                            ->where('user_id', $user->id)
-                            ->whereIn('id', $processedIds)
-                            ->delete();
-
-                        return $order;
+                    return $order;
                 });
+
+                // Dispatch after commit so listeners never observe rolled-back
+                // orders and always receive the final buyer name/order total.
+                $this->dispatchPendingOrderNotifications($order, $user, $pendingBySeller);
+
+                return $order;
             } catch (QueryException $exception) {
                 if (! $this->isUniqueConstraintViolation($exception) || $attempt === $maxAttempts) {
                     throw $exception;
@@ -330,7 +341,10 @@ class CheckoutController extends Controller
         ] : null;
     }
 
-    private function createOrderItem(Order $order, Product $product, int $quantity, User $actor): int
+    /**
+     * @param  array<int, list<array{id: int, product_id: int, name: string}>>  $pendingBySeller
+     */
+    private function createOrderItem(Order $order, Product $product, int $quantity, User $actor, array &$pendingBySeller): int
     {
         if ($product->status !== ProductStatus::Approved) {
             throw ValidationException::withMessages([
@@ -348,7 +362,7 @@ class CheckoutController extends Controller
 
         $subtotal = $quantity * $product->price;
 
-        OrderItem::query()->create([
+        $orderItem = OrderItem::query()->create([
             'order_id' => $order->id,
             'product_id' => $product->id,
             'product_name' => $product->name,
@@ -364,6 +378,14 @@ class CheckoutController extends Controller
             'pre_order_min_quantity' => $product->isPreOrder() ? $product->pre_order_min_quantity : null,
             'pre_order_note' => $product->isPreOrder() ? $product->pre_order_note : null,
         ]);
+
+        if ($product->seller_id !== null && $product->seller_id !== $actor->id) {
+            $pendingBySeller[$product->seller_id][] = [
+                'id' => $orderItem->id,
+                'product_id' => $product->id,
+                'name' => $product->name,
+            ];
+        }
 
         if ($product->isPreOrder()) {
             return $subtotal;
@@ -393,6 +415,31 @@ class CheckoutController extends Controller
         }
 
         return $subtotal;
+    }
+
+    /**
+     * Dispatch one pending-order event per seller involved in the order.
+     * Runs after the checkout transaction commits so the buyer name and
+     * total price always describe the final persisted order.
+     *
+     * @param  array<int, list<array{id: int, product_id: int, name: string}>>  $pendingBySeller
+     */
+    private function dispatchPendingOrderNotifications(Order $order, User $buyer, array $pendingBySeller): void
+    {
+        foreach ($pendingBySeller as $sellerId => $items) {
+            $first = $items[0];
+
+            PendingOrderCreated::dispatch(
+                orderId: $order->id,
+                orderNumber: $order->code ?? "TRX-{$order->id}",
+                productId: $first['product_id'],
+                productName: $first['name'],
+                sellerId: $sellerId,
+                buyerName: $buyer->name,
+                totalPrice: (int) $order->total_price,
+                orderItemId: $first['id'],
+            );
+        }
     }
 
     private function recordConsignmentSale(Order $order, Product $product, User $actor, int $quantity): void

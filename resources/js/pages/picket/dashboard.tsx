@@ -280,6 +280,10 @@ export default function PicketDashboard({
     );
 }
 
+PicketDashboard.layout = {
+    breadcrumbs: [{ title: 'Dashboard', href: '/picket/dashboard' }],
+};
+
 function Summary({
     label,
     value,

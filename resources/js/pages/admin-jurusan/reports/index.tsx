@@ -246,6 +246,10 @@ function Summary({ label, value, icon: Icon }: SummaryProps) {
     );
 }
 
+AdminJurusanReports.layout = {
+    breadcrumbs: [{ title: 'Laporan', href: '/admin-jurusan/reports' }],
+};
+
 function DateTime({ value }: DateTimeProps) {
     return value ? new Date(value).toLocaleString('id-ID') : '-';
 }

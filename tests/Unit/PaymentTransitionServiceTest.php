@@ -123,3 +123,25 @@ test('cannot reject terminal completed item', function () {
     expect(fn () => PaymentTransitionService::reject($item, $seller, 'x'))
         ->toThrow(ValidationException::class);
 });
+
+test('cannot approve terminal items even when payment is unpaid', function () {
+    // Regression: expiry could cancel an unpaid item, then a concurrent
+    // approval would still mark it paid, producing a Paid+Cancelled item
+    // and a Paid order header over a Cancelled order.
+    ['seller' => $seller, 'item' => $cancelled] = makePaymentItem([
+        'status' => OrderItemStatus::Cancelled,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+
+    expect(fn () => PaymentTransitionService::approve($cancelled, $seller))
+        ->toThrow(ValidationException::class)
+        ->and($cancelled->refresh()->payment_status)->toBe(PaymentStatus::Unpaid);
+
+    ['seller' => $seller2, 'item' => $completed] = makePaymentItem([
+        'status' => OrderItemStatus::Completed,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+
+    expect(fn () => PaymentTransitionService::approve($completed, $seller2))
+        ->toThrow(ValidationException::class);
+});

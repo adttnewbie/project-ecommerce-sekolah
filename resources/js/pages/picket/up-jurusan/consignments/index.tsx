@@ -514,6 +514,13 @@ function Stepper({
     );
 }
 
+PicketUpJurusanConsignments.layout = {
+    breadcrumbs: [
+        { title: 'UP Jurusan', href: '/picket/up-jurusan' },
+        { title: 'Titipan', href: '/picket/up-jurusan/consignments' },
+    ],
+};
+
 function Summary({ label, value }: { label: string; value: string | number }) {
     return (
         <div className="rounded-[8px] border border-slate-100 bg-white px-4 py-3">

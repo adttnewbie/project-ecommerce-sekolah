@@ -5,6 +5,7 @@ import {
     ExternalLink,
     ShoppingCart,
     Store,
+    XCircle,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,17 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogDescription,
+    DialogFooter,
+    DialogClose,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import {
     Table,
     TableBody,
     TableCell,
@@ -23,6 +35,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import { index as ordersIndex } from '@/routes/orders';
 
 type BuyerOrder = {
@@ -30,6 +43,14 @@ type BuyerOrder = {
     code: string;
     status: { code: string; label: string };
     can_complete: boolean;
+    can_cancel: boolean;
+    cancelled_at: string | null;
+    cancel_reason: string | null;
+    cancellable_items: Array<{
+        id: number;
+        name: string;
+        quantity: number;
+    }>;
     payment: {
         status: { code: string; label: string };
         method: { code: string; label: string };
@@ -50,6 +71,10 @@ type BuyerOrder = {
         pre_order_min_quantity: number | null;
         pre_order_note: string | null;
         status: { code: string; label: string };
+        payment: {
+            status: { code: string; label: string };
+            method: { code: string; label: string };
+        };
         seller: { id: number; name: string };
     }[];
     created_at: string | null;
@@ -76,6 +101,20 @@ const formatDate = (value: string | null) =>
 
 export default function BuyerOrdersShow({ order }: Props) {
     const { flash } = usePage().props;
+
+    const getCancelStatusMessage = () => {
+        if (order.items.every((item) => item.payment.status.code === 'paid')) {
+            return 'Semua item sudah dibayar dan tidak dapat dibatalkan.';
+        }
+
+        const hasUnpaidItems = order.cancellable_items.length > 0;
+
+        if (!hasUnpaidItems) {
+            return 'Tidak ada item yang dapat dibatalkan karena status sudah final.';
+        }
+
+        return `Dapat membatalkan ${order.cancellable_items.length} item berikut:`;
+    };
 
     return (
         <>
@@ -208,6 +247,120 @@ export default function BuyerOrdersShow({ order }: Props) {
                                 <p className="mt-2 text-xs text-slate-500">
                                     Klik setelah barang sudah diterima agar
                                     status pesanan menjadi selesai.
+                                </p>
+                            </div>
+                        )}
+                        {order.can_cancel && !order.cancelled_at && (
+                            <div className="border-t border-slate-100 px-6 pb-6">
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button
+                                            variant="destructive"
+                                            className="w-fit"
+                                        >
+                                            <XCircle className="size-4" />
+                                            Batalkan Pesanan
+                                        </Button>
+                                    </DialogTrigger>
+
+                                    <DialogContent className="sm:max-w-md">
+                                        <DialogHeader>
+                                            <DialogTitle>
+                                                Batalkan Pesanan
+                                            </DialogTitle>
+                                            <DialogDescription>
+                                                {getCancelStatusMessage()}
+                                            </DialogDescription>
+                                        </DialogHeader>
+
+                                        <Form
+                                            action={`/orders/${order.id}/cancel`}
+                                            method="post"
+                                            className="space-y-4"
+                                        >
+                                            <div className="space-y-2">
+                                                <Label htmlFor="cancel_reason">
+                                                    Alasan Pembatalan
+                                                </Label>
+                                                <Textarea
+                                                    id="cancel_reason"
+                                                    name="cancel_reason"
+                                                    placeholder="Contoh: Perubahan rencana, tidak memerlukan barang lagi, salah pilih varian..."
+                                                    required
+                                                    minLength={10}
+                                                    maxLength={1000}
+                                                    rows={4}
+                                                    className="resize-none"
+                                                />
+                                                <p className="text-xs text-slate-500">
+                                                    Alasan wajib diisi minimal
+                                                    10 karakter
+                                                </p>
+
+                                                {order.cancellable_items
+                                                    .length > 0 && (
+                                                    <div className="mt-3 rounded-[8px] bg-slate-50 p-3">
+                                                        <p className="mb-2 text-xs font-medium text-slate-700">
+                                                            Item yang akan
+                                                            dibatalkan:
+                                                        </p>
+                                                        <ul className="space-y-1">
+                                                            {order.cancellable_items.map(
+                                                                (item) => (
+                                                                    <li
+                                                                        key={
+                                                                            item.id
+                                                                        }
+                                                                        className="flex items-start gap-2 text-sm text-slate-600"
+                                                                    >
+                                                                        <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />
+                                                                        <span>
+                                                                            {
+                                                                                item.name
+                                                                            }
+                                                                        </span>
+                                                                        <span className="text-slate-400">
+                                                                            •
+                                                                        </span>
+                                                                        <span>
+                                                                            x
+                                                                            {
+                                                                                item.quantity
+                                                                            }
+                                                                        </span>
+                                                                    </li>
+                                                                ),
+                                                            )}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <DialogFooter
+                                                showCloseButton={false}
+                                            >
+                                                <DialogClose asChild>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                    >
+                                                        Batal
+                                                    </Button>
+                                                </DialogClose>
+                                                <Button
+                                                    type="submit"
+                                                    variant="destructive"
+                                                >
+                                                    Konfirmasi Pembatalan
+                                                </Button>
+                                            </DialogFooter>
+                                        </Form>
+                                    </DialogContent>
+                                </Dialog>
+
+                                <p className="mt-3 text-xs text-slate-500">
+                                    Pembatalan hanya dapat dilakukan untuk item
+                                    yang belum dibayar dan status belum final.
                                 </p>
                             </div>
                         )}
@@ -344,7 +497,14 @@ export default function BuyerOrdersShow({ order }: Props) {
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="px-5">
-                                                    <Badge className="rounded-[6px] bg-emerald-50 text-emerald-700">
+                                                    <Badge
+                                                        className={
+                                                            item.status.code ===
+                                                            'cancelled'
+                                                                ? 'rounded-[6px] bg-rose-50 text-rose-700'
+                                                                : 'rounded-[6px] bg-emerald-50 text-emerald-700'
+                                                        }
+                                                    >
                                                         {item.status.label}
                                                     </Badge>
                                                 </TableCell>
@@ -353,6 +513,31 @@ export default function BuyerOrdersShow({ order }: Props) {
                                     </TableBody>
                                 </Table>
                             </div>
+
+                            {order.cancelled_at && (
+                                <div className="border-t border-slate-100 p-6">
+                                    <div className="flex items-start gap-3 rounded-[8px] bg-rose-50 p-4">
+                                        <XCircle className="mt-0.5 size-5 text-rose-600" />
+                                        <div>
+                                            <p className="font-medium text-rose-900">
+                                                Pesanan Dibatalkan
+                                            </p>
+                                            <p className="mt-1 text-sm text-rose-700">
+                                                Dibatalkan pada{' '}
+                                                {formatDate(order.cancelled_at)}
+                                                {order.cancel_reason && (
+                                                    <span className="mt-1 block">
+                                                        <strong className="text-rose-900">
+                                                            Alasan:
+                                                        </strong>{' '}
+                                                        {order.cancel_reason}
+                                                    </span>
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>

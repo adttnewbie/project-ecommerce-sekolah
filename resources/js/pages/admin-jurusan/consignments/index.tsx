@@ -194,3 +194,7 @@ function RejectConsignmentDialog({
         </AlertDialog>
     );
 }
+
+AdminJurusanConsignments.layout = {
+    breadcrumbs: [{ title: 'Titipan', href: '/admin-jurusan/consignments' }],
+};

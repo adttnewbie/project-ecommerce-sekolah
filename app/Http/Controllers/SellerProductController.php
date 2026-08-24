@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ProductPendingModeration;
 use App\Enums\ProductFulfillmentType;
 use App\Enums\ProductSalesMethod;
 use App\Enums\ProductStatus;
@@ -178,6 +179,15 @@ class SellerProductController extends Controller
                     'requested_quantity' => $request->integer('requested_quantity'),
                     'status' => UpJurusanConsignmentStatus::PendingApproval,
                 ]);
+            }
+
+            if ($salesMethod === ProductSalesMethod::UpJurusan && $fulfillmentType === ProductFulfillmentType::ReadyStock && $requestedStatus === ProductStatus::Pending) {
+                ProductPendingModeration::dispatch(
+                    productId: $product->id,
+                    productName: $request->string('name')->toString(),
+                    sellerId: $seller->id,
+                    sellerName: $seller->name
+                );
             }
         });
 

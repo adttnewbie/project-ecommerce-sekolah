@@ -166,7 +166,7 @@ test('header notifications can be dismissed per user', function () {
     $notificationKey = "admin-product-pending:{$pendingProduct->id}:{$pendingProduct->updated_at->getTimestamp()}";
 
     $this->actingAs($admin)
-        ->delete(route('notifications.destroy'), ['key' => $notificationKey])
+        ->delete(route('notifications.destroy', $notificationKey))
         ->assertRedirect();
 
     $this->assertDatabaseHas('notification_dismissals', [

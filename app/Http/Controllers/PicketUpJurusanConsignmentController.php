@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Enums\OrderItemStatus;
 use App\Enums\ProductStatus;
 use App\Enums\StockMovementSource;
+use App\Events\DailyReportSubmitted;
+use App\Events\OrderItemStatusChanged;
+use App\Events\OrderPaymentApproved;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\UpJurusanConsignment;
@@ -255,6 +258,7 @@ class PicketUpJurusanConsignmentController extends Controller
                             'rejection_reason' => $item->payment_rejection_reason,
                         ],
                         'created_at' => $item->created_at?->toIso8601String(),
+                        'cancelled_at' => $item->order->cancelled_at?->toIso8601String(),
                     ];
                 })
                 ->all(),
@@ -428,6 +432,12 @@ class PicketUpJurusanConsignmentController extends Controller
             ]);
 
             ReportAggregationService::snapshotDailyReportTransactions($report, $payload['items']);
+
+            DailyReportSubmitted::dispatch(
+                reportId: $report->id,
+                picketName: $picket->name,
+                totalRevenue: $payload['total_revenue']
+            );
         });
 
         return to_route('picket.reports')
@@ -447,8 +457,9 @@ class PicketUpJurusanConsignmentController extends Controller
             /** @var OrderItem $current */
             $current = OrderItem::query()
                 ->with([
-                    'order:id',
+                    'order:id,user_id',
                     'product.upJurusanConsignments:id,product_id,up_jurusan_id',
+                    'product.seller:id,name',
                 ])
                 ->lockForUpdate()
                 ->findOrFail($orderItem->id);
@@ -458,8 +469,22 @@ class PicketUpJurusanConsignmentController extends Controller
             $newStatus = OrderItemStatus::from($validated['status']);
             OrderItemFulfillment::assertCanAdvance($current, $newStatus);
 
+            $sellerName = $current->product->seller_id ? $current->product->seller->name : ($current->product->upJurusan?->name ?? 'UP');
+            
             $current->update(['status' => $newStatus]);
             OrderStatusSync::sync($current->order);
+
+            OrderItemStatusChanged::dispatch(
+                orderItemId: $current->id,
+                orderId: $current->order_id,
+                productId: $current->product_id,
+                consignmentId: null,
+                productName: $current->product_name,
+                sellerName: $sellerName,
+                buyerName: $current->order->user->name,
+                action: "status diubah ke {$newStatus->label()}",
+                picketId: $picket->id
+            );
         });
 
         return to_route('picket.orders')
@@ -475,6 +500,14 @@ class PicketUpJurusanConsignmentController extends Controller
         $this->authorizeOrderItemPicket($picket, $orderItem);
 
         PaymentTransitionService::approve($orderItem, $picket);
+
+        OrderPaymentApproved::dispatch(
+            orderItemId: $orderItem->id,
+            orderNumber: $orderItem->order_code ?? "TRX-{$orderItem->order_id}",
+            amount: $orderItem->subtotal,
+            status: 'approved',
+            processedBy: $picket->id
+        );
 
         return back()->with('success', 'Pelunasan item berhasil dikonfirmasi.');
     }
@@ -495,6 +528,14 @@ class PicketUpJurusanConsignmentController extends Controller
             $orderItem,
             $picket,
             $validated['payment_rejection_reason'] ?? null,
+        );
+
+        OrderPaymentApproved::dispatch(
+            orderItemId: $orderItem->id,
+            orderNumber: $orderItem->order_code ?? "TRX-{$orderItem->order_id}",
+            amount: $orderItem->subtotal,
+            status: 'rejected',
+            processedBy: $picket->id
         );
 
         return back()->with('success', 'Pembayaran item ditolak.');

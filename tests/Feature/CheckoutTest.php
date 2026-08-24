@@ -8,6 +8,7 @@ use App\Enums\ProductStatus;
 use App\Enums\UpJurusanConsignmentStatus;
 use App\Enums\UserRole;
 use App\Models\CartItem;
+use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\UpJurusan;
@@ -692,4 +693,88 @@ test('cancelled and completed orders do not count toward the unpaid limit', func
         ->assertSessionHasNoErrors();
 
     expect(Order::query()->where('user_id', $buyer->id)->count())->toBe(6);
+});
+
+test('checkout notifies seller and admin with final order data when an admin account exists', function () {
+    // Regression: AdminOrderNotify used to read properties that never
+    // existed on PendingOrderCreated, which threw inside the checkout
+    // transaction and rolled back every seller-product purchase whenever
+    // at least one admin user existed (i.e. in production).
+    User::factory()->create(['role' => UserRole::Admin]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+
+    $product = Product::factory()
+        ->for($seller, 'seller')
+        ->approved()
+        ->create(['name' => 'Kaos Sekolah', 'slug' => 'kaos-sekolah', 'price' => 3000, 'stock' => 10]);
+
+    CartItem::query()->create([
+        'user_id' => $buyer->id,
+        'product_id' => $product->id,
+        'quantity' => 2,
+    ]);
+
+    $this->actingAs($buyer)
+        ->from(route('cart.index'))
+        ->post(route('checkout'))
+        ->assertSessionHasNoErrors();
+
+    $order = $buyer->orders()->sole();
+    $item = $order->items()->sole();
+
+    expect($order->total_price)->toBe(6000)
+        ->and($product->fresh()->stock)->toBe(8);
+
+    $sellerNotification = Notification::query()
+        ->where('key', "order-pending:{$order->id}:{$seller->id}")
+        ->sole();
+    expect($sellerNotification->user_id)->toBe($seller->id)
+        ->and($sellerNotification->href)->toBe(route('seller.orders.show', $item->id, false));
+
+    $adminNotification = Notification::query()
+        ->where('key', "admin-order:{$order->id}")
+        ->sole();
+    expect($adminNotification->title)->toBe("Pesanan baru dari {$buyer->name}")
+        ->and($adminNotification->description)->toContain(number_format(6000, 0, ',', '.'));
+});
+
+test('multi seller checkout dispatches one pending notification per seller', function () {
+    User::factory()->create(['role' => UserRole::Admin]);
+    $sellerA = User::factory()->create(['role' => UserRole::Seller]);
+    $sellerB = User::factory()->create(['role' => UserRole::Seller]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+
+    $productA = Product::factory()->for($sellerA, 'seller')->approved()->create(['price' => 1000, 'stock' => 5]);
+    $ownProduct = Product::factory()->for($buyer, 'seller')->approved()->create(['price' => 2000, 'stock' => 5]);
+    $productB = Product::factory()->for($sellerB, 'seller')->approved()->create(['price' => 4000, 'stock' => 5]);
+
+    foreach ([$productA, $ownProduct, $productB] as $product) {
+        CartItem::query()->create([
+            'user_id' => $buyer->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+    }
+
+    $this->actingAs($buyer)
+        ->post(route('checkout'))
+        ->assertSessionHasNoErrors();
+
+    $order = $buyer->orders()->sole();
+
+    $sellerKeys = Notification::query()
+        ->where('key', 'like', 'order-pending:%')
+        ->pluck('user_id')
+        ->sort()
+        ->values();
+
+    expect($sellerKeys)->toHaveCount(2)
+        ->and($sellerKeys[0])->toBe($sellerA->id)
+        ->and($sellerKeys[1])->toBe($sellerB->id)
+        ->and(Notification::query()->where('key', "admin-order:{$order->id}")->count())->toBe(1);
+
+    $notificationA = Notification::query()->where('user_id', $sellerA->id)->firstOrFail();
+    $itemA = $order->items()->where('product_id', $productA->id)->sole();
+    expect($notificationA->href)->toBe(route('seller.orders.show', $itemA->id, false));
 });

@@ -59,6 +59,8 @@ type OrderDetailProps = {
             rejection_reason: string | null;
         };
         created_at: string;
+        cancelled_at?: string | null;
+        cancel_reason?: string | null;
     };
 };
 
@@ -111,8 +113,9 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
     const { flash } = usePage().props;
     const [processing, setProcessing] = useState(false);
     const [paymentProcessing, setPaymentProcessing] = useState(false);
-    const [statusError, setStatusError] = useState<string>();
     const [paymentError, setPaymentError] = useState<string>();
+    const [statusError, setStatusError] = useState<string>();
+
     const isOffline = orderItem.source === 'offline';
 
     const advanceStatus = () => {
@@ -320,20 +323,23 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                                                 </Badge>
                                             </div>
                                             {orderItem.payment.status.code !==
-                                                'paid' && (
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    disabled={paymentProcessing}
-                                                    onClick={approvePayment}
-                                                    className="rounded-[8px] border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                                                >
-                                                    <CheckCircle2 className="size-4" />
-                                                    {paymentProcessing
-                                                        ? 'Memproses...'
-                                                        : 'Tandai lunas'}
-                                                </Button>
-                                            )}
+                                                'paid' &&
+                                                !orderItem.cancelled_at && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        disabled={
+                                                            paymentProcessing
+                                                        }
+                                                        onClick={approvePayment}
+                                                        className="rounded-[8px] border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                                                    >
+                                                        <CheckCircle2 className="size-4" />
+                                                        {paymentProcessing
+                                                            ? 'Memproses...'
+                                                            : 'Tandai lunas'}
+                                                    </Button>
+                                                )}
                                         </div>
                                     )}
 
@@ -343,6 +349,20 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                                         Jurusan. Seller menerima hak penjualan
                                         setelah komisi UP.
                                     </p>
+                                ) : orderItem.cancelled_at ? (
+                                    <div className="mt-3 rounded-[8px] border border-rose-200 bg-rose-50 p-3">
+                                        <p className="text-sm font-medium text-rose-900">
+                                            Pesanan telah dibatalkan
+                                        </p>
+                                        {orderItem.cancel_reason && (
+                                            <p className="mt-1 text-sm text-rose-700">
+                                                <span className="font-semibold">
+                                                    Alasan:
+                                                </span>{' '}
+                                                {orderItem.cancel_reason}
+                                            </p>
+                                        )}
+                                    </div>
                                 ) : orderItem.managed_by_up_jurusan ? (
                                     <p className="text-sm font-medium text-slate-600">
                                         Status pengiriman dikelola oleh picket

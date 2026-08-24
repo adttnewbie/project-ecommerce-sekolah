@@ -1,3 +1,4 @@
+import type { PageProps as SharedPageProps } from '@inertiajs/core';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, Package, ShoppingCart, Store, Tags } from 'lucide-react';
 import InputError from '@/components/input-error';
@@ -57,7 +58,7 @@ type PageProps = {
         success?: string;
         error?: string;
     };
-};
+} & SharedPageProps;
 
 const formatRupiah = (value: number) =>
     new Intl.NumberFormat('id-ID', {

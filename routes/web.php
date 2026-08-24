@@ -17,7 +17,7 @@ use App\Http\Controllers\BuyerOrderController;
 use App\Http\Controllers\BuyerProductDetailController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\NotificationDismissalController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PicketUpJurusanConsignmentController;
 use App\Http\Controllers\SellerApplicationController;
 use App\Http\Controllers\SellerConsignmentController;
@@ -38,7 +38,18 @@ Route::get('/', BuyerCatalogController::class)->name('home');
 Route::get('catalog', BuyerCatalogController::class)->name('catalog.index');
 Route::get('catalog/{product:slug}', BuyerProductDetailController::class)->name('catalog.show');
 
-Route::middleware('auth')->delete('notifications', [NotificationDismissalController::class, 'destroy'])->name('notifications.destroy');
+// Notification routes
+Route::middleware('auth')->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/recent', [NotificationController::class, 'getRecent'])->name('notifications.recent');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
+    Route::post('/notifications/batch-read', [NotificationController::class, 'batchMarkAsRead']);
+    Route::post('/notifications/{key}/read', [NotificationController::class, 'markAsRead']);
+    Route::delete('/notifications/{key}', [NotificationController::class, 'dismiss'])->name('notifications.destroy');
+    Route::put('/notifications/{key}/restore', [NotificationController::class, 'restore'])->name('notifications.restore');
+});
+
 
 Route::middleware(['auth', EnsureUserIsBuyer::class])->group(function () {
     Route::get('cart', [CartController::class, 'index'])->name('cart.index');

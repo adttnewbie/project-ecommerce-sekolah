@@ -276,3 +276,70 @@ test('expire unpaid still works via liveness service', function () {
     expect($order->fresh()->status)->toBe(OrderStatus::Cancelled)
         ->and($product->fresh()->stock)->toBe(2);
 });
+
+test('expiry batch skips an item paid mid-run and still cancels the rest', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $productA = Product::factory()->approved()->create(['stock' => 4]);
+    $productB = Product::factory()->approved()->create(['stock' => 6]);
+
+    $orderA = Order::factory()->for($buyer)->create([
+        'expires_at' => now()->subHour(),
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    $itemA = OrderItem::factory()->for($orderA)->for($productA)->create([
+        'quantity' => 1,
+        'status' => OrderItemStatus::Pending,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+
+    $orderB = Order::factory()->for($buyer)->create([
+        'expires_at' => now()->subHour(),
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+    $itemB = OrderItem::factory()->for($orderB)->for($productB)->create([
+        'quantity' => 1,
+        'status' => OrderItemStatus::Pending,
+        'payment_status' => PaymentStatus::Unpaid,
+    ]);
+
+    // Deterministic race simulation: whichever item the batch cancels first
+    // flips the other one to Paid, mimicking a concurrent payment approval
+    // landing between the pre-read and the locked re-read.
+    $armed = true;
+    OrderItem::updated(function (OrderItem $record) use (&$armed, $itemA, $itemB): void {
+        if (! $armed) {
+            return;
+        }
+
+        $target = match (true) {
+            $record->is($itemA) => $itemB,
+            $record->is($itemB) => $itemA,
+            default => null,
+        };
+
+        if ($target === null) {
+            return;
+        }
+
+        $armed = false;
+        OrderItem::query()
+            ->whereKey($target->getKey())
+            ->update(['payment_status' => PaymentStatus::Paid->value]);
+    });
+
+    $cancelled = OrderLivenessService::expireUnpaidOrders($admin);
+
+    $statuses = [
+        $orderA->fresh()->status->value,
+        $orderB->fresh()->status->value,
+    ];
+    sort($statuses);
+
+    expect($cancelled)->toBe(1)
+        ->and($statuses)->toBe([OrderStatus::Cancelled->value, OrderStatus::Open->value])
+        ->and(
+            $itemA->fresh()->payment_status === PaymentStatus::Paid ||
+            $itemB->fresh()->payment_status === PaymentStatus::Paid
+        )->toBeTrue();
+});

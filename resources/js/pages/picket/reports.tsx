@@ -236,6 +236,10 @@ export default function PicketReports({ errors, daily_report }: Props) {
     );
 }
 
+PicketReports.layout = {
+    breadcrumbs: [{ title: 'Laporan', href: '/picket/reports' }],
+};
+
 function Summary({ label, value }: { label: string; value: string | number }) {
     return (
         <div className="rounded-[8px] border border-slate-200 bg-white p-5 shadow-sm">

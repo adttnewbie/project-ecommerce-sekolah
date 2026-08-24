@@ -300,6 +300,13 @@ function RejectConsignmentDialog({
     );
 }
 
+AdminJurusanConsignmentShow.layout = {
+    breadcrumbs: [
+        { title: 'Titipan', href: '/admin-jurusan/consignments' },
+        { title: 'Detail', href: '#' },
+    ],
+};
+
 function Info({ label, value }: { label: string; value: string }) {
     return (
         <div>

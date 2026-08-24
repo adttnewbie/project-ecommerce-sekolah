@@ -107,3 +107,29 @@ Everything else reviewed (MoneyCalculationService, ConsignmentTransition/Payout,
 2. **Scheduler availability** — the app depends on `schedule:run` for expiry + stuck detection; without it, unpaid/medium-stuck orders go unactioned. The SystemActor fallback fixes attribution only, not scheduling.
 3. **Queue worker for financial MTA** — ensure the financial/consignment transitions found by the audits run in a worker, and that **at-least-once** side effects (restock/payout) are idempotent (they are guarded; expiry race RC-1 is the exception).
 4. **RC-1** is considered a release governor until resolved: automated expiry racing a human payment can corrupt sellable + money state. Either land the locked-revalidation fix or disable auto-expiry on first ship.
+---
+
+## 9. Hotfix — 2026-08-24 (Fase 1)
+
+### Fixed
+
+1. **C1 — Checkout seller products crashed in production (500 + rollback).** `AdminOrderNotify` read `$event->buyerName`/`$event->totalPrice`, which never existed on `PendingOrderCreated`. Laravel converts the resulting E_WARNING into an `ErrorException` inside the checkout transaction, rolling back every seller-product purchase whenever an admin user existed (tests missed it because they never seeded an admin). Event now carries real buyer name, final order total, and the seller's `orderItemId`; dispatch moved **after commit** so listeners can never observe rolled-back orders.
+2. **C2 / RC-1 (release governor) — expiry-vs-payment race closed on the approve side.** `PaymentTransitionService::approve()` now rejects terminal items (`Cancelled`/`Completed`) after the locked re-read, mirroring `reject()`. A cancelled unpaid item can no longer be flipped to Paid, which previously produced a Paid+Cancelled item and a Paid order header over a Cancelled order.
+3. **RC-1 second half — expiry batch resilience.** `expireUnpaidOrders()` catches `ValidationException` per item (item paid mid-run), logs and skips, so one raced item no longer aborts the whole hourly batch.
+4. **H1 — seller notification href pointed at the wrong entity.** Listener used the Order id against the `{orderItem}`-bound route. Now links the seller's own order item; fallback to the orders index when no item id is present.
+5. **Multi-seller notification key collision.** `seller-order-pending:{orderId}` was globally unique per order, so in multi-seller carts only the first seller ever got notified. Key is now `order-pending:{orderId}:{sellerId}`.
+6. **Dead code removed.** Unused `App\Services\NotificationService` (contained its own precedence bug and always-null `$order->pivot` check) deleted.
+
+### Tests added
+
+- Checkout notifies seller + admin with final data when an admin exists (regression for C1/H1).
+- Multi-seller cart dispatches exactly one pending notification per seller.
+- `approve()` refuses Cancelled/Completed items while payment stays Unpaid (regression for C2).
+- Expiry batch skips an item paid mid-run and still cancels the rest (regression for H3).
+
+### Verification status
+
+- Full suite: 528 tests / 526 passed / 2 skipped (pre-existing) / 0 failed.
+- Pint + PHPStan clean on all touched files; repo-wide pint/phpstan still report pre-existing violations in the uncommitted notification WIP files (NotificationController, Notification models/preferences, HandleInertiaRequests, AdminNotificationTriggered) — tracked separately.
+
+> Note: `ShouldDispatchAfterCommit` was evaluated but intentionally not used: under `RefreshDatabase` the root transaction never commits, so deferred events would silently stop firing in feature tests. Post-commit dispatch-by-construction gives the same production guarantee without breaking the suite.

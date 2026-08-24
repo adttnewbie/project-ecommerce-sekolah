@@ -204,6 +204,13 @@ export default function AdminJurusanReportDetail({
     );
 }
 
+AdminJurusanReportDetail.layout = {
+    breadcrumbs: [
+        { title: 'Laporan', href: '/admin-jurusan/reports' },
+        { title: 'Detail', href: '#' },
+    ],
+};
+
 function Summary({ label, value, icon: Icon }: SummaryProps) {
     return (
         <div className="rounded-[8px] border border-slate-200 bg-white p-4 shadow-sm">

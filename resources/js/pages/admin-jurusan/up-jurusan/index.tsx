@@ -675,3 +675,7 @@ function UpJurusanItem({
         </div>
     );
 }
+
+AdminJurusanUpJurusan.layout = {
+    breadcrumbs: [{ title: 'UP Jurusan', href: '/admin-jurusan/up-jurusan' }],
+};

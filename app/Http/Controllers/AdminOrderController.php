@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AdminNotificationTriggered;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
@@ -35,6 +36,19 @@ class AdminOrderController extends Controller
             $validated['cancel_reason'] ?? 'Dibatalkan oleh admin',
         );
 
+        AdminNotificationTriggered::dispatch(
+            adminId: $admin->id,
+            type: 'order',
+            title: "Pesanan {$order->code} dibatalkan",
+            description: "Total: Rp ".number_format($order->total_price, 0, ',', '.').''.$validated['cancel_reason'],
+            href: route('admin.orders.index', false),
+            data: [
+                'order_id' => $order->id,
+                'buyer_name' => $order->user->name,
+                'reason' => $validated['cancel_reason'] ?? null,
+            ]
+        );
+
         return back()->with('success', 'Pesanan berhasil dibatalkan.');
     }
 
@@ -52,6 +66,19 @@ class AdminOrderController extends Controller
             $order,
             $admin,
             $validated['reason'] ?? 'Diselesaikan paksa oleh admin',
+        );
+
+        AdminNotificationTriggered::dispatch(
+            adminId: $admin->id,
+            type: 'order',
+            title: "Pesanan {$order->code} diselesaikan paksa",
+            description: 'Total: Rp '.number_format($order->total_price, 0, ',', '.').(($validated['reason'] ?? null) !== null ? ' Alasan: '.$validated['reason'] : ''),
+            href: route('admin.orders.index', false),
+            data: [
+                'order_id' => $order->id,
+                'buyer_name' => $order->user->name,
+                'reason' => $validated['reason'] ?? null,
+            ]
         );
 
         return back()->with('success', 'Pesanan berhasil diselesaikan oleh admin.');

@@ -32,6 +32,7 @@ type PicketOrderItem = {
         confirmed_at: string | null;
         rejection_reason: string | null;
     };
+    cancelled_at?: string | null;
 };
 
 type Props = {
@@ -262,27 +263,30 @@ export default function PicketOrders({ daily_report, order_items }: Props) {
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
                                                 {item.payment.status.code !==
-                                                    'paid' && (
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        variant="outline"
-                                                        disabled={
-                                                            paymentProcessingId ===
+                                                    'paid' &&
+                                                    !item.cancelled_at && (
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="outline"
+                                                            disabled={
+                                                                paymentProcessingId ===
+                                                                item.id
+                                                            }
+                                                            onClick={() =>
+                                                                approvePayment(
+                                                                    item,
+                                                                )
+                                                            }
+                                                            className="rounded-[8px] border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                                                        >
+                                                            <CheckCircle2 className="size-3.5" />
+                                                            {paymentProcessingId ===
                                                             item.id
-                                                        }
-                                                        onClick={() =>
-                                                            approvePayment(item)
-                                                        }
-                                                        className="rounded-[8px] border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                                                    >
-                                                        <CheckCircle2 className="size-3.5" />
-                                                        {paymentProcessingId ===
-                                                        item.id
-                                                            ? 'Memproses...'
-                                                            : 'Tandai lunas'}
-                                                    </Button>
-                                                )}
+                                                                ? 'Memproses...'
+                                                                : 'Tandai lunas'}
+                                                        </Button>
+                                                    )}
                                                 {item.status.code ===
                                                     'pending' ||
                                                 item.status.code ===
@@ -335,6 +339,10 @@ export default function PicketOrders({ daily_report, order_items }: Props) {
         </>
     );
 }
+
+PicketOrders.layout = {
+    breadcrumbs: [{ title: 'Orders', href: '/picket/orders' }],
+};
 
 function Summary({ label, value }: { label: string; value: string | number }) {
     return (

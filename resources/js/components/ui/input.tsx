@@ -2,7 +2,12 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+type InputProps = React.ComponentProps<"input"> & {
+  /** Non-standard iOS Safari attribute (webkit autofill hint). */
+  passwordrules?: string;
+};
+
+function Input({ className, type, ...props }: InputProps) {
   return (
     <input
       type={type}

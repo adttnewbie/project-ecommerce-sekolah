@@ -221,3 +221,7 @@ export default function AdminJurusanDashboard({ dashboard }: Props) {
         </>
     );
 }
+
+AdminJurusanDashboard.layout = {
+    breadcrumbs: [{ title: 'Dashboard', href: '/admin-jurusan/dashboard' }],
+};

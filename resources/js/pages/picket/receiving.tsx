@@ -131,3 +131,7 @@ export default function PicketReceiving({ up_jurusan, consignments }: Props) {
         </>
     );
 }
+
+PicketReceiving.layout = {
+    breadcrumbs: [{ title: 'Terima Barang', href: '/picket/receiving' }],
+};

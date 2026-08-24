@@ -144,7 +144,7 @@ class SellerOrderController extends Controller
         }
 
         $orderItem->load([
-            'order:id,code,user_id,created_at',
+            'order:id,code,user_id,created_at,cancelled_at,cancel_reason',
             'order.user:id,name',
             'product:id,name,slug,seller_id,sales_method,category_id',
             'product.category:id,name,slug',
@@ -187,6 +187,8 @@ class SellerOrderController extends Controller
                 ],
                 'payment' => $this->paymentPayload($orderItem),
                 'created_at' => $orderItem->created_at?->toIso8601String(),
+                'cancelled_at' => $orderItem->order->cancelled_at?->toIso8601String(),
+                'cancel_reason' => $orderItem->order->cancel_reason,
             ],
         ]);
     }

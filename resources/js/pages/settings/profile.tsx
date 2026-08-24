@@ -1,3 +1,4 @@
+import type { PageProps as SharedPageProps } from '@inertiajs/core';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/delete-user';
@@ -11,7 +12,7 @@ import type { Auth } from '@/types';
 
 type PageProps = {
     auth: Auth;
-};
+} & SharedPageProps;
 
 export default function Profile() {
     const { auth } = usePage<PageProps>().props;

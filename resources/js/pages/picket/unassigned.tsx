@@ -67,3 +67,7 @@ export default function PicketUnassigned() {
         </>
     );
 }
+
+PicketUnassigned.layout = {
+    breadcrumbs: [{ title: 'Unassigned', href: '/picket/unassigned' }],
+};

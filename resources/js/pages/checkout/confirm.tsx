@@ -1,3 +1,4 @@
+import type { PageProps as SharedPageProps } from '@inertiajs/core';
 import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -75,7 +76,7 @@ type Props = {
 
 type PageProps = {
     auth: Auth;
-};
+} & SharedPageProps;
 
 const formatRupiah = (value: number) =>
     new Intl.NumberFormat('id-ID', {

@@ -185,3 +185,7 @@ export default function PicketReceipt({ sale }: Props) {
         </>
     );
 }
+
+PicketReceipt.layout = {
+    breadcrumbs: [{ title: 'Receipt', href: '#' }],
+};

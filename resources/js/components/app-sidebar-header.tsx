@@ -26,7 +26,6 @@ import {
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuLabel,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -50,19 +49,26 @@ const roleLabels: Record<string, string> = {
     picket_officer: 'Picket Officer',
 };
 
+const typeToBorderColors: Record<string, string> = {
+    success: 'border-l-emerald-500',
+    error: 'border-l-red-500',
+    warning: 'border-l-amber-500',
+    info: 'border-l-blue-500',
+};
+
 const userMenuClassName =
     'w-56 rounded-[8px] bg-white text-slate-900 ring-slate-200 [&_[data-slot=dropdown-menu-item]]:text-slate-700 [&_[data-slot=dropdown-menu-item]]:focus:bg-slate-100 [&_[data-slot=dropdown-menu-item]]:focus:text-slate-900 [&_[data-slot=dropdown-menu-label]]:text-slate-500 [&_[data-slot=dropdown-menu-separator]]:bg-slate-200';
-const notificationMenuClassName = 'w-80 overflow-y-auto';
+const notificationMenuClassName =
+    'w-80 max-h-[24rem] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300';
 const notificationMenuStyle = {
-    maxHeight:
-        'min(24rem, var(--radix-dropdown-menu-content-available-height))',
+    maxHeight: 'var(--radix-dropdown-menu-content-available-height)',
 };
 
 type HeaderNotification = {
     key: string;
     type: string;
     title: string;
-    description: string;
+    description: string | null;
     href: string;
 };
 
@@ -142,7 +148,14 @@ export function AppSidebarHeader({
 }: {
     breadcrumbs?: BreadcrumbItemType[];
 }) {
-    const { adminHeader, auth, buyerHeader, sellerHeader } = usePage().props;
+    const {
+        adminHeader,
+        adminJurusanHeader,
+        auth,
+        buyerHeader,
+        picketOfficerHeader,
+        sellerHeader,
+    } = usePage().props;
     const [search, setSearch] = useState('');
     const getInitials = useInitials();
     const currentBreadcrumb = breadcrumbs[breadcrumbs.length - 1];
@@ -241,22 +254,61 @@ export function AppSidebarHeader({
                                     aria-label="Notifikasi"
                                 >
                                     <Bell className="size-5" />
-                                    {Boolean(
-                                        sellerHeader?.notifications.length,
-                                    ) && (
-                                        <span className="absolute top-2 right-2 size-2 rounded-full bg-red-500 ring-2 ring-white" />
-                                    )}
+                                    {sellerHeader?.notifications &&
+                                        sellerHeader.notifications.length >
+                                            0 && (
+                                            <span
+                                                className={`absolute top-2 right-2 size-2.5 rounded-full ring-2 ring-white ${sellerHeader.notifications.length > 9 ? 'h-5 w-5 rounded-[8px] bg-red-500 p-1' : 'bg-red-500'} ${sellerHeader.notifications.length > 9 ? 'flex items-center justify-center' : ''} ${sellerHeader.notifications.some((n) => n.type === 'order' || n.type === 'stock') ? 'notification-badge-pulse' : ''}`}
+                                            >
+                                                {sellerHeader.notifications
+                                                    .length > 9 && (
+                                                    <span className="text-[10px] leading-none font-semibold text-white">
+                                                        {Math.floor(
+                                                            sellerHeader
+                                                                .notifications
+                                                                .length / 10,
+                                                        )}
+                                                        +
+                                                    </span>
+                                                )}
+                                            </span>
+                                        )}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
                                 align="end"
                                 className={notificationMenuClassName}
                                 style={notificationMenuStyle}
+                                sideOffset={8}
                             >
-                                <DropdownMenuLabel>
-                                    Notifikasi
-                                </DropdownMenuLabel>
-                                {sellerHeader?.notifications.length ? (
+                                <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-[inherit] border-b border-slate-100 bg-white px-3 py-3">
+                                    <h3 className="text-sm font-semibold text-slate-900">
+                                        Notifikasi
+                                    </h3>
+                                    {sellerHeader &&
+                                        sellerHeader.notifications &&
+                                        sellerHeader.notifications.length >
+                                            0 && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    router.post(
+                                                        '/notifications/mark-all-as-read',
+                                                        {},
+                                                        {
+                                                            preserveScroll: true,
+                                                        },
+                                                    );
+                                                }}
+                                                className="text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
+                                            >
+                                                Mark all as read
+                                            </button>
+                                        )}
+                                </div>
+                                {sellerHeader &&
+                                sellerHeader.notifications?.length ? (
                                     sellerHeader.notifications.map(
                                         (notification) => (
                                             <NotificationItem
@@ -266,8 +318,17 @@ export function AppSidebarHeader({
                                         ),
                                     )
                                 ) : (
-                                    <div className="px-3 py-6 text-center text-sm text-slate-500">
-                                        Tidak ada tindakan yang diperlukan.
+                                    <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
+                                        <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-slate-50">
+                                            <Bell className="size-5 text-slate-400" />
+                                        </div>
+                                        <p className="mb-1 text-sm font-medium text-slate-900">
+                                            Tidak ada notifikasi baru
+                                        </p>
+                                        <p className="text-xs text-slate-500">
+                                            Anda akan melihat notifikasi di sini
+                                            ketika ada pembaruan
+                                        </p>
                                     </div>
                                 )}
                             </DropdownMenuContent>
@@ -330,7 +391,7 @@ export function AppSidebarHeader({
                             </DialogContent>
                         </Dialog>
                     </>
-                ) : role === 'admin' ? (
+                ) : role === 'admin' || role === 'admin_jurusan' ? (
                     <>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -339,25 +400,64 @@ export function AppSidebarHeader({
                                     variant="ghost"
                                     size="icon"
                                     className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
-                                    aria-label="Notifikasi admin"
+                                    aria-label={`Notifikasi ${userRole || 'Admin'}`}
                                 >
                                     <Bell className="size-5" />
-                                    {Boolean(
-                                        adminHeader?.notifications.length,
-                                    ) && (
-                                        <span className="absolute top-2 right-2 size-2 rounded-full bg-red-500 ring-2 ring-white" />
-                                    )}
+                                    {adminHeader &&
+                                        adminHeader.notifications?.length >
+                                            0 && (
+                                            <span
+                                                className={`absolute top-2 right-2 size-2.5 rounded-full ring-2 ring-white ${adminHeader.notifications.length > 9 ? 'h-5 w-5 rounded-[8px] bg-red-500 p-1' : 'bg-red-500'} ${adminHeader.notifications.length > 9 ? 'flex items-center justify-center' : ''} ${adminHeader.notifications.some((n) => n.type === 'product') ? 'notification-badge-pulse' : ''}`}
+                                            >
+                                                {adminHeader.notifications
+                                                    .length > 9 && (
+                                                    <span className="text-[10px] leading-none font-semibold text-white">
+                                                        {Math.floor(
+                                                            adminHeader
+                                                                .notifications
+                                                                .length / 10,
+                                                        )}
+                                                        +
+                                                    </span>
+                                                )}
+                                            </span>
+                                        )}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
                                 align="end"
                                 className={notificationMenuClassName}
                                 style={notificationMenuStyle}
+                                sideOffset={8}
                             >
-                                <DropdownMenuLabel>
-                                    Notifikasi Admin
-                                </DropdownMenuLabel>
-                                {adminHeader?.notifications.length ? (
+                                <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-[inherit] border-b border-slate-100 bg-white px-3 py-3">
+                                    <h3 className="text-sm font-semibold text-slate-900">
+                                        Notifikasi {userRole || 'Admin'}
+                                    </h3>
+                                    {adminHeader &&
+                                        adminHeader.notifications &&
+                                        adminHeader.notifications.length >
+                                            0 && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    router.post(
+                                                        '/notifications/mark-all-as-read',
+                                                        {},
+                                                        {
+                                                            preserveScroll: true,
+                                                        },
+                                                    );
+                                                }}
+                                                className="text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
+                                            >
+                                                Mark all as read
+                                            </button>
+                                        )}
+                                </div>
+                                {adminHeader &&
+                                adminHeader.notifications?.length ? (
                                     adminHeader.notifications.map(
                                         (notification) => (
                                             <NotificationItem
@@ -367,8 +467,17 @@ export function AppSidebarHeader({
                                         ),
                                     )
                                 ) : (
-                                    <div className="px-3 py-6 text-center text-sm text-slate-500">
-                                        Tidak ada tindakan admin.
+                                    <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
+                                        <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-slate-50">
+                                            <Bell className="size-5 text-slate-400" />
+                                        </div>
+                                        <p className="mb-1 text-sm font-medium text-slate-900">
+                                            Tidak ada notifikasi baru
+                                        </p>
+                                        <p className="text-xs text-slate-500">
+                                            Anda akan melihat notifikasi di sini
+                                            ketika ada pembaruan
+                                        </p>
                                     </div>
                                 )}
                             </DropdownMenuContent>
@@ -381,56 +490,240 @@ export function AppSidebarHeader({
                                     variant="ghost"
                                     size="icon"
                                     className="hidden rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600 sm:inline-flex"
-                                    aria-label="Bantuan admin"
+                                    aria-label={`Bantuan ${userRole}`}
                                 >
                                     <CircleHelp className="size-5" />
                                 </Button>
                             </DialogTrigger>
                             <DialogContent>
                                 <DialogHeader>
-                                    <DialogTitle>Panduan Admin</DialogTitle>
+                                    <DialogTitle>
+                                        Panduan {userRole}
+                                    </DialogTitle>
                                     <DialogDescription>
-                                        Gunakan Moderasi Produk untuk approve
-                                        atau reject produk pending, Products
-                                        untuk memantau semua produk, Orders
-                                        untuk transaksi, Users untuk akun, dan
-                                        Categories untuk data kategori.
+                                        Gunakan UP Jurusan untuk mengelola unit,
+                                        Titipan untuk approve request seller,
+                                        Laporan untuk monitor penjualan, dan
+                                        Dashboard untuk overview hari ini.
                                     </DialogDescription>
                                 </DialogHeader>
                             </DialogContent>
                         </Dialog>
+                    </>
+                ) : role === 'picket_officer' ? (
+                    <>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
+                                    aria-label={`Notifikasi ${userRole}`}
+                                >
+                                    <Bell className="size-5" />
+                                    {picketOfficerHeader &&
+                                        picketOfficerHeader.notifications
+                                            ?.length > 0 && (
+                                            <span
+                                                className={`absolute top-2 right-2 size-2.5 rounded-full ring-2 ring-white ${picketOfficerHeader.notifications.length > 9 ? 'h-5 w-5 rounded-[8px] bg-red-500 p-1' : 'bg-red-500'} ${picketOfficerHeader.notifications.length > 9 ? 'flex items-center justify-center' : ''} ${picketOfficerHeader.notifications.some((n) => n.type === 'order' || n.type === 'payment') ? 'notification-badge-pulse' : ''}`}
+                                            >
+                                                {picketOfficerHeader
+                                                    .notifications.length >
+                                                    9 && (
+                                                    <span className="text-[10px] leading-none font-semibold text-white">
+                                                        {Math.floor(
+                                                            picketOfficerHeader
+                                                                .notifications
+                                                                .length / 10,
+                                                        )}
+                                                        +
+                                                    </span>
+                                                )}
+                                            </span>
+                                        )}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                                align="end"
+                                className={notificationMenuClassName}
+                                style={notificationMenuStyle}
+                                sideOffset={8}
+                            >
+                                <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-[inherit] border-b border-slate-100 bg-white px-3 py-3">
+                                    <h3 className="text-sm font-semibold text-slate-900">
+                                        Notifikasi {userRole}
+                                    </h3>
+                                    {picketOfficerHeader &&
+                                        picketOfficerHeader.notifications &&
+                                        picketOfficerHeader.notifications
+                                            .length > 0 && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    router.post(
+                                                        '/notifications/mark-all-as-read',
+                                                        {},
+                                                        {
+                                                            preserveScroll: true,
+                                                        },
+                                                    );
+                                                }}
+                                                className="text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
+                                            >
+                                                Mark all as read
+                                            </button>
+                                        )}
+                                </div>
+                                {picketOfficerHeader &&
+                                picketOfficerHeader.notifications?.length ? (
+                                    picketOfficerHeader.notifications.map(
+                                        (notification) => (
+                                            <NotificationItem
+                                                key={notification.key}
+                                                notification={notification}
+                                            />
+                                        ),
+                                    )
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
+                                        <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-slate-50">
+                                            <Bell className="size-5 text-slate-400" />
+                                        </div>
+                                        <p className="mb-1 text-sm font-medium text-slate-900">
+                                            Tidak ada notifikasi baru
+                                        </p>
+                                        <p className="text-xs text-slate-500">
+                                            Anda akan melihat notifikasi di sini
+                                            ketika ada pembaruan
+                                        </p>
+                                    </div>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
 
                         <Dialog>
                             <DialogTrigger asChild>
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    className="hidden rounded-[8px] px-2 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 md:inline-flex"
+                                    size="icon"
+                                    className="hidden rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600 sm:inline-flex"
+                                    aria-label="Bantuan Picket Officer"
                                 >
-                                    Support
+                                    <CircleHelp className="size-5" />
                                 </Button>
                             </DialogTrigger>
                             <DialogContent>
                                 <DialogHeader>
-                                    <DialogTitle>Support Admin</DialogTitle>
+                                    <DialogTitle>
+                                        Panduan {userRole || 'Picket Officer'}
+                                    </DialogTitle>
                                     <DialogDescription>
-                                        {adminHeader?.supportEmail ? (
-                                            <>
-                                                Hubungi support melalui{' '}
-                                                <a
-                                                    href={`mailto:${adminHeader.supportEmail}`}
-                                                >
-                                                    {adminHeader.supportEmail}
-                                                </a>
-                                                .
-                                            </>
-                                        ) : (
-                                            'Hubungi tim pengembang untuk bantuan admin.'
-                                        )}
+                                        Gunakan POS untuk transaksi penjualan,
+                                        Orders untuk kelola pesanan titipan,
+                                        Receiving untuk terima barang dari
+                                        seller, Laporan untuk tutup hari, dan
+                                        Dashboard untuk overview operasional
+                                        hari ini.
                                     </DialogDescription>
                                 </DialogHeader>
                             </DialogContent>
                         </Dialog>
+                    </>
+                ) : role === 'admin_jurusan' ? (
+                    <>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
+                                    aria-label={`Notifikasi ${userRole}`}
+                                >
+                                    <Bell className="size-5" />
+                                    {adminJurusanHeader &&
+                                        adminJurusanHeader.notifications
+                                            ?.length > 0 && (
+                                            <span
+                                                className={`absolute top-2 right-2 size-2.5 rounded-full ring-2 ring-white ${adminJurusanHeader.notifications.length > 9 ? 'h-5 w-5 rounded-[8px] bg-red-500 p-1' : 'bg-red-500'} ${adminJurusanHeader.notifications.length > 9 ? 'flex items-center justify-center' : ''} ${adminJurusanHeader.notifications.some((n) => n.type === 'order') ? 'notification-badge-pulse' : ''}`}
+                                            >
+                                                {adminJurusanHeader
+                                                    .notifications.length >
+                                                    9 && (
+                                                    <span className="text-[10px] leading-none font-semibold text-white">
+                                                        {Math.floor(
+                                                            adminJurusanHeader
+                                                                .notifications
+                                                                .length / 10,
+                                                        )}
+                                                        +
+                                                    </span>
+                                                )}
+                                            </span>
+                                        )}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                                align="end"
+                                className={notificationMenuClassName}
+                                style={notificationMenuStyle}
+                                sideOffset={8}
+                            >
+                                <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-[inherit] border-b border-slate-100 bg-white px-3 py-3">
+                                    <h3 className="text-sm font-semibold text-slate-900">
+                                        Notifikasi {userRole}
+                                    </h3>
+                                    {adminJurusanHeader &&
+                                        adminJurusanHeader.notifications &&
+                                        adminJurusanHeader.notifications
+                                            .length > 0 && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    router.post(
+                                                        '/notifications/mark-all-as-read',
+                                                        {},
+                                                        {
+                                                            preserveScroll: true,
+                                                        },
+                                                    );
+                                                }}
+                                                className="text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
+                                            >
+                                                Mark all as read
+                                            </button>
+                                        )}
+                                </div>
+                                {adminJurusanHeader &&
+                                adminJurusanHeader.notifications?.length ? (
+                                    adminJurusanHeader.notifications.map(
+                                        (notification) => (
+                                            <NotificationItem
+                                                key={notification.key}
+                                                notification={notification}
+                                            />
+                                        ),
+                                    )
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
+                                        <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-slate-50">
+                                            <Bell className="size-5 text-slate-400" />
+                                        </div>
+                                        <p className="mb-1 text-sm font-medium text-slate-900">
+                                            Tidak ada notifikasi baru
+                                        </p>
+                                        <p className="text-xs text-slate-500">
+                                            Anda akan melihat notifikasi di sini
+                                            ketika ada pembaruan
+                                        </p>
+                                    </div>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </>
                 ) : !auth.user ? (
                     <>
@@ -506,34 +799,41 @@ function NotificationItem({
         event.preventDefault();
         event.stopPropagation();
 
-        router.delete('/notifications', {
-            data: { key: notification.key },
-            preserveScroll: true,
-            onError: () => toast.error('Notifikasi gagal dihapus.'),
-        });
+        router.delete(
+            `/notifications/${encodeURIComponent(notification.key)}`,
+            {
+                preserveScroll: true,
+                onError: () => toast.error('Notifikasi gagal dihapus.'),
+            },
+        );
     };
 
+    const borderClass =
+        typeToBorderColors[notification.type] || 'border-l-blue-500';
+
     return (
-        <div className="group flex items-start gap-2 rounded-[6px] focus-within:bg-blue-50 hover:bg-blue-50">
-            <Link
-                href={notification.href}
-                className="flex min-w-0 flex-1 flex-col items-start gap-1 px-3 py-3 outline-none"
-            >
-                <span className="max-w-full truncate font-medium text-slate-900 group-hover:text-blue-900">
-                    {notification.title}
-                </span>
-                <span className="text-xs leading-5 text-slate-500 group-hover:text-blue-900">
-                    {notification.description}
-                </span>
-            </Link>
+        <div
+            className={`group flex items-start gap-3 ${borderClass} relative rounded-[6px] transition-colors duration-150 hover:bg-blue-50`}
+        >
             <button
                 type="button"
                 onClick={dismiss}
-                className="mt-2 mr-2 grid size-7 shrink-0 place-items-center rounded-[6px] text-slate-400 hover:bg-white hover:text-rose-600 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="absolute top-2 right-2 z-10 -mt-1 -mr-1 rounded-lg p-1.5 text-slate-400 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-white hover:text-rose-600 focus:opacity-100"
                 aria-label={`Hapus notifikasi ${notification.title}`}
             >
-                <X className="size-4" />
+                <X className="size-3.5" />
             </button>
+            <Link
+                href={notification.href}
+                className="relative z-0 flex min-w-0 flex-1 flex-col items-start gap-1 px-3 py-3 outline-none"
+            >
+                <span className="max-w-full truncate font-medium text-slate-900 transition-colors group-hover:text-blue-900">
+                    {notification.title}
+                </span>
+                <span className="line-clamp-2 text-xs leading-5 text-slate-500 transition-colors group-hover:text-blue-900">
+                    {notification.description}
+                </span>
+            </Link>
         </div>
     );
 }

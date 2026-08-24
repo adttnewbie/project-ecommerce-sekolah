@@ -28,6 +28,12 @@ class PaymentTransitionService
 
             self::assertCanTransition($current, PaymentStatus::Paid);
 
+            if ($current->status->isTerminal()) {
+                throw ValidationException::withMessages([
+                    'payment' => 'Item yang sudah selesai atau dibatalkan tidak dapat dilunaskan.',
+                ]);
+            }
+
             $from = $current->payment_status;
 
             $current->update([

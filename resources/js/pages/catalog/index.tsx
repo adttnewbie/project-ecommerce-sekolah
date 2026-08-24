@@ -1,3 +1,4 @@
+import type { PageProps as SharedPageProps } from '@inertiajs/core';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Package, Search, Store, Tags } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -63,7 +64,7 @@ type CatalogIndexProps = {
 
 type PageProps = {
     auth: Auth;
-};
+} & SharedPageProps;
 
 const formatRupiah = (value: number) =>
     new Intl.NumberFormat('id-ID', {

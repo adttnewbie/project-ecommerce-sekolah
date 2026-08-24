@@ -7,6 +7,7 @@ use App\Enums\ProductFulfillmentType;
 use App\Enums\ProductStatus;
 use App\Enums\UserRole;
 use App\Models\CartItem;
+use App\Models\Notification;
 use App\Models\NotificationDismissal;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -16,7 +17,7 @@ use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
-    private const HEADER_NOTIFICATION_LIMIT = 50;
+    private const HEADER_NOTIFICATION_LIMIT = 10; // Reduced from 50 to match dropdown limit requirement
 
     /**
      * The root template that's loaded on the first page visit.
@@ -30,7 +31,7 @@ class HandleInertiaRequests extends Middleware
     /**
      * Determines the current asset version.
      *
-     * @see https://inertiajs.com/asset-versioning
+     * @see https://inertiajs.com/server-side-setup#asset-versioning
      */
     public function version(Request $request): ?string
     {
@@ -52,9 +53,12 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $this->authenticatedUserPayload($request),
             ],
+            'notificationBadge' => fn () => $this->notificationBadge($request),
             'adminHeader' => fn () => $this->adminHeader($request),
-            'buyerHeader' => fn () => $this->buyerHeader($request),
             'sellerHeader' => fn () => $this->sellerHeader($request),
+            'adminJurusanHeader' => fn () => $this->adminJurusanHeader($request),
+            'picketOfficerHeader' => fn () => $this->picketOfficerHeader($request),
+            'buyerHeader' => fn () => $this->buyerHeader($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => [
                 'success' => $request->session()->get('success'),
@@ -65,7 +69,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * Build the authenticated user payload shared with the frontend.
+     * Build the authenticated user payload shared with the client.
      *
      * Only a fixed allow-list of fields is shared instead of the whole model,
      * so attributes that are not explicitly requested never reach the client
@@ -91,26 +95,26 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return array{cartItemsCount: int}|null
+     * Get unread notification count for header badge.
      */
-    private function buyerHeader(Request $request): ?array
+    private function notificationBadge(Request $request): array
     {
-        /** @var User|null $buyer */
-        $buyer = $request->user();
-
-        if ($buyer?->role !== UserRole::Buyer) {
-            return null;
+        $user = $request->user();
+        
+        if (!$user) {
+            return ['count' => 0];
         }
 
-        return [
-            'cartItemsCount' => (int) CartItem::query()
-                ->where('user_id', $buyer->id)
-                ->count(),
-        ];
+        $count = Notification::where('user_id', $user->id)
+            ->unread()
+            ->active()
+            ->count();
+
+        return ['count' => (int) $count];
     }
 
     /**
-     * @return array{notifications: array<int, array{key: string, type: string, title: string, description: string, href: string}>, supportEmail: string|null}|null
+     * @return array{notifications: array<int, array{key: string, type: string, title: string, description: string, href: string, is_read: bool, created_at: string}>, supportEmail: string|null}|null
      */
     private function adminHeader(Request $request): ?array
     {
@@ -123,7 +127,9 @@ class HandleInertiaRequests extends Middleware
 
         $dismissedKeys = $this->dismissedNotificationKeys($admin);
 
-        $products = Product::query()
+        // Action items are derived live from domain state so they disappear
+        // as soon as the underlying task is handled elsewhere.
+        $notifications = Product::query()
             ->with('seller:id,name')
             ->where('status', ProductStatus::Pending)
             ->whereNotNull('seller_id')
@@ -136,17 +142,19 @@ class HandleInertiaRequests extends Middleware
                 'title' => $product->name,
                 'description' => 'Menunggu moderasi dari '.$product->seller->name,
                 'href' => route('admin.products.moderation.index', absolute: false),
+                'is_read' => false,
+                'created_at' => $product->updated_at?->toISOString(),
             ])
             ->reject(fn (array $notification) => in_array($notification['key'], $dismissedKeys, true));
 
         return [
-            'notifications' => $products->values()->all(),
+            'notifications' => $notifications->values()->all(),
             'supportEmail' => config('mail.from.address'),
         ];
     }
 
     /**
-     * @return array{notifications: array<int, array{key: string, type: string, title: string, description: string, href: string}>, supportEmail: string|null}|null
+     * @return array{notifications: array<int, array{key: string, type: string, title: string, description: string, href: string, is_read: bool, created_at: string}>, supportEmail: string|null}|null
      */
     private function sellerHeader(Request $request): ?array
     {
@@ -159,6 +167,7 @@ class HandleInertiaRequests extends Middleware
 
         $dismissedKeys = $this->dismissedNotificationKeys($seller);
 
+        // Pending orders to process.
         $orders = OrderItem::query()
             ->whereHas('product', fn ($query) => $query->where('seller_id', $seller->id))
             ->where('status', OrderItemStatus::Pending)
@@ -171,9 +180,12 @@ class HandleInertiaRequests extends Middleware
                 'title' => "Pesanan #{$item->order_id}",
                 'description' => $item->product_name.' menunggu diproses',
                 'href' => route('seller.orders.show', $item, absolute: false),
+                'is_read' => false,
+                'created_at' => $item->updated_at?->toISOString(),
             ])
             ->reject(fn (array $notification) => in_array($notification['key'], $dismissedKeys, true));
 
+        // Low stock alerts based on real (consignment-aware) stock.
         $stock = Product::query()
             ->select('products.*')
             ->selectRaw(Product::REAL_STOCK_SQL.' as real_stock')
@@ -192,6 +204,8 @@ class HandleInertiaRequests extends Middleware
                     'title' => $product->name,
                     'description' => $realStock === 0 ? 'Stok habis' : "Stok tersisa {$realStock}",
                     'href' => route('seller.inventory.index', ['q' => $product->name], absolute: false),
+                    'is_read' => false,
+                    'created_at' => $product->updated_at?->toISOString(),
                 ];
             })
             ->reject(fn (array $notification) => in_array($notification['key'], $dismissedKeys, true));
@@ -216,5 +230,115 @@ class HandleInertiaRequests extends Middleware
     private function notificationKey(string $type, int $id, ?int $version): string
     {
         return "{$type}:{$id}:".($version ?? 0);
+    }
+
+    /**
+     * @return array{notifications: array<int, array{key: string, type: string, title: string, description: string, href: string, is_read: bool, created_at: string}>, supportEmail: string|null}|null
+     */
+    private function adminJurusanHeader(Request $request): ?array
+    {
+        /** @var User|null $adminJurusan */
+        $adminJurusan = $request->user();
+
+        if ($adminJurusan?->role !== UserRole::AdminJurusan) {
+            return null;
+        }
+
+        $notifications = Notification::query()
+            ->where('user_id', $adminJurusan->id)
+            ->active()
+            ->orderBy('created_at', 'desc')
+            ->limit(self::HEADER_NOTIFICATION_LIMIT)
+            ->get([
+                'key',
+                'type',
+                'title',
+                'description',
+                'href',
+                'read_at',
+                'created_at',
+            ]);
+
+        $supportEmail = config('mail.from.address');
+
+        return [
+            'notifications' => $notifications->map(function ($notification) use ($supportEmail) {
+                return [
+                    'key' => $notification->key,
+                    'type' => $notification->type,
+                    'title' => $notification->title,
+                    'description' => $notification->description,
+                    'href' => $notification->href,
+                    'is_read' => $notification->read_at !== null,
+                    'created_at' => $notification->created_at->toISOString(),
+                ];
+            })->values()->all(),
+            'supportEmail' => $supportEmail,
+        ];
+    }
+
+    /**
+     * @return array{notifications: array<int, array{key: string, type: string, title: string, description: string, href: string, is_read: bool, created_at: string}>, supportEmail: string|null}|null
+     */
+    private function picketOfficerHeader(Request $request): ?array
+    {
+        /** @var User|null $picket */
+        $picket = $request->user();
+
+        if ($picket?->role !== UserRole::PicketOfficer) {
+            return null;
+        }
+
+        $notifications = Notification::query()
+            ->where('user_id', $picket->id)
+            ->active()
+            ->orderBy('created_at', 'desc')
+            ->limit(self::HEADER_NOTIFICATION_LIMIT)
+            ->get([
+                'key',
+                'type',
+                'title',
+                'description',
+                'href',
+                'read_at',
+                'created_at',
+            ]);
+
+        $supportEmail = config('mail.from.address');
+
+        return [
+            'notifications' => $notifications->map(function ($notification) use ($supportEmail) {
+                return [
+                    'key' => $notification->key,
+                    'type' => $notification->type,
+                    'title' => $notification->title,
+                    'description' => $notification->description,
+                    'href' => $notification->href,
+                    'is_read' => $notification->read_at !== null,
+                    'created_at' => $notification->created_at->toISOString(),
+                ];
+            })->values()->all(),
+            'supportEmail' => $supportEmail,
+        ];
+    }
+
+    /**
+     * @return array{id: int, cartItemsCount: int}|null
+     */
+    private function buyerHeader(Request $request): ?array
+    {
+        /** @var User|null $buyer */
+        $buyer = $request->user();
+
+        if ($buyer?->role !== UserRole::Buyer) {
+            return null;
+        }
+
+        return [
+            'id' => $buyer->id,
+            'cartItemsCount' => (int) CartItem::query()
+                ->where('user_id', $buyer->id)
+                ->count(),
+        ];
     }
 }

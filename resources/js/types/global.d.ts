@@ -1,47 +1,39 @@
-import type { Auth } from '@/types/auth';
-
-declare module 'react' {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    interface InputHTMLAttributes<T> {
-        passwordrules?: string;
-    }
-}
+import type { Auth } from './auth';
+import type {
+    HeaderNotificationData,
+    NotificationBadgeProps,
+} from './notifications';
 
 declare module '@inertiajs/core' {
-    export interface InertiaConfig {
-        sharedPageProps: {
-            name: string;
-            auth: Auth;
-            adminHeader: {
-                notifications: {
-                    key: string;
-                    type: 'product';
-                    title: string;
-                    description: string;
-                    href: string;
-                }[];
-                supportEmail: string | null;
-            } | null;
-            buyerHeader: {
-                cartItemsCount: number;
-            } | null;
-            sellerHeader: {
-                notifications: {
-                    key: string;
-                    type: 'order' | 'stock';
-                    title: string;
-                    description: string;
-                    href: string;
-                }[];
-                supportEmail: string | null;
-            } | null;
-            sidebarOpen: boolean;
-            flash: {
-                success?: string;
-                error?: string;
-                receipt_url?: string;
-            };
-            [key: string]: unknown;
+    interface PageProps {
+        name: string;
+        auth: Auth;
+        flash: {
+            success?: string;
+            error?: string;
+            receipt_url?: string;
         };
+        notificationBadge: NotificationBadgeProps;
+        adminHeader: HeaderNotificationData | null;
+        sellerHeader: HeaderNotificationData | null;
+        adminJurusanHeader: HeaderNotificationData | null;
+        picketOfficerHeader: HeaderNotificationData | null;
+        buyerHeader: {
+            cartItemsCount: number;
+        } | null;
+        sidebarOpen: boolean;
     }
 }
+
+declare global {
+    interface Window {
+        __NOTIF_COUNT__?: number;
+        __toasts__?: Array<{
+            id: string;
+            message: string;
+            type: 'success' | 'error' | 'info';
+        }>;
+    }
+}
+
+export {};
