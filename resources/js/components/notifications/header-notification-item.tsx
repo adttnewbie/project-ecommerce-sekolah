@@ -83,7 +83,7 @@ export function HeaderNotificationItem({
     };
 
     return (
-        <div className="group relative flex items-start gap-3 px-3 py-3 transition-colors duration-150 hover:bg-blue-50/60">
+        <div className="group relative flex items-start gap-3 border-b border-slate-50 px-4 py-3 transition-colors duration-150 last:border-b-0 hover:bg-blue-50/60">
             {!notification.is_read && (
                 <span
                     className="absolute top-4 left-[27px] size-2 rounded-full ring-2 ring-white"

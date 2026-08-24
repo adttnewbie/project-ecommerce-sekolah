@@ -11,7 +11,7 @@ import {
 import type { NotificationForDropdown } from '@/types/notifications';
 
 const notificationMenuClassName =
-    'w-80 max-h-[24rem] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300';
+    'w-[24rem] max-w-[calc(100vw-1.5rem)] max-h-[26rem] overflow-y-auto rounded-xl border border-slate-200/80 bg-white shadow-lg shadow-slate-900/5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300';
 
 const notificationMenuStyle = {
     maxHeight: 'var(--radix-dropdown-menu-content-available-height)',
@@ -61,7 +61,7 @@ export function NotificationDropdown({
                 style={notificationMenuStyle}
                 sideOffset={8}
             >
-                <div className="sticky top-0 z-10 flex items-center justify-between gap-2 rounded-t-[inherit] border-b border-slate-100 bg-white px-3 py-3">
+                <div className="sticky top-0 z-10 flex items-center justify-between gap-2 rounded-t-[inherit] border-b border-slate-100 bg-white px-4 py-3">
                     <h3 className="text-sm font-semibold text-slate-900">
                         {ariaLabel}
                         {unreadCount > 0 && (
@@ -90,7 +90,7 @@ export function NotificationDropdown({
                                 notification={notification}
                             />
                         ))}
-                        <div className="border-t border-slate-100 p-2">
+                        <div className="border-t border-slate-100 px-3 py-2">
                             <Button
                                 asChild
                                 variant="ghost"
