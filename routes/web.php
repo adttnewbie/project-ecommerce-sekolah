@@ -58,7 +58,7 @@ Route::middleware(['auth', EnsureUserIsBuyer::class])->group(function () {
     Route::delete('cart/items/{cartItem}', [CartController::class, 'destroy'])->name('cart.items.destroy');
 
     Route::get('checkout/confirm', [CheckoutController::class, 'confirm'])->name('checkout.confirm');
-    Route::post('checkout', CheckoutController::class)->name('checkout');
+    Route::post('checkout', CheckoutController::class)->name('checkout')->middleware('throttle:checkout');
 
     Route::get('orders', [BuyerOrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [BuyerOrderController::class, 'show'])->name('orders.show');

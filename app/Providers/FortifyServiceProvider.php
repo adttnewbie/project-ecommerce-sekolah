@@ -137,5 +137,15 @@ class FortifyServiceProvider extends ServiceProvider
 
             return Limit::perMinute(5)->by('payout|'.$key);
         });
+
+        RateLimiter::for('checkout', function (Request $request) {
+            return Limit::perMinute(10)->by(
+                'checkout|'.($request->user()?->id ?? $request->ip()),
+            );
+        });
+
+        RateLimiter::for('registration', function (Request $request) {
+            return Limit::perMinute(3)->by($request->ip());
+        });
     }
 }

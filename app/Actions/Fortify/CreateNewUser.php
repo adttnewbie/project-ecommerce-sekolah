@@ -7,8 +7,10 @@ use App\Concerns\ProfileValidationRules;
 use App\Enums\UserRole;
 use App\Models\Position;
 use App\Models\User;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -22,6 +24,17 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
+        $throttleKey = 'register|'.(string) request()->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 3)) {
+            throw ValidationException::withMessages([
+                'email' => __('Terlalu banyak percobaan pendaftaran. Silakan coba lagi dalam satu menit.'),
+            ]);
+        }
+
+        // Successful signups keep counting toward the ip limit: the goal is
+        // capping account-creation volume per ip, not just failed attempts.
+        RateLimiter::hit($throttleKey);
         $validator = Validator::make($input, [
             ...$this->profileRules(),
             'position_id' => ['required', 'integer', Rule::exists('positions', 'id')],
@@ -47,7 +60,7 @@ class CreateNewUser implements CreatesNewUsers
             ->where('code', Position::STUDENT)
             ->exists();
 
-        return User::create([
+        $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'role' => UserRole::Buyer,
@@ -55,5 +68,7 @@ class CreateNewUser implements CreatesNewUsers
             'position_id' => $positionId,
             'class_id' => $isStudent ? (int) $input['class_id'] : null,
         ]);
+
+        return $user;
     }
 }
