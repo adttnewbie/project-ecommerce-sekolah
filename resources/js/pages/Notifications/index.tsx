@@ -1,3 +1,4 @@
+import type { PageProps as SharedPageProps } from '@inertiajs/core';
 import { router, usePage } from '@inertiajs/react';
 import { CheckCircle2 } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
@@ -26,10 +27,10 @@ const toasts = {
     },
 };
 
+type NotificationsPageProps = SharedPageProps & PaginatedNotifications;
+
 export default function NotificationsPage() {
-    const props = usePage().props.data as PaginatedNotifications & {
-        unreadCount: number;
-    };
+    const props = usePage<NotificationsPageProps>().props;
 
     const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
     const [filter, setFilter] = useState(props.filter || 'all');
