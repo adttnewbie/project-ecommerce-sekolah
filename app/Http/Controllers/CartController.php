@@ -8,8 +8,10 @@ use App\Models\Product;
 use App\Models\User;
 use App\Support\PreOrderRules;
 use App\Traits\OwnerPayloadHelper;
+use App\Support\UniqueViolationRetry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -82,24 +84,33 @@ class CartController extends Controller
         /** @var User $user */
         $user = $request->user();
         $quantity = $this->validatedQuantity($request);
-        $cartItem = CartItem::query()
-            ->where('user_id', $user->id)
-            ->where('product_id', $product->id)
-            ->first();
-        $nextQuantity = $quantity + ($cartItem->quantity ?? 0);
 
-        $this->ensureQuantityDoesNotExceedStock($nextQuantity, $product);
-        PreOrderRules::assertPurchasable($product, $nextQuantity);
+        $cartItem = UniqueViolationRetry::run(
+            fn (): CartItem => DB::transaction(function () use ($user, $product, $quantity): CartItem {
+                $existing = CartItem::query()
+                    ->where('user_id', $user->id)
+                    ->where('product_id', $product->id)
+                    ->lockForUpdate()
+                    ->first();
 
-        if ($cartItem) {
-            $cartItem->update(['quantity' => $nextQuantity]);
-        } else {
-            $cartItem = CartItem::query()->create([
-                'user_id' => $user->id,
-                'product_id' => $product->id,
-                'quantity' => $quantity,
-            ]);
-        }
+                $nextQuantity = $quantity + ($existing->quantity ?? 0);
+
+                $this->ensureQuantityDoesNotExceedStock($nextQuantity, $product);
+                PreOrderRules::assertPurchasable($product, $nextQuantity);
+
+                if ($existing) {
+                    $existing->update(['quantity' => $nextQuantity]);
+
+                    return $existing;
+                }
+
+                return CartItem::query()->create([
+                    'user_id' => $user->id,
+                    'product_id' => $product->id,
+                    'quantity' => $quantity,
+                ]);
+            }),
+        );
 
         if ($request->input('redirect_to') === 'checkout.confirm') {
             return to_route('checkout.confirm', ['items' => (string) $cartItem->id]);
