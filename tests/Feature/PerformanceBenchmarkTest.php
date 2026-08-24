@@ -117,31 +117,39 @@ test('benchmark optimized routes query counts', function () {
         return count(DB::getQueryLog());
     };
 
+    // Historical query counts recorded before the Fase 1-4 optimisations
+    // (see PRODUCTION_HARDENING.md §3/§5/§11). The assertion guards against
+    // regressing past the documented baseline; measured counts stay visible
+    // in test output for drift tracking.
+    $baselines = [
+        'catalog.index' => 14,
+        'cart.index' => 14,
+        'checkout.confirm' => 16,
+        'admin.orders.index' => 70,
+        'admin.products.moderation.index' => 8,
+        'admin.seller-applications.index' => 7,
+        'admin-jurusan.consignments.index' => 7,
+        'admin-jurusan.reports.index' => 8,
+    ];
+
     $results = [];
 
-    $catalogAfter = $measure(fn () => $this->get(route('catalog.index'))->assertOk());
-    $results['catalog.index'] = ['before' => $catalogAfter + 8, 'after' => $catalogAfter];
+    foreach ($baselines as $name => $before) {
+        $after = match ($name) {
+            'catalog.index' => $measure(fn () => $this->get(route('catalog.index'))->assertOk()),
+            'cart.index' => $measure(fn () => $this->actingAs($buyer)->get(route('cart.index'))->assertOk()),
+            'checkout.confirm' => $measure(fn () => $this->actingAs($buyer)->get(route('checkout.confirm'))->assertOk()),
+            'admin.orders.index' => $measure(fn () => $this->actingAs($admin)->get(route('admin.orders.index'))->assertOk()),
+            'admin.products.moderation.index' => $measure(fn () => $this->actingAs($admin)->get(route('admin.products.moderation.index'))->assertOk()),
+            'admin.seller-applications.index' => $measure(fn () => $this->actingAs($admin)->get(route('admin.seller-applications.index'))->assertOk()),
+            'admin-jurusan.consignments.index' => $measure(fn () => $this->actingAs($adminJurusan)->get(route('admin-jurusan.consignments.index'))->assertOk()),
+            'admin-jurusan.reports.index' => $measure(fn () => $this->actingAs($adminJurusan)->get(route('admin-jurusan.reports.index'))->assertOk()),
+        };
 
-    $cartAfter = $measure(fn () => $this->actingAs($buyer)->get(route('cart.index'))->assertOk());
-    $results['cart.index'] = ['before' => $cartAfter + 7, 'after' => $cartAfter];
+        expect($after)->toBeLessThanOrEqual($before, "{$name} ran {$after} queries, baseline allows {$before}");
 
-    $confirmAfter = $measure(fn () => $this->actingAs($buyer)->get(route('checkout.confirm'))->assertOk());
-    $results['checkout.confirm'] = ['before' => $confirmAfter + 8, 'after' => $confirmAfter];
-
-    $ordersAfter = $measure(fn () => $this->actingAs($admin)->get(route('admin.orders.index'))->assertOk());
-    $results['admin.orders.index'] = ['before' => $ordersAfter + 30, 'after' => $ordersAfter];
-
-    $moderationAfter = $measure(fn () => $this->actingAs($admin)->get(route('admin.products.moderation.index'))->assertOk());
-    $results['admin.products.moderation.index'] = ['before' => $moderationAfter - 1, 'after' => $moderationAfter];
-
-    $applicationsAfter = $measure(fn () => $this->actingAs($admin)->get(route('admin.seller-applications.index'))->assertOk());
-    $results['admin.seller-applications.index'] = ['before' => $applicationsAfter - 1, 'after' => $applicationsAfter];
-
-    $consignmentsAfter = $measure(fn () => $this->actingAs($adminJurusan)->get(route('admin-jurusan.consignments.index'))->assertOk());
-    $results['admin-jurusan.consignments.index'] = ['before' => $consignmentsAfter - 1, 'after' => $consignmentsAfter];
-
-    $reportsAfter = $measure(fn () => $this->actingAs($adminJurusan)->get(route('admin-jurusan.reports.index'))->assertOk());
-    $results['admin-jurusan.reports.index'] = ['before' => $reportsAfter - 1, 'after' => $reportsAfter];
+        $results[$name] = ['before' => $before, 'after' => $after];
+    }
 
     dump($results);
 });
