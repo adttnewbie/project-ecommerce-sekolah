@@ -11,7 +11,7 @@ import {
     Users,
 } from 'lucide-react';
 import { useState } from 'react';
-import { HeaderNotificationItem } from '@/components/notifications/header-notification-item';
+import { NotificationDropdown } from '@/components/notifications/notification-dropdown';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -50,12 +50,6 @@ const roleLabels: Record<string, string> = {
 
 const userMenuClassName =
     'w-56 rounded-[8px] bg-white text-slate-900 ring-slate-200 [&_[data-slot=dropdown-menu-item]]:text-slate-700 [&_[data-slot=dropdown-menu-item]]:focus:bg-slate-100 [&_[data-slot=dropdown-menu-item]]:focus:text-slate-900 [&_[data-slot=dropdown-menu-label]]:text-slate-500 [&_[data-slot=dropdown-menu-separator]]:bg-slate-200';
-const notificationMenuClassName =
-    'w-80 max-h-[24rem] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300';
-const notificationMenuStyle = {
-    maxHeight: 'var(--radix-dropdown-menu-content-available-height)',
-};
-
 export function getSearchConfig(role: string | undefined, query: string) {
     if (role === 'buyer' || !role) {
         return {
@@ -143,7 +137,6 @@ export function AppSidebarHeader({
     } = usePage().props;
 
     const unreadCount = notificationBadge?.count ?? 0;
-    const badgeLabel = unreadCount > 99 ? '99+' : String(unreadCount);
     const [search, setSearch] = useState('');
     const getInitials = useInitials();
     const currentBreadcrumb = breadcrumbs[breadcrumbs.length - 1];
@@ -230,175 +223,50 @@ export function AppSidebarHeader({
                             <Link href={buyerOrdersIndex()}>Orders</Link>
                         </Button>
 
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
-                                    aria-label="Notifikasi"
-                                >
-                                    <Bell className="size-5" />
-                                    {buyerHeader?.notifications &&
-                                        buyerHeader.notifications.length >
-                                            0 && (
-                                            <span
-                                                className={`absolute top-2 right-2 size-2.5 rounded-full ring-2 ring-white ${buyerHeader.notifications.some((n) => !n.is_read) ? 'bg-red-500' : 'bg-slate-300'}`}
-                                            />
-                                        )}
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                align="end"
-                                className={notificationMenuClassName}
-                                style={notificationMenuStyle}
-                                sideOffset={8}
+                        <NotificationDropdown
+                            notifications={buyerHeader?.notifications}
+                            unreadCount={unreadCount}
+                            emptyTitle="Tidak ada notifikasi baru"
+                            emptyText="Kabar terbaru soal pesanan Anda akan muncul di sini"
+                        >
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
+                                aria-label="Notifikasi"
                             >
-                                <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-[inherit] border-b border-slate-100 bg-white px-3 py-3">
-                                    <h3 className="text-sm font-semibold text-slate-900">
-                                        Notifikasi
-                                    </h3>
-                                    {buyerHeader &&
-                                        buyerHeader.notifications &&
-                                        buyerHeader.notifications.length >
-                                            0 && (
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    router.post(
-                                                        '/notifications/mark-all-as-read',
-                                                        {},
-                                                        {
-                                                            preserveScroll: true,
-                                                        },
-                                                    );
-                                                }}
-                                                className="text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
-                                            >
-                                                Mark all as read
-                                            </button>
-                                        )}
-                                </div>
-                                {buyerHeader &&
-                                buyerHeader.notifications?.length ? (
-                                    <>
-                                        {buyerHeader.notifications.map(
-                                            (notification) => (
-                                                <HeaderNotificationItem
-                                                    key={notification.key}
-                                                    notification={notification}
-                                                />
-                                            ),
-                                        )}
-                                        <div className="border-t border-slate-100 p-2">
-                                            <Button
-                                                asChild
-                                                variant="ghost"
-                                                size="sm"
-                                                className="w-full text-xs text-blue-600"
-                                            >
-                                                <Link href="/notifications">
-                                                    Lihat semua notifikasi
-                                                </Link>
-                                            </Button>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-                                        <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-slate-50">
-                                            <Bell className="size-5 text-slate-400" />
-                                        </div>
-                                        <p className="mb-1 text-sm font-medium text-slate-900">
-                                            Tidak ada notifikasi baru
-                                        </p>
-                                        <p className="text-xs text-slate-500">
-                                            Kabar terbaru soal pesanan Anda akan
-                                            muncul di sini
-                                        </p>
-                                    </div>
+                                <Bell className="size-5" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </span>
                                 )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                            </Button>
+                        </NotificationDropdown>
                     </>
                 ) : role === 'seller' ? (
                     <>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
-                                    aria-label="Notifikasi"
-                                >
-                                    <Bell className="size-5" />
-                                    {unreadCount > 0 && (
-                                        <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
-                                            {badgeLabel}
-                                        </span>
-                                    )}
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                align="end"
-                                className={notificationMenuClassName}
-                                style={notificationMenuStyle}
-                                sideOffset={8}
+                        <NotificationDropdown
+                            notifications={sellerHeader?.notifications}
+                            unreadCount={unreadCount}
+                            ariaLabel="Notifikasi"
+                        >
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
+                                aria-label="Notifikasi"
                             >
-                                <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-[inherit] border-b border-slate-100 bg-white px-3 py-3">
-                                    <h3 className="text-sm font-semibold text-slate-900">
-                                        Notifikasi
-                                    </h3>
-                                    {sellerHeader &&
-                                        sellerHeader.notifications &&
-                                        sellerHeader.notifications.length >
-                                            0 && (
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    router.post(
-                                                        '/notifications/mark-all-as-read',
-                                                        {},
-                                                        {
-                                                            preserveScroll: true,
-                                                        },
-                                                    );
-                                                }}
-                                                className="text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
-                                            >
-                                                Mark all as read
-                                            </button>
-                                        )}
-                                </div>
-                                {sellerHeader &&
-                                sellerHeader.notifications?.length ? (
-                                    sellerHeader.notifications.map(
-                                        (notification) => (
-                                            <HeaderNotificationItem
-                                                key={notification.key}
-                                                notification={notification}
-                                            />
-                                        ),
-                                    )
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-                                        <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-slate-50">
-                                            <Bell className="size-5 text-slate-400" />
-                                        </div>
-                                        <p className="mb-1 text-sm font-medium text-slate-900">
-                                            Tidak ada notifikasi baru
-                                        </p>
-                                        <p className="text-xs text-slate-500">
-                                            Anda akan melihat notifikasi di sini
-                                            ketika ada pembaruan
-                                        </p>
-                                    </div>
+                                <Bell className="size-5" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </span>
                                 )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                            </Button>
+                        </NotificationDropdown>
 
                         <Dialog>
                             <DialogTrigger asChild>
@@ -459,81 +327,26 @@ export function AppSidebarHeader({
                     </>
                 ) : role === 'admin' || role === 'admin_jurusan' ? (
                     <>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
-                                    aria-label={`Notifikasi ${userRole || 'Admin'}`}
-                                >
-                                    <Bell className="size-5" />
-                                    {unreadCount > 0 && (
-                                        <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
-                                            {badgeLabel}
-                                        </span>
-                                    )}
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                align="end"
-                                className={notificationMenuClassName}
-                                style={notificationMenuStyle}
-                                sideOffset={8}
+                        <NotificationDropdown
+                            notifications={adminHeader?.notifications}
+                            unreadCount={unreadCount}
+                            ariaLabel={`Notifikasi ${userRole || 'Admin'}`}
+                        >
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
+                                aria-label={`Notifikasi ${userRole || 'Admin'}`}
                             >
-                                <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-[inherit] border-b border-slate-100 bg-white px-3 py-3">
-                                    <h3 className="text-sm font-semibold text-slate-900">
-                                        Notifikasi {userRole || 'Admin'}
-                                    </h3>
-                                    {adminHeader &&
-                                        adminHeader.notifications &&
-                                        adminHeader.notifications.length >
-                                            0 && (
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    router.post(
-                                                        '/notifications/mark-all-as-read',
-                                                        {},
-                                                        {
-                                                            preserveScroll: true,
-                                                        },
-                                                    );
-                                                }}
-                                                className="text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
-                                            >
-                                                Mark all as read
-                                            </button>
-                                        )}
-                                </div>
-                                {adminHeader &&
-                                adminHeader.notifications?.length ? (
-                                    adminHeader.notifications.map(
-                                        (notification) => (
-                                            <HeaderNotificationItem
-                                                key={notification.key}
-                                                notification={notification}
-                                            />
-                                        ),
-                                    )
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-                                        <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-slate-50">
-                                            <Bell className="size-5 text-slate-400" />
-                                        </div>
-                                        <p className="mb-1 text-sm font-medium text-slate-900">
-                                            Tidak ada notifikasi baru
-                                        </p>
-                                        <p className="text-xs text-slate-500">
-                                            Anda akan melihat notifikasi di sini
-                                            ketika ada pembaruan
-                                        </p>
-                                    </div>
+                                <Bell className="size-5" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </span>
                                 )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                            </Button>
+                        </NotificationDropdown>
 
                         <Dialog>
                             <DialogTrigger asChild>
@@ -564,96 +377,26 @@ export function AppSidebarHeader({
                     </>
                 ) : role === 'picket_officer' ? (
                     <>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
-                                    aria-label={`Notifikasi ${userRole}`}
-                                >
-                                    <Bell className="size-5" />
-                                    {picketOfficerHeader &&
-                                        picketOfficerHeader.notifications
-                                            ?.length > 0 && (
-                                            <span
-                                                className={`absolute top-2 right-2 size-2.5 rounded-full ring-2 ring-white ${picketOfficerHeader.notifications.length > 9 ? 'h-5 w-5 rounded-[8px] bg-red-500 p-1' : 'bg-red-500'} ${picketOfficerHeader.notifications.length > 9 ? 'flex items-center justify-center' : ''} ${picketOfficerHeader.notifications.some((n) => n.type === 'order' || n.type === 'payment') ? 'notification-badge-pulse' : ''}`}
-                                            >
-                                                {picketOfficerHeader
-                                                    .notifications.length >
-                                                    9 && (
-                                                    <span className="text-[10px] leading-none font-semibold text-white">
-                                                        {Math.floor(
-                                                            picketOfficerHeader
-                                                                .notifications
-                                                                .length / 10,
-                                                        )}
-                                                        +
-                                                    </span>
-                                                )}
-                                            </span>
-                                        )}
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                align="end"
-                                className={notificationMenuClassName}
-                                style={notificationMenuStyle}
-                                sideOffset={8}
+                        <NotificationDropdown
+                            notifications={picketOfficerHeader?.notifications}
+                            unreadCount={unreadCount}
+                            ariaLabel={`Notifikasi ${userRole}`}
+                        >
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
+                                aria-label={`Notifikasi ${userRole}`}
                             >
-                                <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-[inherit] border-b border-slate-100 bg-white px-3 py-3">
-                                    <h3 className="text-sm font-semibold text-slate-900">
-                                        Notifikasi {userRole}
-                                    </h3>
-                                    {picketOfficerHeader &&
-                                        picketOfficerHeader.notifications &&
-                                        picketOfficerHeader.notifications
-                                            .length > 0 && (
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    router.post(
-                                                        '/notifications/mark-all-as-read',
-                                                        {},
-                                                        {
-                                                            preserveScroll: true,
-                                                        },
-                                                    );
-                                                }}
-                                                className="text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
-                                            >
-                                                Mark all as read
-                                            </button>
-                                        )}
-                                </div>
-                                {picketOfficerHeader &&
-                                picketOfficerHeader.notifications?.length ? (
-                                    picketOfficerHeader.notifications.map(
-                                        (notification) => (
-                                            <HeaderNotificationItem
-                                                key={notification.key}
-                                                notification={notification}
-                                            />
-                                        ),
-                                    )
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-                                        <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-slate-50">
-                                            <Bell className="size-5 text-slate-400" />
-                                        </div>
-                                        <p className="mb-1 text-sm font-medium text-slate-900">
-                                            Tidak ada notifikasi baru
-                                        </p>
-                                        <p className="text-xs text-slate-500">
-                                            Anda akan melihat notifikasi di sini
-                                            ketika ada pembaruan
-                                        </p>
-                                    </div>
+                                <Bell className="size-5" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </span>
                                 )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                            </Button>
+                        </NotificationDropdown>
 
                         <Dialog>
                             <DialogTrigger asChild>
@@ -686,96 +429,26 @@ export function AppSidebarHeader({
                     </>
                 ) : role === 'admin_jurusan' ? (
                     <>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
-                                    aria-label={`Notifikasi ${userRole}`}
-                                >
-                                    <Bell className="size-5" />
-                                    {adminJurusanHeader &&
-                                        adminJurusanHeader.notifications
-                                            ?.length > 0 && (
-                                            <span
-                                                className={`absolute top-2 right-2 size-2.5 rounded-full ring-2 ring-white ${adminJurusanHeader.notifications.length > 9 ? 'h-5 w-5 rounded-[8px] bg-red-500 p-1' : 'bg-red-500'} ${adminJurusanHeader.notifications.length > 9 ? 'flex items-center justify-center' : ''} ${adminJurusanHeader.notifications.some((n) => n.type === 'order') ? 'notification-badge-pulse' : ''}`}
-                                            >
-                                                {adminJurusanHeader
-                                                    .notifications.length >
-                                                    9 && (
-                                                    <span className="text-[10px] leading-none font-semibold text-white">
-                                                        {Math.floor(
-                                                            adminJurusanHeader
-                                                                .notifications
-                                                                .length / 10,
-                                                        )}
-                                                        +
-                                                    </span>
-                                                )}
-                                            </span>
-                                        )}
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                align="end"
-                                className={notificationMenuClassName}
-                                style={notificationMenuStyle}
-                                sideOffset={8}
+                        <NotificationDropdown
+                            notifications={adminJurusanHeader?.notifications}
+                            unreadCount={unreadCount}
+                            ariaLabel={`Notifikasi ${userRole}`}
+                        >
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
+                                aria-label={`Notifikasi ${userRole}`}
                             >
-                                <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-[inherit] border-b border-slate-100 bg-white px-3 py-3">
-                                    <h3 className="text-sm font-semibold text-slate-900">
-                                        Notifikasi {userRole}
-                                    </h3>
-                                    {adminJurusanHeader &&
-                                        adminJurusanHeader.notifications &&
-                                        adminJurusanHeader.notifications
-                                            .length > 0 && (
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    router.post(
-                                                        '/notifications/mark-all-as-read',
-                                                        {},
-                                                        {
-                                                            preserveScroll: true,
-                                                        },
-                                                    );
-                                                }}
-                                                className="text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
-                                            >
-                                                Mark all as read
-                                            </button>
-                                        )}
-                                </div>
-                                {adminJurusanHeader &&
-                                adminJurusanHeader.notifications?.length ? (
-                                    adminJurusanHeader.notifications.map(
-                                        (notification) => (
-                                            <HeaderNotificationItem
-                                                key={notification.key}
-                                                notification={notification}
-                                            />
-                                        ),
-                                    )
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-                                        <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-slate-50">
-                                            <Bell className="size-5 text-slate-400" />
-                                        </div>
-                                        <p className="mb-1 text-sm font-medium text-slate-900">
-                                            Tidak ada notifikasi baru
-                                        </p>
-                                        <p className="text-xs text-slate-500">
-                                            Anda akan melihat notifikasi di sini
-                                            ketika ada pembaruan
-                                        </p>
-                                    </div>
+                                <Bell className="size-5" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </span>
                                 )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                            </Button>
+                        </NotificationDropdown>
                     </>
                 ) : !auth.user ? (
                     <>
