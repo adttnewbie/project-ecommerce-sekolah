@@ -8,6 +8,7 @@ use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
 use App\Enums\StockMovementSource;
+use App\Events\OrderItemsAwaitingVerification;
 use App\Events\PendingOrderCreated;
 use App\Models\CartItem;
 use App\Models\Order;
@@ -25,6 +26,7 @@ use App\Traits\OwnerPayloadHelper;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -440,6 +442,56 @@ class CheckoutController extends Controller
                 buyerName: $buyer->name,
                 totalPrice: (int) $order->total_price,
                 orderItemId: $first['id'],
+            );
+        }
+
+        $this->notifyPicketsOfNewItems($order, collect($pendingBySeller)->flatten(1));
+    }
+
+    /**
+     * Group the pending items by the up jurusan that must verify them and
+     * fire one new-work event per group. Self-managed items never involve a
+     * picket and are skipped.
+     *
+     * @param  Collection<int, array{id: int, product_id: int, name: string}>  $items
+     */
+    private function notifyPicketsOfNewItems(Order $order, Collection $items): void
+    {
+        if ($items->isEmpty()) {
+            return;
+        }
+
+        $products = Product::query()
+            ->whereIn('id', $items->pluck('product_id'))
+            ->with('upJurusanConsignments:id,product_id,up_jurusan_id')
+            ->get()
+            ->keyBy('id');
+
+        $byUpJurusan = [];
+
+        foreach ($items as $item) {
+            $product = $products->get($item['product_id']);
+
+            if ($product === null) {
+                continue;
+            }
+
+            $upJurusanId = $product->up_jurusan_id
+                ?? $product->upJurusanConsignments->first()?->up_jurusan_id;
+
+            if ($upJurusanId === null) {
+                continue;
+            }
+
+            $byUpJurusan[(int) $upJurusanId][] = $item;
+        }
+
+        foreach ($byUpJurusan as $upJurusanId => $ujItems) {
+            OrderItemsAwaitingVerification::dispatch(
+                upJurusanId: $upJurusanId,
+                orderId: $order->id,
+                orderCode: $order->code ?? "TRX-{$order->id}",
+                itemCount: count($ujItems),
             );
         }
     }

@@ -276,3 +276,11 @@ New events/listeners: `BuyerOrderStateChanged` → `PersistBuyerOrderNotice`, pl
 - `BuyerItemCancelledNotify`: buyer diberi tahu hanya ketika pembatalan dilakukan seller/picket; self-cancel senyap dan expiry/force-cancel tetap lewat `BuyerOrderStateChanged` (tanpa dobel).
 
 Keduanya pref-gated & idempotent via `NotificationDispatch`. Regresi: `OrderCancelledNotifyTest` ×5 (multi-seller fan-out, dua arah silence rules, picket both-sides, system-side expiry ke seller, preference gate).
+
+### Picket new-work notifications (2026-08-24, lanjutan §14)
+
+Checkout post-commit kini mengelompokkan item pending per up jurusan tujuan (produk UP-managed via `up_jurusan_id` atau konsinyasa) dan men-dispatch `OrderItemsAwaitingVerification(upJurusanId, orderId, orderCode, itemCount)` — satu event per order-per-UJ, `itemCount` hanya menghitung item actionable untuk UJ tersebut (item self-managed dilewati).
+
+Listener `PicketVerificationNotify` mem-fan-out ke picket officer UJ tsb (domain: satu picket per UJ — `users.up_jurusan_id` unique) dengan key `picket-new-order:{orderId}:{upJurusanId}`, type `payment` (memicu pulse badge eksisting), href `picket.orders`, pref-gated `payment`.
+
+Regresi: `PicketVerificationNotifyTest` ×4 — fan-out + isolasi UJ lain; itemCount hanya item actionable; idempotent per order+UJ sementara order baru tetap notif; preference gate.

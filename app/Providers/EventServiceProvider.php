@@ -7,6 +7,7 @@ use App\Events\BuyerOrderStateChanged;
 use App\Events\DailyReportSubmitted;
 use App\Events\LowStockDetected;
 use App\Events\OrderItemCancelled;
+use App\Events\OrderItemsAwaitingVerification;
 use App\Events\OrderItemStatusChanged;
 use App\Events\OrderPaymentApproved;
 use App\Events\PendingOrderCreated;
@@ -28,6 +29,7 @@ use App\Listeners\CreatePendingOrderNotification;
 use App\Listeners\CreateProductModerationNotification;
 use App\Listeners\PersistBuyerOrderNotice;
 use App\Listeners\PicketOfficerOrderNotify;
+use App\Listeners\PicketVerificationNotify;
 use App\Listeners\SellerCancelledOrderNotify;
 use App\Listeners\SellerPaymentPaidNotify;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -75,6 +77,10 @@ class EventServiceProvider extends ServiceProvider
         OrderItemCancelled::class => [
             SellerCancelledOrderNotify::class,
             BuyerItemCancelledNotify::class,
+        ],
+
+        OrderItemsAwaitingVerification::class => [
+            PicketVerificationNotify::class,
         ],
 
         BuyerOrderStateChanged::class => [
