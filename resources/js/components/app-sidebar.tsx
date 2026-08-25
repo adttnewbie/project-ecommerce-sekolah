@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import {
     Boxes,
     ClipboardCheck,
@@ -41,6 +41,7 @@ import { dashboard as sellerDashboard } from '@/routes/seller';
 import { index as sellerInventoryIndex } from '@/routes/seller/inventory';
 import { index as sellerOrdersIndex } from '@/routes/seller/orders';
 import { index as sellerProductsIndex } from '@/routes/seller/products';
+import { enter as enterShoppingMode } from '@/routes/shopping-mode';
 import type { NavItem } from '@/types';
 
 const lightTooltip = {
@@ -126,14 +127,16 @@ export function AppSidebar() {
                                             <span>{item.title}</span>
                                         </a>
                                     ) : (
-                                        <Link href={item.href} prefetch>
-                                            {item.icon && <item.icon />}
-                                            <span>{item.title}</span>
-                                            {auth.user?.role === 'buyer' &&
-                                                item.title === 'Keranjang' &&
-                                                Boolean(
-                                                    buyerHeader?.cartItemsCount,
-                                                ) && (
+                                    <Link href={item.href} prefetch>
+                                        {item.icon && <item.icon />}
+                                        <span>{item.title}</span>
+                                        {(auth.user?.role === 'buyer' ||
+                                            auth.user?.role ===
+                                                'seller') &&
+                                            item.title === 'Keranjang' &&
+                                            Boolean(
+                                                buyerHeader?.cartItemsCount,
+                                            ) && (
                                                     <span className="ml-auto rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
                                                         {
                                                             buyerHeader?.cartItemsCount
@@ -152,6 +155,30 @@ export function AppSidebar() {
             {auth.user && (
                 <SidebarFooter className="border-t border-slate-100 p-3">
                     <SidebarMenu>
+                        {auth.user.role === 'seller' && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    tooltip={{
+                                        children: 'Mode Buyer',
+                                        ...lightTooltip,
+                                    }}
+                                    className="h-11 rounded-xl px-3 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            router.post(
+                                                enterShoppingMode().url,
+                                            )
+                                        }
+                                    >
+                                        <ShoppingCart />
+                                        <span>Mode Buyer</span>
+                                    </button>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild

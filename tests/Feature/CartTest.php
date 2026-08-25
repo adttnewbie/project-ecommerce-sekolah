@@ -252,6 +252,33 @@ test('guest users are redirected from cart endpoints', function () {
         ->assertRedirect(route('login'));
 });
 
+test('seller can shop like a buyer via cart endpoints', function () {
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $product = Product::factory()->approved()->create(['stock' => 5]);
+
+    $this->actingAs($seller);
+
+    $this->post(route('cart.items.store', ['product' => $product->slug]), [
+        'quantity' => 1,
+    ])->assertRedirect(route('cart.index'));
+
+    $cartItem = CartItem::query()
+        ->where('user_id', $seller->id)
+        ->where('product_id', $product->id)
+        ->firstOrFail();
+
+    $this->get(route('cart.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('buyerHeader.cartItemsCount', 1));
+
+    $this->put(route('cart.items.update', $cartItem), [
+        'quantity' => 2,
+    ])->assertRedirect(route('cart.index'));
+
+    $this->delete(route('cart.items.destroy', $cartItem))->assertRedirect(route('cart.index'));
+});
+
 test('non buyer users cannot access cart endpoints', function (UserRole $role) {
     $user = User::factory()->create(['role' => $role]);
     $product = Product::factory()->approved()->create(['stock' => 5]);
@@ -273,7 +300,6 @@ test('non buyer users cannot access cart endpoints', function (UserRole $role) {
     $this->delete(route('cart.items.destroy', $cartItem))->assertForbidden();
 })->with([
     UserRole::Admin,
-    UserRole::Seller,
     UserRole::PicketOfficer,
 ]);
 

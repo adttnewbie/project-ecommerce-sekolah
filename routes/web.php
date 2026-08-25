@@ -29,6 +29,7 @@ use App\Http\Controllers\SellerDashboardController;
 use App\Http\Controllers\SellerInventoryController;
 use App\Http\Controllers\SellerOrderController;
 use App\Http\Controllers\SellerProductController;
+use App\Http\Controllers\ShoppingModeController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureUserIsAdminJurusan;
@@ -53,6 +54,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/{key}/read', [NotificationController::class, 'markAsRead']);
     Route::delete('/notifications/{key}', [NotificationController::class, 'dismiss'])->name('notifications.destroy');
     Route::put('/notifications/{key}/restore', [NotificationController::class, 'restore'])->name('notifications.restore');
+
+    // Seller shopping-mode toggle (UI only - the role never changes)
+    Route::post('shopping-mode/buyer', [ShoppingModeController::class, 'enter'])->name('shopping-mode.enter');
+    Route::post('shopping-mode/seller', [ShoppingModeController::class, 'leave'])->name('shopping-mode.leave');
 });
 
 Route::middleware(['auth', EnsureUserIsBuyer::class])->group(function () {

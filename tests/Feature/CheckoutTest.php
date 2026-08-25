@@ -618,7 +618,6 @@ test('non buyer users cannot checkout', function (UserRole $role) {
         ->assertForbidden();
 })->with([
     UserRole::Admin,
-    UserRole::Seller,
     UserRole::PicketOfficer,
 ]);
 
@@ -630,7 +629,6 @@ test('non buyer users cannot view payment confirmation', function (UserRole $rol
         ->assertForbidden();
 })->with([
     UserRole::Admin,
-    UserRole::Seller,
     UserRole::PicketOfficer,
 ]);
 

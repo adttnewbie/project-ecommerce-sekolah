@@ -47,7 +47,7 @@ export default function CatalogIndex({
 }: CatalogIndexProps) {
     const { auth } = usePage<PageProps>().props;
     const greetingName =
-        auth.user?.role === 'buyer'
+        auth.user?.role === 'buyer' || auth.user?.role === 'seller'
             ? auth.user.name.split(' ')[0]
             : 'selamat datang';
 

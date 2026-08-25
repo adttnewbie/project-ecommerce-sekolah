@@ -1,5 +1,10 @@
-import { Link, usePage } from '@inertiajs/react';
-import { Settings, ShieldCheck, UserRound } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import {
+    LayoutDashboard,
+    Settings,
+    ShieldCheck,
+    UserRound,
+} from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import Heading from '@/components/heading';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,6 +16,8 @@ import { useInitials } from '@/hooks/use-initials';
 import { cn, toUrl } from '@/lib/utils';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
+import { dashboard as sellerDashboard } from '@/routes/seller';
+import { leave as leaveShoppingMode } from '@/routes/shopping-mode';
 import type { NavItem } from '@/types';
 
 const sidebarNavItems: NavItem[] = [
@@ -40,6 +47,17 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const getInitials = useInitials();
     const roleLabel = auth.user?.role ? (roleLabels[auth.user.role] ?? auth.user.role) : null;
     const isBuyer = auth.user?.role === 'buyer';
+    const navItems: NavItem[] =
+        auth.user?.role === 'seller'
+            ? [
+                  {
+                      title: 'Dashboard Seller',
+                      href: sellerDashboard(),
+                      icon: LayoutDashboard,
+                  },
+                  ...sidebarNavItems,
+              ]
+            : sidebarNavItems;
 
     return (
         <div
@@ -109,9 +127,15 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                             <p className="px-3 pb-1 text-[11px] font-semibold tracking-widest text-slate-400 uppercase">
                                 Menu
                             </p>
-                            {sidebarNavItems.map((item, index) => {
+                            {navItems.map((item, index) => {
                                 const isActive = isCurrentOrParentUrl(item.href);
                                 const Icon = item.icon;
+                                // "Dashboard Seller" also ends shopping mode so
+                                // the session flag never outlives the intent.
+                                const exitsShoppingMode =
+                                    auth.user?.role === 'seller' &&
+                                    toUrl(item.href) ===
+                                        toUrl(sellerDashboard());
 
                                 return (
                                     <Button
@@ -126,11 +150,32 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
                                         )}
                                     >
-                                        <Link href={item.href} aria-current={isActive ? 'page' : undefined}>
-                                            {Icon && <Icon className="size-4 shrink-0" />}
+                                        <Link
+                                            href={item.href}
+                                            aria-current={
+                                                isActive ? 'page' : undefined
+                                            }
+                                            onClick={
+                                                exitsShoppingMode
+                                                    ? (event) => {
+                                                          event.preventDefault();
+                                                          router.post(
+                                                              leaveShoppingMode()
+                                                                  .url,
+                                                          );
+                                                      }
+                                                    : undefined
+                                            }
+                                        >
+                                            {Icon && (
+                                                <Icon className="size-4 shrink-0" />
+                                            )}
                                             {item.title}
                                             {isActive && (
-                                                <span className="ml-auto size-1.5 rounded-full bg-[#0080FF]" aria-hidden />
+                                                <span
+                                                    className="ml-auto size-1.5 rounded-full bg-[#0080FF]"
+                                                    aria-hidden
+                                                />
                                             )}
                                         </Link>
                                     </Button>

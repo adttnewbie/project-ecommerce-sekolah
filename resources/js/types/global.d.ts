@@ -22,6 +22,7 @@ declare module '@inertiajs/core' {
             cartItemsCount: number;
             notifications: HeaderNotificationData['notifications'];
         } | null;
+        shoppingMode: string | null;
         sidebarOpen: boolean;
     }
 }

@@ -14,7 +14,9 @@ class EnsureUserIsBuyer
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user()?->role !== UserRole::Buyer) {
+        $role = $request->user()?->role;
+
+        if ($role !== UserRole::Buyer && $role !== UserRole::Seller) {
             abort(403);
         }
 

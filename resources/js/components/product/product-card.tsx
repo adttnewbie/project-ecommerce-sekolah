@@ -105,7 +105,8 @@ export function ProductCard({
     const pageProps = usePage().props as unknown as { auth: Auth };
     const auth = pageProps.auth;
     const isGuest = !auth?.user;
-    const isBuyer = auth?.user?.role === 'buyer';
+    const isBuyer =
+        auth?.user?.role === 'buyer' || auth?.user?.role === 'seller';
     const preOrderStatus = resolvePreOrderStatus(product);
     const isPreOrderClosed = preOrderStatus === 'closed';
     const isOutOfStock = !product.is_pre_order && product.stock <= 0;

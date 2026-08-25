@@ -21,6 +21,10 @@ class SellerApplicationController extends Controller
         /** @var User $user */
         $user = $request->user();
 
+        if ($user->role !== UserRole::Buyer) {
+            abort(403);
+        }
+
         $application = SellerApplication::query()
             ->where('user_id', $user->id)
             ->latest()

@@ -54,6 +54,7 @@ class HandleInertiaRequests extends Middleware
             'adminJurusanHeader' => fn () => $this->adminJurusanHeader($request),
             'picketOfficerHeader' => fn () => $this->picketOfficerHeader($request),
             'buyerHeader' => fn () => $this->buyerHeader($request),
+            'shoppingMode' => fn () => $this->shoppingMode($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => [
                 'success' => $request->session()->get('success'),
@@ -286,6 +287,21 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
+     * Sellers may browse the storefront in an explicit "buyer mode" driven by
+     * a session flag. The role itself never changes - only the UI does.
+     */
+    private function shoppingMode(Request $request): ?string
+    {
+        $user = $request->user();
+
+        if ($user?->role !== UserRole::Seller) {
+            return null;
+        }
+
+        return $request->session()->get('shopping_mode') === 'buyer' ? 'buyer' : null;
+    }
+
+    /**
      * @return array{id: int, cartItemsCount: int}|null
      */
     private function buyerHeader(Request $request): ?array
@@ -293,7 +309,9 @@ class HandleInertiaRequests extends Middleware
         /** @var User|null $buyer */
         $buyer = $request->user();
 
-        if ($buyer?->role !== UserRole::Buyer) {
+        // Sellers share buyer capabilities, so they receive the same header
+        // payload (cart count + transactional notifications) as buyers.
+        if ($buyer?->role !== UserRole::Buyer && $buyer?->role !== UserRole::Seller) {
             return null;
         }
 

@@ -175,6 +175,5 @@ test('non buyer users cannot access buyer orders', function (UserRole $role) {
     $this->get(route('orders.show', $order))->assertForbidden();
 })->with([
     UserRole::Admin,
-    UserRole::Seller,
     UserRole::PicketOfficer,
 ]);

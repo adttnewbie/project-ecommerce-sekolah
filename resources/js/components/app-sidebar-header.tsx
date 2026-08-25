@@ -85,6 +85,11 @@ export function getSearchConfig(role: string | undefined, query: string) {
                     icon: ShoppingCart,
                     href: sellerOrdersIndex({ query: { q: query } }),
                 },
+                {
+                    label: 'Katalog',
+                    icon: Package,
+                    href: catalogIndex({ query: { search: query } }),
+                },
             ],
         };
     }

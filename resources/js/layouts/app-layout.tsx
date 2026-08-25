@@ -10,9 +10,16 @@ export default function AppLayout({
     breadcrumbs?: BreadcrumbItem[];
     children: React.ReactNode;
 }) {
-    const { auth } = usePage().props;
+    const page = usePage();
+    const { auth, shoppingMode } = page.props;
+    const isSellerShopping =
+        auth.user?.role === 'seller' &&
+        shoppingMode === 'buyer' &&
+        !page.url.startsWith('/seller');
     const Layout =
-        auth.user?.role === 'buyer' ? AppHeaderLayout : AppLayoutTemplate;
+        auth.user?.role === 'buyer' || isSellerShopping
+            ? AppHeaderLayout
+            : AppLayoutTemplate;
 
     return <Layout breadcrumbs={breadcrumbs}>{children}</Layout>;
 }

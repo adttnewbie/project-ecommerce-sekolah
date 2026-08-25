@@ -1,5 +1,5 @@
-import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { LayoutDashboard, LogOut, Settings } from 'lucide-react';
 import { useState } from 'react';
 import {
     DropdownMenuGroup,
@@ -12,6 +12,7 @@ import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
+import { leave as leaveShoppingMode } from '@/routes/shopping-mode';
 import type { User } from '@/types';
 
 type Props = {
@@ -20,7 +21,9 @@ type Props = {
 
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
+    const { shoppingMode } = usePage().props;
     const [processing, setProcessing] = useState(false);
+    const isSellerShopping = user.role === 'seller' && shoppingMode === 'buyer';
 
     const handleLogout = () => {
         if (processing) {
@@ -49,6 +52,20 @@ export function UserMenuContent({ user }: Props) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+                {isSellerShopping && (
+                    <DropdownMenuItem asChild>
+                        <button
+                            type="button"
+                            className="block w-full cursor-pointer"
+                            onClick={() =>
+                                router.post(leaveShoppingMode().url)
+                            }
+                        >
+                            <LayoutDashboard className="mr-2" />
+                            Dashboard Seller
+                        </button>
+                    </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full cursor-pointer"

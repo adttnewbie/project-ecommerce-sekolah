@@ -40,7 +40,28 @@ test('buyer can access buyer transactional routes and profile', function () {
     $this->get(route('profile.edit'))->assertOk();
 });
 
-test('seller and admin cannot access buyer transactional routes', function (UserRole $role) {
+test('seller can access buyer transactional routes like a buyer', function () {
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $product = Product::factory()->approved()->create(['stock' => 5]);
+    $cartItem = CartItem::query()->create([
+        'user_id' => $seller->id,
+        'product_id' => $product->id,
+        'quantity' => 1,
+    ]);
+    $order = Order::factory()->for($seller)->create();
+
+    $this->actingAs($seller);
+
+    $this->get(route('cart.index'))->assertOk();
+    $this->post(route('cart.items.store', $product), ['quantity' => 1])->assertRedirect(route('cart.index'));
+    $this->put(route('cart.items.update', $cartItem), ['quantity' => 2])->assertRedirect(route('cart.index'));
+    $this->delete(route('cart.items.destroy', $cartItem))->assertRedirect(route('cart.index'));
+    $this->get(route('checkout.confirm'))->assertOk();
+    $this->get(route('orders.index'))->assertOk();
+    $this->get(route('orders.show', $order))->assertOk();
+});
+
+test('admin cannot access buyer transactional routes', function (UserRole $role) {
     $user = User::factory()->create(['role' => $role]);
     $product = Product::factory()->approved()->create(['stock' => 5]);
     $cartItem = CartItem::query()->create([
@@ -60,6 +81,5 @@ test('seller and admin cannot access buyer transactional routes', function (User
     $this->get(route('orders.index'))->assertForbidden();
     $this->get(route('orders.show', $order))->assertForbidden();
 })->with([
-    UserRole::Seller,
     UserRole::Admin,
 ]);

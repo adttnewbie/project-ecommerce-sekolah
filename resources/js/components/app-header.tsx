@@ -40,7 +40,8 @@ const userMenuClassName =
     'w-56 rounded-[14px] bg-white text-slate-900 ring-slate-200 shadow-[0_8px_24px_rgba(15,23,42,0.08)] [&_[data-slot=dropdown-menu-item]]:text-slate-700 [&_[data-slot=dropdown-menu-item]]:focus:bg-slate-100 [&_[data-slot=dropdown-menu-item]]:focus:text-slate-900 [&_[data-slot=dropdown-menu-label]]:text-slate-500 [&_[data-slot=dropdown-menu-separator]]:bg-slate-200';
 
 export function AppHeader() {
-    const { auth, buyerHeader, notificationBadge } = usePage().props;
+    const { auth, buyerHeader, notificationBadge, shoppingMode } =
+        usePage().props;
     const { isCurrentUrl } = useCurrentUrl();
     const [search, setSearch] = useState(() =>
         typeof window === 'undefined'
@@ -48,9 +49,11 @@ export function AppHeader() {
             : (new URL(window.location.href).searchParams.get('search') ?? ''),
     );
     const getInitials = useInitials();
-    const isBuyer = auth.user?.role === 'buyer';
+    const canShop =
+        auth.user?.role === 'buyer' ||
+        (auth.user?.role === 'seller' && shoppingMode === 'buyer');
     const query = search.trim();
-    const navItems = getBuyerNavItems(isBuyer);
+    const navItems = getBuyerNavItems(canShop);
 
     const submitSearch = (event: React.FormEvent) => {
         event.preventDefault();
@@ -149,7 +152,7 @@ export function AppHeader() {
                 </nav>
 
                 <div className="flex shrink-0 items-center justify-end gap-1 sm:gap-2">
-                    {isBuyer && (
+                    {canShop && (
                         <>
                             <Button
                                 asChild

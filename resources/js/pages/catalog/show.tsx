@@ -142,7 +142,8 @@ export default function CatalogShow({ product }: CatalogShowProps) {
     const deadlineSummary = product.pre_order_deadline
         ? preOrderDeadlineSummary(product.pre_order_deadline)
         : null;
-    const isBuyer = auth.user?.role === 'buyer';
+    const isBuyer =
+        auth.user?.role === 'buyer' || auth.user?.role === 'seller';
     const [formRating, setFormRating] = useState(
         product.my_review?.rating ?? 0,
     );
