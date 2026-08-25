@@ -1,10 +1,17 @@
 import { Form } from '@inertiajs/react';
-import { ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import Heading from '@/components/heading';
 import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
 import { disable, enable } from '@/routes/two-factor';
 
@@ -45,70 +52,113 @@ export default function ManageTwoFactor(props: Props) {
     }
 
     return (
-        <div className="space-y-6">
-            <Heading
-                variant="small"
-                title="Two-factor authentication"
-                description="Manage your two-factor authentication settings"
-            />
-            {twoFactorEnabled ? (
-                <div className="flex flex-col items-start justify-start space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                        You will be prompted for a secure, random pin during
-                        login, which you can retrieve from the TOTP-supported
-                        application on your phone.
-                    </p>
-
-                    <div className="relative inline">
-                        <Form {...disable.form()}>
-                            {({ processing }) => (
-                                <Button
-                                    variant="destructive"
-                                    type="submit"
-                                    disabled={processing}
-                                >
-                                    Disable 2FA
-                                </Button>
-                            )}
-                        </Form>
+        <>
+            <Card className="rounded-[14px] border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+                <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="flex gap-3">
+                            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#EFF8FF] ring-1 ring-[#BCE0FF]">
+                                <ShieldCheck className="size-5 text-[#0080FF]" />
+                            </span>
+                            <div>
+                                <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-900">
+                                    Verifikasi 2 langkah (2FA)
+                                    {twoFactorEnabled ? (
+                                        <Badge className="h-5 rounded-full bg-emerald-50 px-2 py-0 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                                            <CheckCircle2 className="size-3" />
+                                            Aktif
+                                        </Badge>
+                                    ) : (
+                                        <Badge
+                                            variant="secondary"
+                                            className="h-5 rounded-full bg-slate-100 px-2 py-0 text-[11px] font-medium text-slate-600"
+                                        >
+                                            Nonaktif
+                                        </Badge>
+                                    )}
+                                </CardTitle>
+                                <CardDescription className="mt-1 max-w-[36ch] text-sm leading-5 text-slate-500">
+                                    Tambahkan lapisan keamanan. Saat login kamu akan diminta kode 6 digit dari aplikasi autentikator.
+                                </CardDescription>
+                            </div>
+                        </div>
                     </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {twoFactorEnabled ? (
+                        <>
+                            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                                <p className="flex items-center gap-2 text-sm font-medium text-emerald-800">
+                                    <CheckCircle2 className="size-4" />
+                                    2FA sudah aktif
+                                </p>
+                                <p className="mt-1 text-sm leading-5 text-emerald-700">
+                                    Kamu akan diminta kode dari aplikasi autentikator di HP setiap kali login. Simpan kode pemulihan di tempat aman.
+                                </p>
+                            </div>
 
-                    <TwoFactorRecoveryCodes
-                        recoveryCodesList={recoveryCodesList}
-                        fetchRecoveryCodes={fetchRecoveryCodes}
-                        errors={errors}
-                    />
-                </div>
-            ) : (
-                <div className="flex flex-col items-start justify-start space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                        When you enable two-factor authentication, you will be
-                        prompted for a secure pin during login. This pin can be
-                        retrieved from a TOTP-supported application on your
-                        phone.
-                    </p>
+                            <div className="flex flex-wrap gap-3">
+                                <Form {...disable.form()}>
+                                    {({ processing }) => (
+                                        <Button
+                                            variant="destructive"
+                                            type="submit"
+                                            disabled={processing}
+                                            className="h-11 rounded-xl px-5 font-semibold"
+                                        >
+                                            {processing ? 'Memproses...' : 'Nonaktifkan 2FA'}
+                                        </Button>
+                                    )}
+                                </Form>
+                            </div>
 
-                    <div>
-                        {hasSetupData ? (
-                            <Button onClick={() => setShowSetupModal(true)}>
-                                <ShieldCheck />
-                                Continue setup
-                            </Button>
-                        ) : (
-                            <Form
-                                {...enable.form()}
-                                onSuccess={() => setShowSetupModal(true)}
-                            >
-                                {({ processing }) => (
-                                    <Button type="submit" disabled={processing}>
-                                        Enable 2FA
+                            <TwoFactorRecoveryCodes
+                                recoveryCodesList={recoveryCodesList}
+                                fetchRecoveryCodes={fetchRecoveryCodes}
+                                errors={errors}
+                            />
+                        </>
+                    ) : (
+                        <>
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                <p className="text-sm leading-5 text-slate-600">
+                                    Saat 2FA aktif, kamu perlu memasukkan kode 6 digit dari aplikasi seperti Google Authenticator atau Authy setiap login. Ini menjaga akun tetap aman meski password bocor.
+                                </p>
+                            </div>
+
+                            <div>
+                                {hasSetupData ? (
+                                    <Button
+                                        onClick={() => setShowSetupModal(true)}
+                                        className="h-11 rounded-xl px-5 font-semibold"
+                                    >
+                                        <ShieldCheck className="size-4" />
+                                        Lanjutkan pengaturan
                                     </Button>
+                                ) : (
+                                    <Form
+                                        {...enable.form()}
+                                        onSuccess={() => setShowSetupModal(true)}
+                                    >
+                                        {({ processing }) => (
+                                            <Button
+                                                type="submit"
+                                                disabled={processing}
+                                                className="h-11 rounded-xl px-5 font-semibold"
+                                            >
+                                                {processing ? 'Memproses...' : 'Aktifkan 2FA'}
+                                            </Button>
+                                        )}
+                                    </Form>
                                 )}
-                            </Form>
-                        )}
-                    </div>
-                </div>
-            )}
+                                <p className="mt-2 text-xs text-slate-500">
+                                    Proses hanya butuh &lt; 1 menit. Siapkan aplikasi autentikator di HP.
+                                </p>
+                            </div>
+                        </>
+                    )}
+                </CardContent>
+            </Card>
 
             <TwoFactorSetupModal
                 isOpen={showSetupModal}
@@ -121,6 +171,6 @@ export default function ManageTwoFactor(props: Props) {
                 fetchSetupData={fetchSetupData}
                 errors={errors}
             />
-        </div>
+        </>
     );
 }

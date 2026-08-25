@@ -50,16 +50,20 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
 
     if (!isSupported) {
         return (
-            <div className="text-sm text-muted-foreground">
-                Passkeys are not supported in this browser.
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-800">
+                Browser ini belum mendukung passkey. Coba gunakan Chrome, Safari, atau Edge terbaru.
             </div>
         );
     }
 
     if (!showForm) {
         return (
-            <Button variant="outline" onClick={() => setShowForm(true)}>
-                Add passkey
+            <Button
+                variant="outline"
+                onClick={() => setShowForm(true)}
+                className="h-11 rounded-xl border-slate-200 bg-white px-5 font-semibold text-slate-700 hover:bg-slate-50"
+            >
+                Tambah passkey
             </Button>
         );
     }
@@ -67,32 +71,34 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
     return (
         <form
             onSubmit={handleSubmit}
-            className="space-y-4 rounded-lg border border-border bg-muted/50 p-4"
+            className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4"
         >
             <div className="grid gap-2">
-                <Label htmlFor="passkey-name">Passkey name</Label>
+                <Label htmlFor="passkey-name" className="text-sm font-medium text-slate-700">
+                    Nama passkey
+                </Label>
                 <Input
                     id="passkey-name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g., MacBook Pro, iPhone"
-                    className="mt-1 block w-full border-foreground/20"
+                    placeholder="Contoh: MacBook Pro, iPhone"
+                    className="block w-full"
                     autoFocus
                 />
-                <p className="text-xs text-muted-foreground">
-                    A name helps you identify this passkey later.
+                <p className="text-xs leading-4 text-slate-500">
+                    Beri nama agar mudah mengenali passkey ini nanti.
                 </p>
             </div>
 
             {error && <InputError message={error} />}
 
-            <div className="flex gap-2">
-                <Button type="submit" disabled={isLoading || !name.trim()}>
-                    {isLoading ? 'Registering...' : 'Register passkey'}
+            <div className="flex flex-wrap gap-2">
+                <Button type="submit" disabled={isLoading || !name.trim()} className="h-11 rounded-xl px-5 font-semibold">
+                    {isLoading ? 'Mendaftarkan...' : 'Daftar passkey'}
                 </Button>
-                <Button type="button" variant="ghost" onClick={handleCancel}>
-                    Cancel
+                <Button type="button" variant="ghost" onClick={handleCancel} className="h-11 rounded-xl">
+                    Batal
                 </Button>
             </div>
         </form>

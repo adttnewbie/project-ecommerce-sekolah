@@ -53,22 +53,21 @@ export default function TwoFactorRecoveryCodes({
     const RecoveryCodeIconComponent = codesAreVisible ? EyeOff : Eye;
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex gap-3">
-                    <LockKeyhole className="size-4" aria-hidden="true" />
-                    2FA recovery codes
+        <Card className="rounded-[14px] border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+            <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                    <LockKeyhole className="size-4 text-slate-500" aria-hidden="true" />
+                    Kode pemulihan 2FA
                 </CardTitle>
-                <CardDescription>
-                    Recovery codes let you regain access if you lose your 2FA
-                    device. Store them in a secure password manager.
+                <CardDescription className="text-sm leading-5 text-slate-500">
+                    Simpan kode ini di pengelola password yang aman. Kode dipakai sekali jika kamu kehilangan perangkat 2FA.
                 </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
                 <div className="flex flex-col gap-3 select-none sm:flex-row sm:items-center sm:justify-between">
                     <Button
                         onClick={toggleCodesVisibility}
-                        className="w-fit"
+                        className="h-11 w-fit rounded-xl px-5 font-semibold"
                         aria-expanded={codesAreVisible}
                         aria-controls="recovery-codes-section"
                     >
@@ -76,7 +75,7 @@ export default function TwoFactorRecoveryCodes({
                             className="size-4"
                             aria-hidden="true"
                         />
-                        {codesAreVisible ? 'Hide' : 'View'} recovery codes
+                        {codesAreVisible ? 'Sembunyikan' : 'Lihat'} kode pemulihan
                     </Button>
 
                     {canRegenerateCodes && (
@@ -91,8 +90,9 @@ export default function TwoFactorRecoveryCodes({
                                     type="submit"
                                     disabled={processing}
                                     aria-describedby="regenerate-warning"
+                                    className="h-11 rounded-xl"
                                 >
-                                    <RefreshCw /> Regenerate codes
+                                    <RefreshCw className="size-4" /> Buat ulang kode
                                 </Button>
                             )}
                         </Form>
@@ -110,9 +110,9 @@ export default function TwoFactorRecoveryCodes({
                             <>
                                 <div
                                     ref={codesSectionRef}
-                                    className="grid gap-1 rounded-lg bg-muted p-4 font-mono text-sm"
+                                    className="grid gap-1 rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm text-slate-800"
                                     role="list"
-                                    aria-label="Recovery codes"
+                                    aria-label="Kode pemulihan"
                                 >
                                     {recoveryCodesList.length ? (
                                         recoveryCodesList.map((code, index) => (
@@ -127,14 +127,14 @@ export default function TwoFactorRecoveryCodes({
                                     ) : (
                                         <div
                                             className="space-y-2"
-                                            aria-label="Loading recovery codes"
+                                            aria-label="Memuat kode pemulihan"
                                         >
                                             {Array.from(
                                                 { length: 8 },
                                                 (_, index) => (
                                                     <div
                                                         key={index}
-                                                        className="h-4 animate-pulse rounded bg-muted-foreground/20"
+                                                        className="h-4 animate-pulse rounded bg-slate-200"
                                                         aria-hidden="true"
                                                     />
                                                 ),
@@ -143,15 +143,13 @@ export default function TwoFactorRecoveryCodes({
                                     )}
                                 </div>
 
-                                <div className="text-xs text-muted-foreground select-none">
+                                <div className="text-xs leading-4 text-slate-500 select-none">
                                     <p id="regenerate-warning">
-                                        Each recovery code can be used once to
-                                        access your account and will be removed
-                                        after use. If you need more, click{' '}
-                                        <span className="font-bold">
-                                            Regenerate codes
+                                        Tiap kode hanya bisa dipakai sekali dan akan terhapus setelah dipakai. Butuh kode baru? Klik{' '}
+                                        <span className="font-semibold text-slate-700">
+                                            Buat ulang kode
                                         </span>{' '}
-                                        above.
+                                        di atas.
                                     </p>
                                 </div>
                             </>

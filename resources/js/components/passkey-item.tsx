@@ -26,30 +26,28 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
     };
 
     return (
-        <div className="flex items-center justify-between border-b p-4 last:border-b-0">
-            <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted">
-                    <KeyRound className="h-5 w-5 text-muted-foreground" />
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4 last:border-b-0">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 ring-1 ring-slate-200">
+                    <KeyRound className="h-5 w-5 text-slate-500" />
                 </div>
-                <div className="space-y-1">
-                    <div className="flex items-center gap-2.5">
-                        <p className="font-medium tracking-tight">
+                <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate text-sm font-semibold tracking-tight text-slate-900">
                             {passkey.name}
                         </p>
                         {passkey.authenticator && (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase ring-1 ring-border ring-inset">
+                            <span className="inline-flex items-center gap-1 rounded-[6px] bg-slate-100 px-2 py-0.5 text-[11px] font-medium tracking-wide text-slate-600 uppercase ring-1 ring-slate-200 ring-inset">
                                 {passkey.authenticator}
                             </span>
                         )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                        Added {passkey.created_at_diff}
+                    <p className="text-xs leading-4 text-slate-500 sm:text-sm">
+                        Ditambahkan {passkey.created_at_diff}
                         {passkey.last_used_at_diff && (
                             <>
-                                <span className="mx-1 text-muted-foreground/50">
-                                    /
-                                </span>
-                                Last used {passkey.last_used_at_diff}
+                                <span className="mx-1 text-slate-300">•</span>
+                                Terakhir dipakai {passkey.last_used_at_diff}
                             </>
                         )}
                     </p>
@@ -60,30 +58,32 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
                 <DialogTrigger asChild>
                     <Button
                         variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        size="icon-sm"
+                        className="shrink-0 rounded-xl text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                        aria-label={`Hapus passkey ${passkey.name}`}
                     >
                         <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Remove</span>
+                        <span className="sr-only">Hapus</span>
                     </Button>
                 </DialogTrigger>
-                <DialogContent>
-                    <DialogTitle>Remove passkey</DialogTitle>
-                    <DialogDescription>
-                        Are you sure you want to remove the "{passkey.name}"
-                        passkey? You will no longer be able to use it to sign
-                        in.
+                <DialogContent className="sm:max-w-md">
+                    <DialogTitle>Hapus passkey?</DialogTitle>
+                    <DialogDescription className="text-sm leading-6 text-slate-600">
+                        Kamu akan menghapus passkey &quot;{passkey.name}&quot;. Kamu tidak akan bisa masuk memakai passkey ini lagi.
                     </DialogDescription>
                     <DialogFooter className="gap-2">
                         <DialogClose asChild>
-                            <Button variant="secondary">Cancel</Button>
+                            <Button variant="secondary" className="h-11 rounded-xl">
+                                Batal
+                            </Button>
                         </DialogClose>
                         <Button
                             variant="destructive"
                             onClick={handleDelete}
                             disabled={isDeleting}
+                            className="h-11 rounded-xl px-5 font-semibold"
                         >
-                            {isDeleting ? 'Removing...' : 'Remove passkey'}
+                            {isDeleting ? 'Menghapus...' : 'Hapus passkey'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

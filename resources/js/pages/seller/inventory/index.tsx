@@ -125,10 +125,12 @@ export default function SellerInventoryIndex({
         if (!sortKey) {
             return products.data;
         }
+
         const copy = [...products.data];
         copy.sort((a, b) => {
             let aVal: string | number = '';
             let bVal: string | number = '';
+
             switch (sortKey) {
                 case 'name':
                     aVal = a.name.toLowerCase();
@@ -145,10 +147,18 @@ export default function SellerInventoryIndex({
                 default:
                     break;
             }
-            if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
-            if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+
+            if (aVal < bVal) {
+return sortOrder === 'asc' ? -1 : 1;
+}
+
+            if (aVal > bVal) {
+return sortOrder === 'asc' ? 1 : -1;
+}
+
             return 0;
         });
+
         return copy;
     }, [products.data, sortKey, sortOrder]);
 

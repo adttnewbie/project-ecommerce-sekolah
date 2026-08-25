@@ -151,6 +151,7 @@ export default function SellerConsignments({ consignments }: Props) {
             data.sort((a, b) => {
                 let aVal: string | number = '';
                 let bVal: string | number = '';
+
                 switch (sortKey) {
                     case 'product':
                         aVal = a.product_name.toLowerCase();
@@ -171,8 +172,15 @@ export default function SellerConsignments({ consignments }: Props) {
                     default:
                         break;
                 }
-                if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
-                if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+
+                if (aVal < bVal) {
+return sortOrder === 'asc' ? -1 : 1;
+}
+
+                if (aVal > bVal) {
+return sortOrder === 'asc' ? 1 : -1;
+}
+
                 return 0;
             });
         }
@@ -182,6 +190,7 @@ export default function SellerConsignments({ consignments }: Props) {
 
     useEffect(() => {
         const totalPages = Math.max(1, Math.ceil(filteredAndSorted.length / perPage));
+
         if (currentPage > totalPages) {
             setCurrentPage(totalPages);
         }
@@ -190,6 +199,7 @@ export default function SellerConsignments({ consignments }: Props) {
     const totalPages = Math.max(1, Math.ceil(filteredAndSorted.length / perPage));
     const paginatedData = useMemo(() => {
         const start = (currentPage - 1) * perPage;
+
         return filteredAndSorted.slice(start, start + perPage);
     }, [filteredAndSorted, currentPage]);
 

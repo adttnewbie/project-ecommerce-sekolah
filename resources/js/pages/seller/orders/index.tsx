@@ -184,11 +184,15 @@ export default function SellerOrdersIndex({
     };
 
     const sortedData = useMemo(() => {
-        if (!sortKey) return orderItems.data;
+        if (!sortKey) {
+return orderItems.data;
+}
+
         const copy = [...orderItems.data];
         copy.sort((a, b) => {
             let aVal: string | number = '';
             let bVal: string | number = '';
+
             switch (sortKey) {
                 case 'amount':
                     aVal = a.subtotal;
@@ -205,10 +209,18 @@ export default function SellerOrdersIndex({
                 default:
                     break;
             }
-            if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
-            if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+
+            if (aVal < bVal) {
+return sortOrder === 'asc' ? -1 : 1;
+}
+
+            if (aVal > bVal) {
+return sortOrder === 'asc' ? 1 : -1;
+}
+
             return 0;
         });
+
         return copy;
     }, [orderItems.data, sortKey, sortOrder]);
 

@@ -16,10 +16,9 @@ import {
     Store,
 } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { SellerEmptyState } from '@/components/seller/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { SellerEmptyState } from '@/components/seller/empty-state';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
     Card,
     CardContent,
@@ -33,6 +32,7 @@ import {
     ChartTooltipContent,
 } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
     Table,
     TableBody,
