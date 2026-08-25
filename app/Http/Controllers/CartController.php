@@ -53,6 +53,7 @@ class CartController extends Controller
                         'is_pre_order' => $cartItem->product->isPreOrder(),
                         'pre_order_estimate_days' => $cartItem->product->pre_order_estimate_days,
                         'pre_order_deadline' => $cartItem->product->pre_order_deadline?->toDateString(),
+                        'pre_order_status' => $cartItem->product->preOrderStatus()?->value,
                         'pre_order_min_quantity' => $cartItem->product->pre_order_min_quantity,
                         'pre_order_note' => $cartItem->product->pre_order_note,
                         'image' => $cartItem->product->image,

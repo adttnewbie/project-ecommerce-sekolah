@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\PreOrderStatus;
 use App\Enums\ProductFulfillmentType;
 use App\Enums\ProductSalesMethod;
 use App\Enums\ProductStatus;
@@ -138,7 +139,7 @@ test('public catalog shows approved pre-order products without ready stock', fun
             'name' => 'Brownies PO',
             'slug' => 'brownies-po',
             'stock' => 0,
-            'pre_order_deadline' => '2026-08-01',
+            'pre_order_deadline' => now()->addDays(10)->toDateString(),
             'pre_order_min_quantity' => 15,
         ]);
 
@@ -151,7 +152,8 @@ test('public catalog shows approved pre-order products without ready stock', fun
             ->where('products.data.0.is_pre_order', true)
             ->where('products.data.0.fulfillment_type.code', ProductFulfillmentType::PreOrder->value)
             ->where('products.data.0.pre_order_estimate_days', 5)
-            ->where('products.data.0.pre_order_deadline', '2026-08-01')
+            ->where('products.data.0.pre_order_deadline', now()->addDays(10)->toDateString())
+            ->where('products.data.0.pre_order_status', PreOrderStatus::Open->value)
             ->where('products.data.0.pre_order_min_quantity', 15),
         );
 
@@ -159,7 +161,37 @@ test('public catalog shows approved pre-order products without ready stock', fun
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('product.is_pre_order', true)
-            ->where('product.pre_order_estimate_days', 5));
+            ->where('product.pre_order_estimate_days', 5)
+            ->where('product.pre_order_status', PreOrderStatus::Open->value));
+});
+
+test('public catalog still lists closed pre-order products with closed status', function () {
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+
+    $product = Product::factory()
+        ->for($seller, 'seller')
+        ->approved()
+        ->preOrder(5)
+        ->create([
+            'name' => 'Kue Kering PO',
+            'slug' => 'kue-kering-po',
+            'stock' => 0,
+            'pre_order_deadline' => now()->subDay()->toDateString(),
+        ]);
+
+    $this->get(route('catalog.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('products.data', 1)
+            ->where('products.data.0.name', 'Kue Kering PO')
+            ->where('products.data.0.is_pre_order', true)
+            ->where('products.data.0.pre_order_status', PreOrderStatus::Closed->value),
+        );
+
+    $this->get(route('catalog.show', ['product' => $product->slug]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('product.pre_order_status', PreOrderStatus::Closed->value));
 });
 
 test('public catalog can search products from query string', function () {

@@ -31,6 +31,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import type { PreOrderStatus } from '@/lib/pre-order';
+import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { index as cartIndex } from '@/routes/cart';
 import {
@@ -39,32 +41,37 @@ import {
 } from '@/routes/cart/items';
 import { show as catalogShow } from '@/routes/catalog';
 
+type CartItemProduct = {
+    id: number;
+    name: string;
+    slug: string;
+    price: number;
+    stock: number;
+    is_pre_order: boolean;
+    pre_order_estimate_days: number | null;
+    pre_order_deadline: string | null;
+    pre_order_status?: PreOrderStatus | null;
+    pre_order_min_quantity: number | null;
+    pre_order_note: string | null;
+    image: string | null;
+    seller: {
+        id: number;
+        name: string;
+    };
+    category: {
+        id: number;
+        name: string;
+        slug: string;
+    };
+};
+
 type CartItem = {
     id: number;
     quantity: number;
     subtotal: number;
-    product: {
-        id: number;
-        name: string;
-        slug: string;
-        price: number;
-        stock: number;
-        is_pre_order: boolean;
-        pre_order_estimate_days: number | null;
-        pre_order_deadline: string | null;
-        pre_order_min_quantity: number | null;
-        pre_order_note: string | null;
-        image: string | null;
-        seller: {
-            id: number;
-            name: string;
-        };
-        category: {
-            id: number;
-            name: string;
-            slug: string;
-        };
-    };
+    is_valid?: boolean;
+    invalid_reasons?: string[];
+    product: CartItemProduct;
 };
 
 type CartIndexProps = {
@@ -72,8 +79,34 @@ type CartIndexProps = {
     summary: {
         total_items: number;
         total_price: number;
+        has_invalid_items?: boolean;
     };
 };
+
+/**
+ * Pre-order specific problem for a cart item, or null when fine.
+ * Mirrors PreOrderRules (deadline passed / below minimum quantity).
+ */
+function preOrderIssue(item: CartItem): string | null {
+    const { product } = item;
+
+    if (!product.is_pre_order) {
+        return null;
+    }
+
+    if (product.pre_order_status === 'closed') {
+        return 'Batas waktu pre-order produk ini sudah lewat. Hapus item ini untuk lanjut checkout.';
+    }
+
+    if (
+        product.pre_order_min_quantity !== null &&
+        item.quantity < product.pre_order_min_quantity
+    ) {
+        return `Jumlah pre-order minimal ${product.pre_order_min_quantity} item.`;
+    }
+
+    return null;
+}
 
 const formatRupiah = (value: number) =>
     new Intl.NumberFormat('id-ID', {
@@ -113,6 +146,10 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
             !item.product.is_pre_order &&
             (item.product.stock <= 0 || item.quantity > item.product.stock),
     );
+    const hasInvalidPreOrder = selectedItems.some(
+        (item) => preOrderIssue(item) !== null,
+    );
+    const hasBlockingIssue = hasInvalidStock || hasInvalidPreOrder;
     const checkoutHref = `/checkout/confirm?items=${selectedIds.join(',')}`;
 
     const toggleItem = (id: number, checked: boolean) => {
@@ -225,6 +262,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                             (item.product.stock <= 0 ||
                                                 item.quantity >
                                                     item.product.stock);
+                                        const poIssue = preOrderIssue(item);
 
                                         return (
                                             <div
@@ -285,17 +323,28 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                 )}
                                                             </p>
                                                             <p
-                                                                className={`mt-1 text-xs ${
-                                                                    hasStockIssue
+                                                                className={cn(
+                                                                    'mt-1 text-xs',
+                                                                    hasStockIssue ||
+                                                                        poIssue
                                                                         ? 'text-rose-600'
-                                                                        : 'text-slate-500'
-                                                                }`}
+                                                                        : 'text-slate-500',
+                                                                )}
                                                             >
                                                                 {item.product
                                                                     .is_pre_order
-                                                                    ? `Pre-Order ${item.product.pre_order_estimate_days} hari`
+                                                                    ? poIssue?.startsWith(
+                                                                            'Batas waktu',
+                                                                        )
+                                                                        ? 'Pre-order ditutup'
+                                                                        : `Pre-Order ${item.product.pre_order_estimate_days} hari`
                                                                     : `Stok ${item.product.stock}`}
                                                             </p>
+                                                            {poIssue && (
+                                                                <p className="mt-1 rounded-[6px] border border-rose-100 bg-rose-50 px-2 py-1 text-xs leading-4 text-rose-700">
+                                                                    {poIssue}
+                                                                </p>
+                                                            )}
                                                         </div>
                                                     </Link>
                                                 </div>
@@ -396,6 +445,8 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                     item.product.stock <= 0 ||
                                                     item.quantity >
                                                         item.product.stock;
+                                                const poIssue =
+                                                    preOrderIssue(item);
 
                                                 return (
                                                     <TableRow
@@ -483,6 +534,9 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                             <p className="mt-1 text-xs font-normal text-slate-500">
                                                                 <span
                                                                     className={
+                                                                        poIssue?.startsWith(
+                                                                            'Batas waktu',
+                                                                        ) ||
                                                                         hasStockIssue
                                                                             ? 'text-rose-600'
                                                                             : undefined
@@ -491,7 +545,11 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                     {item
                                                                         .product
                                                                         .is_pre_order
-                                                                        ? `Pre-Order ${item.product.pre_order_estimate_days} hari`
+                                                                        ? poIssue?.startsWith(
+                                                                                'Batas waktu',
+                                                                            )
+                                                                            ? 'Pre-order ditutup'
+                                                                            : `Pre-Order ${item.product.pre_order_estimate_days} hari`
                                                                         : 'Stok '}
                                                                 </span>
                                                                 {!item.product
@@ -501,10 +559,19 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                             </p>
                                                         </TableCell>
                                                         <TableCell className="px-6 py-4">
-                                                            <QuantityStepper
-                                                                item={item}
-                                                                buttonClassName="size-9"
-                                                            />
+                                                            <div className="space-y-1.5">
+                                                                <QuantityStepper
+                                                                    item={item}
+                                                                    buttonClassName="size-9"
+                                                                />
+                                                                {poIssue && (
+                                                                    <p className="max-w-[14rem] rounded-[6px] border border-rose-100 bg-rose-50 px-2 py-1 text-xs leading-4 text-rose-700">
+                                                                        {
+                                                                            poIssue
+                                                                        }
+                                                                    </p>
+                                                                )}
+                                                            </div>
                                                         </TableCell>
                                                         <TableCell className="px-6 py-4 font-semibold text-slate-950">
                                                             {formatRupiah(
@@ -577,7 +644,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                 </div>
                                 <div className="space-y-2">
                                     {selectedIds.length === 0 ||
-                                    hasInvalidStock ? (
+                                    hasBlockingIssue ? (
                                         <Button
                                             type="button"
                                             disabled
@@ -606,6 +673,14 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                             Ada item dengan stok tidak cukup.
                                             Update quantity atau hapus item
                                             tersebut.
+                                        </p>
+                                    )}
+                                    {hasInvalidPreOrder && (
+                                        <p className="text-xs text-rose-600">
+                                            Ada item pre-order yang tidak
+                                            memenuhi syarat (batas waktu lewat
+                                            atau di bawah jumlah minimal).
+                                            Perbaiki atau hapus item tersebut.
                                         </p>
                                     )}
                                 </div>

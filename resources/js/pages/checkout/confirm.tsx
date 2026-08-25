@@ -28,6 +28,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import type { PreOrderStatus } from '@/lib/pre-order';
+import { cn } from '@/lib/utils';
 import { checkout, home } from '@/routes';
 import { index as cartIndex } from '@/routes/cart';
 import { show as catalogShow } from '@/routes/catalog';
@@ -38,6 +40,8 @@ type CheckoutItem = {
     source: 'cart' | 'buy_now';
     quantity: number;
     subtotal: number;
+    is_valid?: boolean;
+    invalid_reasons?: string[];
     product: {
         id: number;
         name: string;
@@ -47,6 +51,7 @@ type CheckoutItem = {
         is_pre_order: boolean;
         pre_order_estimate_days: number | null;
         pre_order_deadline: string | null;
+        pre_order_status?: PreOrderStatus | null;
         pre_order_min_quantity: number | null;
         pre_order_note: string | null;
         image: string | null;
@@ -125,6 +130,11 @@ export default function CheckoutConfirm({ items, summary }: Props) {
             !item.product.is_pre_order &&
             (item.product.stock <= 0 || item.quantity > item.product.stock),
     );
+    const invalidPreOrderItems = items.filter(
+        (item) => item.is_valid === false && item.invalid_reasons?.length,
+    );
+    const hasInvalidPreOrder = invalidPreOrderItems.length > 0;
+    const hasBlockingIssue = hasInvalidStock || hasInvalidPreOrder;
     const hasPendingCheckout = items.length > 0;
 
     useEffect(() => {
@@ -313,16 +323,28 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                                 </p>
                                                 <div className="mt-3 flex items-center justify-between gap-3">
                                                     <span
-                                                        className={`text-xs ${
-                                                            stockIssue
+                                                        className={cn(
+                                                            'text-xs',
+                                                            stockIssue ||
+                                                                item.is_valid ===
+                                                                    false
                                                                 ? 'text-rose-600'
-                                                                : 'text-slate-500'
-                                                        }`}
+                                                                : 'text-slate-500',
+                                                        )}
                                                     >
                                                         {item.quantity} item
                                                         {item.product
                                                             .is_pre_order &&
+                                                            item.product
+                                                                .pre_order_status !==
+                                                                'closed' &&
                                                             ` • PO ${item.product.pre_order_estimate_days} hari`}
+                                                        {item.product
+                                                            .is_pre_order &&
+                                                            item.product
+                                                                .pre_order_status ===
+                                                                'closed' &&
+                                                            ' • Pre-order ditutup'}
                                                     </span>
                                                     <span className="font-semibold text-slate-950">
                                                         {formatRupiah(
@@ -330,6 +352,16 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                                         )}
                                                     </span>
                                                 </div>
+                                                {item.is_valid === false &&
+                                                    !!item.invalid_reasons
+                                                        ?.length && (
+                                                        <div className="mt-2 rounded-[6px] border border-rose-100 bg-rose-50 px-2 py-1.5 text-xs leading-4 text-rose-700">
+                                                            {
+                                                                item
+                                                                    .invalid_reasons[0]
+                                                            }
+                                                        </div>
+                                                    )}
                                             </div>
                                         </Link>
                                     );
@@ -555,7 +587,7 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                             disabled={
                                                 processing ||
                                                 items.length === 0 ||
-                                                hasInvalidStock
+                                                hasBlockingIssue
                                             }
                                             className="h-11 w-full"
                                         >
@@ -566,6 +598,15 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                             <p className="text-xs text-rose-600">
                                                 Ada item dengan stok tidak
                                                 cukup. Update cart dulu.
+                                            </p>
+                                        )}
+                                        {hasInvalidPreOrder && (
+                                            <p className="text-xs text-rose-600">
+                                                Ada item pre-order yang sudah
+                                                tidak dapat dibeli (batas
+                                                waktu lewat atau di bawah
+                                                jumlah minimal). Update cart
+                                                dulu.
                                             </p>
                                         )}
                                         <InputError message={errors.cart} />

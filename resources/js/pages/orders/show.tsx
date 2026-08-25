@@ -36,6 +36,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { formatDateID } from '@/lib/pre-order';
 import { index as ordersIndex } from '@/routes/orders';
 
 type BuyerOrder = {
@@ -417,7 +418,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                                         }{' '}
                                                         hari
                                                         {item.pre_order_deadline &&
-                                                            ` • Deadline ${item.pre_order_deadline}`}
+                                                            ` • Deadline ${formatDateID(item.pre_order_deadline)}`}
                                                     </p>
                                                 )}
                                                 <p className="mt-1 inline-flex items-center gap-1 text-sm text-slate-500">
@@ -498,7 +499,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                                                 }{' '}
                                                                 hari
                                                                 {item.pre_order_deadline &&
-                                                                    ` • Deadline ${item.pre_order_deadline}`}
+                                                                    ` • Deadline ${formatDateID(item.pre_order_deadline)}`}
                                                             </p>
                                                         )}
                                                     </div>

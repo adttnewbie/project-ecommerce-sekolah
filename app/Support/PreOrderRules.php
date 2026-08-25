@@ -2,12 +2,39 @@
 
 namespace App\Support;
 
+use App\Enums\PreOrderStatus;
 use App\Models\Product;
 use Carbon\CarbonInterface;
 use Illuminate\Validation\ValidationException;
 
 class PreOrderRules
 {
+    public const int CLOSING_SOON_DAYS = 3;
+
+    /**
+     * Single source of truth for the pre-order window status shown across
+     * catalog, detail, cart and checkout surfaces.
+     */
+    public static function status(Product $product, ?CarbonInterface $now = null): PreOrderStatus
+    {
+        if ($product->pre_order_deadline === null) {
+            return PreOrderStatus::Open;
+        }
+
+        $today = ($now ?? now())->copy()->startOfDay();
+        $deadline = $product->pre_order_deadline->copy()->startOfDay();
+
+        if ($today->greaterThan($deadline)) {
+            return PreOrderStatus::Closed;
+        }
+
+        if ($today->greaterThanOrEqualTo($deadline->copy()->subDays(self::CLOSING_SOON_DAYS))) {
+            return PreOrderStatus::ClosingSoon;
+        }
+
+        return PreOrderStatus::Open;
+    }
+
     public static function isDeadlinePassed(Product $product, ?CarbonInterface $now = null): bool
     {
         if (! $product->isPreOrder() || $product->pre_order_deadline === null) {

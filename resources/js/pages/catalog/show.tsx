@@ -16,6 +16,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import {
+    preOrderDeadlineSummary,
+    preOrderStatusMeta,
+    resolvePreOrderStatus
+    
+} from '@/lib/pre-order';
+import type {PreOrderStatus} from '@/lib/pre-order';
 import { cn } from '@/lib/utils';
 import { home, login } from '@/routes';
 import { store as storeCartItem } from '@/routes/cart/items';
@@ -49,6 +56,7 @@ type CatalogProduct = {
     };
     pre_order_estimate_days: number | null;
     pre_order_deadline: string | null;
+    pre_order_status?: PreOrderStatus | null;
     pre_order_min_quantity: number | null;
     pre_order_note: string | null;
     image: string | null;
@@ -126,6 +134,14 @@ export default function CatalogShow({ product }: CatalogShowProps) {
     const { auth, flash } = usePage<PageProps>().props;
     const src = imageSource(product.image);
     const isOutOfStock = !product.is_pre_order && product.stock <= 0;
+    const preOrderStatus = resolvePreOrderStatus(product);
+    const preOrderMeta =
+        preOrderStatus !== null ? preOrderStatusMeta(preOrderStatus) : null;
+    const isPreOrderClosed = preOrderStatus === 'closed';
+    const notPurchasable = isOutOfStock || isPreOrderClosed;
+    const deadlineSummary = product.pre_order_deadline
+        ? preOrderDeadlineSummary(product.pre_order_deadline)
+        : null;
     const isBuyer = auth.user?.role === 'buyer';
     const [formRating, setFormRating] = useState(
         product.my_review?.rating ?? 0,
@@ -188,21 +204,31 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                         <Tags className="size-3.5" />
                                         {product.category.name}
                                     </Badge>
-                                    <Badge
-                                        className={
-                                            product.is_pre_order
-                                                ? 'rounded-full bg-blue-50 text-blue-700'
-                                                : isOutOfStock
-                                                  ? 'rounded-full bg-orange-50 text-orange-700'
-                                                  : 'rounded-full bg-emerald-50 text-emerald-700'
-                                        }
-                                    >
-                                        {product.is_pre_order
-                                            ? `Pre-Order ${product.pre_order_estimate_days} hari`
-                                            : isOutOfStock
-                                              ? 'Stok habis'
-                                              : `Stok ${product.stock}`}
-                                    </Badge>
+                                    {product.is_pre_order && preOrderMeta && (
+                                        <Badge
+                                            className={cn(
+                                                'rounded-full',
+                                                preOrderMeta.badgeClass,
+                                            )}
+                                        >
+                                            {isPreOrderClosed
+                                                ? 'Pre-Order Ditutup'
+                                                : `Pre-Order ${product.pre_order_estimate_days} hari`}
+                                        </Badge>
+                                    )}
+                                    {!product.is_pre_order && (
+                                        <Badge
+                                            className={
+                                                isOutOfStock
+                                                    ? 'rounded-full bg-orange-50 text-orange-700'
+                                                    : 'rounded-full bg-emerald-50 text-emerald-700'
+                                            }
+                                        >
+                                            {isOutOfStock
+                                                ? 'Stok habis'
+                                                : `Stok ${product.stock}`}
+                                        </Badge>
+                                    )}
                                     {!product.is_pre_order && (
                                         <Badge
                                             className={
@@ -218,31 +244,52 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                     )}
                                 </div>
 
-                                {product.is_pre_order && (
-                                    <div className="rounded-[8px] border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                                        Produk ini memakai sistem pre-order.
-                                        Estimasi siap dalam{' '}
-                                        {product.pre_order_estimate_days} hari
-                                        setelah pesanan dibuat.
-                                        {product.pre_order_note && (
-                                            <span className="mt-1 block text-blue-700">
-                                                {product.pre_order_note}
-                                            </span>
-                                        )}
-                                        {(product.pre_order_deadline ||
-                                            product.pre_order_min_quantity) && (
-                                            <span className="mt-2 block text-xs text-blue-700">
-                                                {product.pre_order_deadline &&
-                                                    `Deadline ${product.pre_order_deadline}`}
-                                                {product.pre_order_deadline &&
-                                                    product.pre_order_min_quantity &&
-                                                    ' • '}
-                                                {product.pre_order_min_quantity &&
-                                                    `Minimum ${product.pre_order_min_quantity} pesanan`}
-                                            </span>
-                                        )}
-                                    </div>
-                                )}
+                                {product.is_pre_order &&
+                                    preOrderStatus !== null &&
+                                    preOrderMeta && (
+                                        <div
+                                            className={cn(
+                                                'rounded-[8px] border px-4 py-3 text-sm',
+                                                preOrderMeta.boxClass,
+                                                preOrderMeta.textClass,
+                                            )}
+                                        >
+                                            {isPreOrderClosed ? (
+                                                <>
+                                                    Pre-order untuk produk ini{' '}
+                                                    sudah ditutup.
+                                                </>
+                                            ) : (
+                                                <>
+                                                    Produk ini memakai sistem
+                                                    pre-order. Estimasi siap
+                                                    dalam{' '}
+                                                    {
+                                                        product.pre_order_estimate_days
+                                                    }{' '}
+                                                    hari setelah pesanan
+                                                    dibuat.
+                                                </>
+                                            )}
+                                            {product.pre_order_note && (
+                                                <span className="mt-1 block opacity-80">
+                                                    {product.pre_order_note}
+                                                </span>
+                                            )}
+                                            {(deadlineSummary ||
+                                                product.pre_order_min_quantity) && (
+                                                <span className="mt-2 block text-xs opacity-80">
+                                                    {deadlineSummary &&
+                                                        `Deadline: ${deadlineSummary}`}
+                                                    {deadlineSummary &&
+                                                        product.pre_order_min_quantity &&
+                                                        ' • '}
+                                                    {product.pre_order_min_quantity &&
+                                                        `Minimum ${product.pre_order_min_quantity} item per pesanan`}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
 
                                 <div>
                                     <h1 className="text-3xl font-semibold tracking-normal text-slate-950 sm:text-4xl">
@@ -321,13 +368,15 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                 {isBuyer ? (
                                     <div className="space-y-2">
                                         <div className="flex flex-wrap gap-2">
-                                            {isOutOfStock ? (
+                                            {notPurchasable ? (
                                                 <Button
                                                     type="button"
                                                     disabled
                                                     className="h-11 w-fit px-5"
                                                 >
-                                                    Stok habis
+                                                    {isOutOfStock
+                                                        ? 'Stok habis'
+                                                        : 'Pre-order ditutup'}
                                                 </Button>
                                             ) : (
                                                 <Button
@@ -364,7 +413,7 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                                         <Button
                                                             type="submit"
                                                             disabled={
-                                                                isOutOfStock ||
+                                                                notPurchasable ||
                                                                 processing
                                                             }
                                                             variant="outline"
@@ -397,14 +446,16 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                         <ShoppingCart className="size-4" />
                                         Khusus buyer
                                     </Button>
-                                ) : isOutOfStock ? (
+                                ) : notPurchasable ? (
                                     <Button
                                         type="button"
                                         disabled
                                         className="h-11 w-full"
                                     >
                                         <ShoppingCart className="size-4" />
-                                        Stok habis
+                                        {isOutOfStock
+                                            ? 'Stok habis'
+                                            : 'Pre-order ditutup'}
                                     </Button>
                                 ) : (
                                     <Button asChild className="h-11 w-full">

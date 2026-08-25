@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\PreOrderStatus;
 use App\Enums\ProductFulfillmentType;
 use App\Enums\ProductSalesMethod;
 use App\Enums\ProductStatus;
 use App\Events\LowStockDetected;
+use App\Support\PreOrderRules;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -175,6 +177,18 @@ class Product extends Model
     public function isPreOrder(): bool
     {
         return $this->fulfillment_type === ProductFulfillmentType::PreOrder;
+    }
+
+    /**
+     * Null for non pre-order products.
+     */
+    public function preOrderStatus(): ?PreOrderStatus
+    {
+        if (! $this->isPreOrder()) {
+            return null;
+        }
+
+        return PreOrderRules::status($this);
     }
 
     public function availableStock(): int

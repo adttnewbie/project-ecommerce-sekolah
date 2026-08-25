@@ -5,6 +5,11 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    resolvePreOrderStatus
+    
+} from '@/lib/pre-order';
+import type {PreOrderStatus} from '@/lib/pre-order';
 import { cn } from '@/lib/utils';
 import { login } from '@/routes';
 import { store as storeCartItem } from '@/routes/cart/items';
@@ -33,6 +38,7 @@ export type ProductCardProduct = {
     };
     pre_order_estimate_days: number | null;
     pre_order_deadline: string | null;
+    pre_order_status?: PreOrderStatus | null;
     pre_order_min_quantity: number | null;
     pre_order_note: string | null;
     image: string | null;
@@ -100,7 +106,10 @@ export function ProductCard({
     const auth = pageProps.auth;
     const isGuest = !auth?.user;
     const isBuyer = auth?.user?.role === 'buyer';
+    const preOrderStatus = resolvePreOrderStatus(product);
+    const isPreOrderClosed = preOrderStatus === 'closed';
     const isOutOfStock = !product.is_pre_order && product.stock <= 0;
+    const notPurchasable = isOutOfStock || isPreOrderClosed;
 
     const src = imageSource(product.image);
     const [imgError, setImgError] = useState(false);
@@ -194,7 +203,7 @@ export function ProductCard({
             return;
         }
 
-        if (isOutOfStock) {
+        if (notPurchasable) {
             return;
         }
 
@@ -241,7 +250,7 @@ export function ProductCard({
             return;
         }
 
-        if (isOutOfStock) {
+        if (notPurchasable) {
             return;
         }
 
@@ -302,8 +311,20 @@ export function ProductCard({
                             </Badge>
                         )}
                         {product.is_pre_order && (
-                            <Badge className="rounded-full bg-[#EFF8FF] px-2.5 py-0.5 text-[11px] font-semibold text-[#0080FF] ring-1 ring-[#BCE0FF]">
-                                PO {product.pre_order_estimate_days} hari
+                            <Badge
+                                className={cn(
+                                    'rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1',
+                                    preOrderStatus === 'closing_soon' &&
+                                        'bg-orange-50 text-orange-700 ring-orange-200',
+                                    preOrderStatus === 'closed'
+                                        ? 'bg-rose-50 text-rose-700 ring-rose-200'
+                                        : preOrderStatus !== 'closing_soon' &&
+                                            'bg-[#EFF8FF] text-[#0080FF] ring-[#BCE0FF]',
+                                )}
+                            >
+                                {isPreOrderClosed
+                                    ? 'Pre-Order ditutup'
+                                    : `PO ${product.pre_order_estimate_days} hari`}
                             </Badge>
                         )}
                     </div>
@@ -337,10 +358,15 @@ export function ProductCard({
                         />
                     </button>
 
-                    {/* Out of stock overlay */}
+                    {/* Out of stock / pre-order closed overlays */}
                     {isOutOfStock && (
                         <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-white/85 px-2 py-1.5 text-center text-[11px] font-semibold tracking-wide text-slate-700 backdrop-blur">
                             Stok habis
+                        </div>
+                    )}
+                    {isPreOrderClosed && (
+                        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-white/85 px-2 py-1.5 text-center text-[11px] font-semibold tracking-wide text-rose-700 backdrop-blur">
+                            Pre-order ditutup
                         </div>
                     )}
                 </div>
@@ -447,16 +473,18 @@ export function ProductCard({
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                disabled={isOutOfStock || cartLoading}
+                                disabled={notPurchasable || cartLoading}
                                 onClick={handleAddToCart}
                                 className={cn(
                                     'h-8 shrink-0 rounded-full border-slate-200 bg-white px-2.5 text-slate-700 hover:bg-slate-50 sm:px-3',
-                                    isOutOfStock && 'opacity-50',
+                                    notPurchasable && 'opacity-50',
                                 )}
                                 aria-label={
                                     isOutOfStock
                                         ? 'Stok habis'
-                                        : `Tambah ${product.name} ke keranjang`
+                                        : isPreOrderClosed
+                                          ? 'Pre-order ditutup'
+                                          : `Tambah ${product.name} ke keranjang`
                                 }
                             >
                                 {cartLoading ? (
@@ -480,13 +508,15 @@ export function ProductCard({
                             <Button
                                 type="button"
                                 size="sm"
-                                disabled={isOutOfStock}
+                                disabled={notPurchasable}
                                 onClick={handleBuyNow}
                                 className="h-8 shrink-0 rounded-full px-3.5 text-xs font-semibold"
                                 aria-label={
                                     isOutOfStock
                                         ? 'Stok habis'
-                                        : `Beli ${product.name} sekarang`
+                                        : isPreOrderClosed
+                                          ? 'Pre-order ditutup'
+                                          : `Beli ${product.name} sekarang`
                                 }
                             >
                                 Beli

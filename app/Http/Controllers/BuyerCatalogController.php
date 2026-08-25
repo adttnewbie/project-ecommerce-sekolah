@@ -109,6 +109,7 @@ class BuyerCatalogController extends Controller
                         ],
                         'pre_order_estimate_days' => $product->pre_order_estimate_days,
                         'pre_order_deadline' => $product->pre_order_deadline?->toDateString(),
+                        'pre_order_status' => $product->preOrderStatus()?->value,
                         'pre_order_min_quantity' => $product->pre_order_min_quantity,
                         'pre_order_note' => $product->pre_order_note,
                         'image' => $product->image,

@@ -18,6 +18,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
+import { formatDateID } from '@/lib/pre-order';
 import { cn } from '@/lib/utils';
 import { index as ordersIndex, updateStatus } from '@/routes/seller/orders';
 
@@ -200,7 +201,12 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                       'Estimasi',
                       `${orderItem.pre_order_estimate_days ?? '-'} hari`,
                   ],
-                  ['Deadline PO', orderItem.pre_order_deadline ?? '-'],
+                  [
+                      'Deadline PO',
+                      orderItem.pre_order_deadline
+                          ? formatDateID(orderItem.pre_order_deadline)
+                          : '-',
+                  ],
                   [
                       'Minimum kuota',
                       orderItem.pre_order_min_quantity
