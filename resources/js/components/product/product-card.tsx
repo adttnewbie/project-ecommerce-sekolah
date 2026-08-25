@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     resolvePreOrderStatus
-    
+
 } from '@/lib/pre-order';
 import type {PreOrderStatus} from '@/lib/pre-order';
 import { cn } from '@/lib/utils';
@@ -329,7 +329,7 @@ export function ProductCard({
                         )}
                     </div>
 
-                    {/* Wishlist */}
+                    {/* Wishlist — visual 36, hit 44 via padding */}
                     <button
                         type="button"
                         onClick={handleWishlist}
@@ -340,10 +340,16 @@ export function ProductCard({
                                 : 'Tambah ke wishlist'
                         }
                         aria-pressed={wishlisted}
+                        title={
+                            wishlisted
+                                ? 'Hapus dari wishlist'
+                                : 'Tambah ke wishlist'
+                        }
                         className={cn(
-                            'absolute top-2 right-2 grid size-8 place-items-center rounded-full border bg-white/90 shadow-sm backdrop-blur transition duration-200',
+                            'absolute top-2 right-2 grid size-9 place-items-center rounded-full border bg-white/90 shadow-[0_1px_2px_rgba(15,23,42,0.05)] backdrop-blur transition duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
                             'hover:bg-white focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 focus-visible:outline-none',
                             'disabled:opacity-60',
+                            'after:absolute after:-inset-1 after:content-[""]',
                             wishlisted
                                 ? 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-50'
                                 : 'border-slate-200 text-slate-500 hover:text-rose-600',
@@ -395,18 +401,10 @@ export function ProductCard({
                         href={catalogShow(product.slug)}
                         className="block rounded-[6px] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 focus-visible:outline-none"
                     >
-                        <CardTitle className="line-clamp-2 text-sm leading-5 font-semibold text-slate-900 sm:text-[15px] sm:leading-6">
+                        <CardTitle className="line-clamp-2 text-sm leading-5 font-bold text-slate-900 sm:text-[15px] sm:leading-6">
                             {product.name}
                         </CardTitle>
                     </Link>
-                    {product.description && (
-                        <p
-                            className="line-clamp-1 overflow-hidden text-xs leading-5 text-ellipsis text-slate-500 sm:text-sm"
-                            title={product.description}
-                        >
-                            {product.description}
-                        </p>
-                    )}
                 </CardHeader>
 
                 <CardContent className="flex flex-1 flex-col gap-2 p-3 pt-0 sm:p-4 sm:pt-0">
@@ -440,9 +438,9 @@ export function ProductCard({
                         </div>
                     )}
 
-                    {/* Price */}
+                    {/* Price — primary hierarchy */}
                     <div className="space-y-1">
-                        <p className="text-base font-bold text-slate-900 tabular-nums sm:text-lg">
+                        <p className="text-base font-bold tracking-tight text-slate-900 tabular-nums sm:text-lg">
                             {formatRupiah(product.price)}
                         </p>
                         {showOriginal && (
@@ -451,7 +449,7 @@ export function ProductCard({
                                     {formatRupiah(product.original_price!)}
                                 </span>
                                 {discountPercent !== null && (
-                                    <span className="rounded-full bg-rose-50 px-1.5 py-0.5 text-[11px] font-bold text-rose-600 ring-1 ring-rose-200">
+                                    <span className="rounded-full bg-[#FEF2F2] px-1.5 py-0.5 text-[11px] font-bold text-[#DC2626] ring-1 ring-red-200">
                                         -{discountPercent}%
                                     </span>
                                 )}
@@ -459,16 +457,16 @@ export function ProductCard({
                         )}
                     </div>
 
-                    {/* Footer */}
-                    <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
-                        <p className="flex min-w-0 items-center gap-1.5 truncate text-xs font-medium text-slate-500">
-                            <Store className="size-3.5 shrink-0" aria-hidden />
+                    {/* Footer — compact to avoid horizontal overflow */}
+                    <div className="mt-auto flex items-center justify-between gap-1.5 border-t border-slate-100 pt-3">
+                        <p className="flex min-w-0 flex-1 items-center gap-1 truncate text-[11px] font-medium text-slate-500">
+                            <Store className="size-3 shrink-0" aria-hidden />
                             <span className="truncate">
                                 {product.owner.name ?? 'Toko Sekolah'}
                             </span>
                         </p>
 
-                        <div className="flex shrink-0 items-center gap-1.5">
+                        <div className="flex shrink-0 items-center gap-1">
                             <Button
                                 type="button"
                                 size="sm"
@@ -476,10 +474,18 @@ export function ProductCard({
                                 disabled={notPurchasable || cartLoading}
                                 onClick={handleAddToCart}
                                 className={cn(
-                                    'h-8 shrink-0 rounded-full border-slate-200 bg-white px-2.5 text-slate-700 hover:bg-slate-50 sm:px-3',
+                                    'h-9 shrink-0 rounded-[10px] border-slate-200 bg-white px-2 text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-slate-50 sm:h-11 sm:rounded-[12px] sm:px-3',
+                                    'after:absolute after:-inset-1 after:content-[""] relative',
                                     notPurchasable && 'opacity-50',
                                 )}
                                 aria-label={
+                                    isOutOfStock
+                                        ? 'Stok habis'
+                                        : isPreOrderClosed
+                                          ? 'Pre-order ditutup'
+                                          : `Tambah ${product.name} ke keranjang`
+                                }
+                                title={
                                     isOutOfStock
                                         ? 'Stok habis'
                                         : isPreOrderClosed
@@ -494,23 +500,17 @@ export function ProductCard({
                                     />
                                 ) : (
                                     <ShoppingCart
-                                        className="size-3.5"
+                                        className="size-3.5 sm:size-4"
                                         aria-hidden
                                     />
                                 )}
-                                <span className="hidden text-xs font-semibold sm:inline">
-                                    {isOutOfStock ? 'Habis' : 'Tambah'}
-                                </span>
-                                <span className="text-xs font-semibold sm:hidden">
-                                    {isOutOfStock ? 'Habis' : '+'}
-                                </span>
                             </Button>
                             <Button
                                 type="button"
                                 size="sm"
                                 disabled={notPurchasable}
                                 onClick={handleBuyNow}
-                                className="h-8 shrink-0 rounded-full px-3.5 text-xs font-semibold"
+                                className="h-9 shrink-0 rounded-[10px] bg-[#0080FF] px-2.5 text-xs font-semibold text-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-[#006FE0] active:bg-[#0059B8] sm:h-11 sm:rounded-[12px] sm:px-3 xl:px-4 after:absolute after:-inset-1 after:content-[''] relative"
                                 aria-label={
                                     isOutOfStock
                                         ? 'Stok habis'
@@ -518,8 +518,11 @@ export function ProductCard({
                                           ? 'Pre-order ditutup'
                                           : `Beli ${product.name} sekarang`
                                 }
+                                title="Beli Sekarang — primary"
                             >
-                                Beli
+                                <span className="sm:hidden">Beli</span>
+                                <span className="hidden sm:inline xl:hidden">Beli</span>
+                                <span className="hidden xl:inline">Beli Sekarang</span>
                             </Button>
                         </div>
                     </div>

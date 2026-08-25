@@ -13,13 +13,31 @@
 
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        'Inter Variable', 'Inter', 'Plus Jakarta Sans', ui-sans-serif,
+        system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
 
-    --radius-lg: var(--radius);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-sm: calc(var(--radius) - 4px);
+    /* EduCart Design Tokens §4, §7, §8 */
+    --color-primary-50: #eff8ff;
+    --color-primary-100: #d9eeff;
+    --color-primary-200: #bce0ff;
+    --color-primary-300: #8eccff;
+    --color-primary-400: #56aeff;
+    --color-primary-500: #0080ff;
+    --color-primary-600: #006fe0;
+    --color-primary-700: #0059b8;
+    --color-primary-800: #064b91;
+    --color-primary-900: #0a3f76;
+
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.1);
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+    --radius-2xl: 24px;
 
     --color-background: var(--background);
     --color-foreground: var(--foreground);
@@ -72,7 +90,7 @@
     --card-foreground: oklch(0.141 0.005 285.823);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.141 0.005 285.823);
-    --primary: oklch(0.488 0.243 264.376);
+    --primary: #0080ff;
     --primary-foreground: oklch(0.97 0.014 254.604);
     --secondary: oklch(0.967 0.001 286.375);
     --secondary-foreground: oklch(0.21 0.006 285.885);
@@ -80,17 +98,17 @@
     --muted-foreground: oklch(0.552 0.016 285.938);
     --accent: oklch(0.967 0.001 286.375);
     --accent-foreground: oklch(0.21 0.006 285.885);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
+    --destructive: #dc2626;
+    --destructive-foreground: oklch(1 0 0);
     --border: oklch(0.92 0.004 286.32);
     --input: oklch(0.92 0.004 286.32);
-    --ring: oklch(0.705 0.015 286.067);
+    --ring: rgba(0, 128, 255, 0.45);
     --chart-1: oklch(0.809 0.105 251.813);
     --chart-2: oklch(0.623 0.214 259.815);
     --chart-3: oklch(0.546 0.245 262.881);
-    --chart-4: oklch(0.488 0.243 264.376);
+    --chart-4: #0080ff;
     --chart-5: oklch(0.424 0.199 265.638);
-    --radius: 0.625rem;
+    --radius: 0.875rem;
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.141 0.005 285.823);
     --sidebar-primary: oklch(0.546 0.245 262.881);
@@ -171,7 +189,7 @@
 
 @theme inline {
     --font-heading: var(--font-sans);
-    --font-sans: 'Inter Variable', sans-serif;
+    --font-sans: 'Inter Variable', 'Inter', 'Plus Jakarta Sans', sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);

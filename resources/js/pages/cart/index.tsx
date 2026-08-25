@@ -168,16 +168,16 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                     <section className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                         <div>
                             <div className="mb-2 flex flex-wrap items-center gap-2">
-                                <Badge className="rounded-[6px] bg-blue-50 text-blue-700">
+                                <Badge className="rounded-[6px] bg-[#EFF8FF] text-[#0080FF] ring-1 ring-[#BCE0FF]">
                                     <ShoppingCart className="size-3.5" />
                                     Buyer Cart
                                 </Badge>
-                                <Badge className="rounded-[6px] bg-emerald-50 text-emerald-700">
+                                <Badge className="rounded-[6px] bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
                                     {summary.total_items} item
                                 </Badge>
                             </div>
-                            <h1 className="text-2xl font-semibold text-slate-950">
-                                Cart Belanja
+                            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+                                Keranjangmu
                             </h1>
                             <p className="mt-1 max-w-2xl text-sm text-slate-500">
                                 Kelola quantity produk sebelum melanjutkan ke
@@ -187,7 +187,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                         <Button
                             asChild
                             variant="outline"
-                            className="h-9 w-fit rounded-[8px] border-slate-200 bg-white"
+                            className="h-11 w-fit rounded-[12px] border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                         >
                             <Link href={home()}>
                                 <ArrowLeft className="size-4" />
@@ -198,9 +198,9 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
 
                     {(flash.success || flash.error) && (
                         <div
-                            className={`rounded-[8px] border px-4 py-3 text-sm ${
+                            className={`rounded-[10px] border px-4 py-3 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.05)] ${
                                 flash.error
-                                    ? 'border-rose-200 bg-rose-50 text-rose-700'
+                                    ? 'border-red-200 bg-[#FEF2F2] text-[#DC2626]'
                                     : 'border-emerald-200 bg-emerald-50 text-emerald-700'
                             }`}
                             role="status"
@@ -210,10 +210,10 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                     )}
 
                     <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-                        <Card className="gap-0 rounded-[8px] border border-slate-100 bg-white py-0 shadow-sm">
+                        <Card className="gap-0 overflow-hidden rounded-[14px] border border-slate-200 bg-white py-0 shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
                             <CardHeader className="flex-row items-center border-b border-slate-100 p-6">
                                 <div className="space-y-1">
-                                    <CardTitle className="text-xl font-semibold text-slate-950">
+                                    <CardTitle className="text-xl font-bold text-slate-900">
                                         Item Cart
                                     </CardTitle>
                                     <CardDescription>
@@ -222,32 +222,30 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                     </CardDescription>
                                 </div>
                                 <CardAction>
-                                    <div className="flex size-10 items-center justify-center rounded-[8px] bg-slate-100 text-slate-600">
+                                    <div className="flex size-10 items-center justify-center rounded-[14px] bg-slate-100 text-slate-600">
                                         <Package className="size-5" />
                                     </div>
                                 </CardAction>
                             </CardHeader>
                             <CardContent className="p-0">
-                                <div className="space-y-3 p-4 md:hidden">
+                                <div className="space-y-3 p-4 xl:hidden">
                                     {items.length === 0 && (
-                                        <div className="rounded-[8px] border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center">
-                                            <div className="mx-auto flex size-12 items-center justify-center rounded-[8px] bg-blue-50 text-blue-700">
+                                        <div className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center">
+                                            <div className="mx-auto flex size-12 items-center justify-center rounded-[14px] bg-[#EFF8FF] text-[#0080FF]">
                                                 <ShoppingCart className="size-5" />
                                             </div>
-                                            <p className="mt-4 text-sm font-medium text-slate-700">
-                                                Cart masih kosong.
+                                            <p className="mt-4 text-base font-bold text-slate-900">
+                                                Keranjangmu masih kosong
                                             </p>
-                                            <p className="mt-1 text-sm text-slate-500">
-                                                Tambahkan produk dari Home
-                                                EduCart.
+                                            <p className="mt-1 text-sm leading-6 text-slate-500">
+                                                Yuk, temukan produk yang kamu suka dan tambahkan ke keranjang.
                                             </p>
                                             <Button
                                                 asChild
-                                                variant="outline"
-                                                className="mt-4 h-10 rounded-full border-slate-200 bg-white"
+                                                className="mt-4 h-11 rounded-[12px] px-6"
                                             >
                                                 <Link href={home()}>
-                                                    Lihat produk
+                                                    Mulai Belanja
                                                 </Link>
                                             </Button>
                                         </div>
@@ -267,7 +265,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                         return (
                                             <div
                                                 key={item.id}
-                                                className="rounded-[8px] border border-slate-200 bg-white p-3 shadow-sm"
+                                                className="rounded-[14px] border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition hover:border-[#BCE0FF] hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)]"
                                             >
                                                 <div className="flex gap-3">
                                                     <Checkbox
@@ -292,7 +290,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                         )}
                                                         className="flex min-w-0 flex-1 gap-3"
                                                     >
-                                                        <div className="size-20 shrink-0 overflow-hidden rounded-[8px] bg-blue-50 text-blue-700">
+                                                        <div className="size-20 shrink-0 overflow-hidden rounded-[14px] bg-[#EFF8FF] text-[#0080FF]">
                                                             {src ? (
                                                                 <img
                                                                     src={src}
@@ -301,6 +299,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                             .product
                                                                             .name
                                                                     }
+                                                                    loading="lazy"
                                                                     className="size-full object-cover"
                                                                 />
                                                             ) : (
@@ -310,13 +309,13 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                             )}
                                                         </div>
                                                         <div className="min-w-0 flex-1">
-                                                            <p className="line-clamp-2 font-semibold text-slate-950">
+                                                            <p className="line-clamp-2 font-bold text-slate-900">
                                                                 {
                                                                     item.product
                                                                         .name
                                                                 }
                                                             </p>
-                                                            <p className="mt-1 text-sm font-semibold text-slate-950">
+                                                            <p className="mt-1 text-sm font-bold text-slate-900 tabular-nums">
                                                                 {formatRupiah(
                                                                     item.product
                                                                         .price,
@@ -341,7 +340,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                     : `Stok ${item.product.stock}`}
                                                             </p>
                                                             {poIssue && (
-                                                                <p className="mt-1 rounded-[6px] border border-rose-100 bg-rose-50 px-2 py-1 text-xs leading-4 text-rose-700">
+                                                                <p className="mt-1 rounded-[6px] border border-red-200 bg-[#FEF2F2] px-2 py-1 text-xs leading-4 text-[#DC2626]">
                                                                     {poIssue}
                                                                 </p>
                                                             )}
@@ -358,7 +357,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                         <p className="text-xs text-slate-500">
                                                             Subtotal
                                                         </p>
-                                                        <p className="font-semibold text-slate-950">
+                                                        <p className="font-bold text-slate-900 tabular-nums">
                                                             {formatRupiah(
                                                                 item.subtotal,
                                                             )}
@@ -375,11 +374,12 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                 type="submit"
                                                                 variant="outline"
                                                                 size="icon"
-                                                                className="size-11 rounded-[8px] border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                                                                className="size-11 rounded-[12px] border-red-200 bg-white text-[#DC2626] hover:bg-[#FEF2F2] hover:text-[#DC2626]"
                                                                 disabled={
                                                                     processing
                                                                 }
                                                                 aria-label="Hapus item cart"
+                                                                title="Hapus item"
                                                             >
                                                                 {processing ? (
                                                                     <Spinner />
@@ -395,8 +395,8 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                     })}
                                 </div>
 
-                                <div className="hidden overflow-x-auto md:block">
-                                    <Table className="min-w-[760px]">
+                                <div className="hidden overflow-x-auto xl:block">
+                                    <Table className="min-w-[680px] w-full">
                                         <TableHeader>
                                             <TableRow className="border-slate-100 bg-slate-50 hover:bg-slate-50">
                                                 {[
@@ -409,7 +409,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                 ].map((heading) => (
                                                     <TableHead
                                                         key={heading}
-                                                        className="h-11 px-6 text-xs font-semibold tracking-wide text-slate-500 uppercase"
+                                                        className="h-11 px-4 text-xs font-semibold tracking-wide text-slate-500 uppercase"
                                                     >
                                                         {heading}
                                                     </TableHead>
@@ -423,16 +423,23 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                         colSpan={6}
                                                         className="px-6 py-12 text-center"
                                                     >
-                                                        <div className="mx-auto flex size-12 items-center justify-center rounded-[8px] bg-blue-50 text-blue-700">
+                                                        <div className="mx-auto flex size-12 items-center justify-center rounded-[14px] bg-[#EFF8FF] text-[#0080FF]">
                                                             <ShoppingCart className="size-5" />
                                                         </div>
-                                                        <p className="mt-4 text-sm font-medium text-slate-700">
-                                                            Cart masih kosong.
+                                                        <p className="mt-4 text-base font-bold text-slate-900">
+                                                            Keranjangmu masih kosong
                                                         </p>
-                                                        <p className="mt-1 text-sm text-slate-500">
-                                                            Tambahkan produk
-                                                            dari Home EduCart.
+                                                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                                                            Yuk, temukan produk yang kamu suka dan tambahkan ke keranjang.
                                                         </p>
+                                                        <Button
+                                                            asChild
+                                                            className="mt-4 h-11 rounded-[12px] px-6"
+                                                        >
+                                                            <Link href={home()}>
+                                                                Mulai Belanja
+                                                            </Link>
+                                                        </Button>
                                                     </TableCell>
                                                 </TableRow>
                                             )}
@@ -453,7 +460,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                         key={item.id}
                                                         className="border-slate-100 hover:bg-slate-50/70"
                                                     >
-                                                        <TableCell className="px-6 py-4">
+                                                        <TableCell className="px-4 py-4">
                                                             <Checkbox
                                                                 checked={selectedIds.includes(
                                                                     item.id,
@@ -470,7 +477,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                 aria-label={`Pilih ${item.product.name} untuk checkout`}
                                                             />
                                                         </TableCell>
-                                                        <TableCell className="min-w-[18rem] px-6 py-4">
+                                                        <TableCell className="min-w-[16rem] px-4 py-4">
                                                             <Link
                                                                 href={catalogShow(
                                                                     item.product
@@ -478,7 +485,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                 )}
                                                                 className="flex min-w-0 items-center gap-3"
                                                             >
-                                                                <div className="size-12 shrink-0 overflow-hidden rounded-[8px] bg-blue-50 text-blue-700">
+                                                                <div className="size-12 shrink-0 overflow-hidden rounded-[14px] bg-[#EFF8FF] text-[#0080FF]">
                                                                     {src ? (
                                                                         <img
                                                                             src={
@@ -489,6 +496,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                                     .product
                                                                                     .name
                                                                             }
+                                                                            loading="lazy"
                                                                             className="size-full object-cover"
                                                                         />
                                                                     ) : (
@@ -498,7 +506,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                     )}
                                                                 </div>
                                                                 <div className="min-w-0">
-                                                                    <p className="truncate font-semibold text-slate-950">
+                                                                    <p className="truncate font-bold text-slate-900">
                                                                         {
                                                                             item
                                                                                 .product
@@ -526,7 +534,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                 </div>
                                                             </Link>
                                                         </TableCell>
-                                                        <TableCell className="px-6 py-4 font-semibold text-slate-950">
+                                                        <TableCell className="px-4 py-4 font-bold text-slate-900 tabular-nums">
                                                             {formatRupiah(
                                                                 item.product
                                                                     .price,
@@ -538,7 +546,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                             'Batas waktu',
                                                                         ) ||
                                                                         hasStockIssue
-                                                                            ? 'text-rose-600'
+                                                                            ? 'text-[#DC2626]'
                                                                             : undefined
                                                                     }
                                                                 >
@@ -558,14 +566,14 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                         .stock}
                                                             </p>
                                                         </TableCell>
-                                                        <TableCell className="px-6 py-4">
+                                                        <TableCell className="px-4 py-4">
                                                             <div className="space-y-1.5">
                                                                 <QuantityStepper
                                                                     item={item}
                                                                     buttonClassName="size-9"
                                                                 />
                                                                 {poIssue && (
-                                                                    <p className="max-w-[14rem] rounded-[6px] border border-rose-100 bg-rose-50 px-2 py-1 text-xs leading-4 text-rose-700">
+                                                                    <p className="max-w-[12rem] rounded-[6px] border border-red-200 bg-[#FEF2F2] px-2 py-1 text-xs leading-4 text-[#DC2626]">
                                                                         {
                                                                             poIssue
                                                                         }
@@ -573,12 +581,12 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                 )}
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="px-6 py-4 font-semibold text-slate-950">
+                                                        <TableCell className="px-4 py-4 font-bold text-slate-900 tabular-nums">
                                                             {formatRupiah(
                                                                 item.subtotal,
                                                             )}
                                                         </TableCell>
-                                                        <TableCell className="px-6 py-4 text-right">
+                                                        <TableCell className="px-4 py-4 text-right">
                                                             <Form
                                                                 {...destroyCartItem.form(
                                                                     item.id,
@@ -592,11 +600,12 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                         type="submit"
                                                                         variant="outline"
                                                                         size="icon"
-                                                                        className="size-9 rounded-[8px] border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                                                                        className="size-9 rounded-[10px] border-red-200 bg-white text-[#DC2626] hover:bg-[#FEF2F2] hover:text-[#DC2626]"
                                                                         disabled={
                                                                             processing
                                                                         }
                                                                         aria-label="Hapus item cart"
+                                                                        title="Hapus item"
                                                                     >
                                                                         {processing ? (
                                                                             <Spinner />
@@ -616,9 +625,9 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                             </CardContent>
                         </Card>
 
-                        <Card className="h-fit rounded-[8px] border border-slate-100 bg-white shadow-sm">
+                        <Card className="h-fit rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] lg:sticky lg:top-24">
                             <CardHeader>
-                                <CardTitle className="text-xl font-semibold text-slate-950">
+                                <CardTitle className="text-xl font-bold text-slate-900">
                                     Ringkasan
                                 </CardTitle>
                                 <CardDescription>
@@ -628,7 +637,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                             <CardContent className="space-y-4">
                                 <div className="flex items-center justify-between gap-4 text-sm text-slate-600">
                                     <span>Total item</span>
-                                    <span className="font-semibold text-slate-950">
+                                    <span className="font-semibold text-slate-900 tabular-nums">
                                         {selectedSummary.total_items}
                                     </span>
                                 </div>
@@ -636,7 +645,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                     <span className="text-sm font-medium text-slate-600">
                                         Total harga
                                     </span>
-                                    <span className="text-xl font-semibold text-slate-950">
+                                    <span className="text-xl font-bold tracking-tight text-slate-900 tabular-nums">
                                         {formatRupiah(
                                             selectedSummary.total_price,
                                         )}
@@ -648,14 +657,14 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                         <Button
                                             type="button"
                                             disabled
-                                            className="h-10 w-full rounded-[8px] bg-blue-600 hover:bg-blue-700"
+                                            className="h-11 w-full rounded-[12px] bg-[#0080FF] hover:bg-[#006FE0]"
                                         >
                                             Checkout
                                         </Button>
                                     ) : (
                                         <Button
                                             asChild
-                                            className="h-10 w-full rounded-[8px] bg-blue-600 hover:bg-blue-700"
+                                            className="h-11 w-full rounded-[12px] bg-[#0080FF] shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-[#006FE0] active:bg-[#0059B8]"
                                         >
                                             <Link href={checkoutHref}>
                                                 Checkout
@@ -663,20 +672,20 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                         </Button>
                                     )}
                                     {selectedIds.length === 0 && (
-                                        <p className="text-xs text-slate-500">
+                                        <p className="rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
                                             Pilih minimal satu item untuk
                                             checkout.
                                         </p>
                                     )}
                                     {hasInvalidStock && (
-                                        <p className="text-xs text-rose-600">
+                                        <p className="rounded-[10px] border border-red-200 bg-[#FEF2F2] px-3 py-2 text-xs leading-5 text-[#DC2626]">
                                             Ada item dengan stok tidak cukup.
                                             Update quantity atau hapus item
                                             tersebut.
                                         </p>
                                     )}
                                     {hasInvalidPreOrder && (
-                                        <p className="text-xs text-rose-600">
+                                        <p className="rounded-[10px] border border-red-200 bg-[#FEF2F2] px-3 py-2 text-xs leading-5 text-[#DC2626]">
                                             Ada item pre-order yang tidak
                                             memenuhi syarat (batas waktu lewat
                                             atau di bawah jumlah minimal).
@@ -715,17 +724,18 @@ function QuantityStepper({
                             value={item.quantity - 1}
                             variant="outline"
                             size="icon"
-                            className={`${buttonClassName} rounded-[8px] border-slate-200 bg-white`}
+                            className={`${buttonClassName} rounded-[10px] border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-slate-50`}
                             disabled={processing || item.quantity <= 1}
                             aria-label="Kurangi quantity"
+                            title="Kurangi"
                         >
                             {processing ? (
                                 <Spinner />
                             ) : (
-                                <Minus className="size-4" />
+                                <Minus className="size-3.5" />
                             )}
                         </Button>
-                        <span className="min-w-8 text-center text-sm font-semibold text-slate-950 tabular-nums">
+                        <span className="min-w-7 text-center text-sm font-bold text-slate-900 tabular-nums">
                             {item.quantity}
                         </span>
                         <Button
@@ -734,13 +744,14 @@ function QuantityStepper({
                             value={item.quantity + 1}
                             variant="outline"
                             size="icon"
-                            className={`${buttonClassName} rounded-[8px] border-slate-200 bg-white`}
+                            className={`${buttonClassName} rounded-[10px] border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-slate-50`}
                             disabled={
                                 processing ||
                                 (!item.product.is_pre_order &&
                                     item.quantity >= item.product.stock)
                             }
                             aria-label="Tambah quantity"
+                            title="Tambah"
                         >
                             {processing ? (
                                 <Spinner />

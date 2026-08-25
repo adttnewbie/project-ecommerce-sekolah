@@ -81,11 +81,11 @@ export default function BuyerOrdersIndex({ orders }: Props) {
                 <div className="mx-auto w-full max-w-7xl space-y-6">
                     <section className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                         <div>
-                            <Badge className="mb-2 rounded-[6px] bg-blue-50 text-blue-700">
+                            <Badge className="mb-2 rounded-[6px] bg-[#EFF8FF] text-[#0080FF] ring-1 ring-[#BCE0FF]">
                                 <ShoppingCart className="size-3.5" />
                                 {orders.total} order
                             </Badge>
-                            <h1 className="text-2xl font-semibold text-slate-950">
+                            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                                 Orders Saya
                             </h1>
                             <p className="mt-1 text-sm text-slate-500">
@@ -95,7 +95,7 @@ export default function BuyerOrdersIndex({ orders }: Props) {
                         <Button
                             asChild
                             variant="outline"
-                            className="h-9 w-fit rounded-[8px] border-slate-200 bg-white"
+                            className="h-11 w-fit rounded-[12px] border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                         >
                             <Link href={home()}>
                                 <ArrowLeft className="size-4" />
@@ -104,29 +104,29 @@ export default function BuyerOrdersIndex({ orders }: Props) {
                         </Button>
                     </section>
 
-                    <Card className="gap-0 rounded-[8px] border border-slate-100 bg-white py-0 shadow-sm">
+                    <Card className="gap-0 rounded-[14px] border border-slate-200 bg-white py-0 shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
                         <CardHeader className="border-b border-slate-100 p-6">
-                            <CardTitle>Daftar Order</CardTitle>
+                            <CardTitle className="font-bold text-slate-900">Daftar Order</CardTitle>
                             <CardDescription>
                                 {orders.from ?? 0}-{orders.to ?? 0} dari{' '}
                                 {orders.total} order
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">
-                            <div className="space-y-3 p-4 md:hidden">
+                            <div className="space-y-3 p-4 xl:hidden">
                                 {orders.data.length === 0 && (
-                                    <div className="rounded-[8px] border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center">
+                                    <div className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center">
                                         <Package className="mx-auto size-8 text-slate-400" />
-                                        <p className="mt-3 text-sm font-medium text-slate-700">
-                                            Belum ada order.
+                                        <p className="mt-3 text-base font-bold text-slate-900">
+                                            Belum ada order
                                         </p>
+                                        <p className="mt-1 text-sm text-slate-500">Riwayat pesananmu akan tampil di sini.</p>
                                         <Button
                                             asChild
-                                            variant="outline"
-                                            className="mt-4 h-10 rounded-full border-slate-200 bg-white"
+                                            className="mt-4 h-11 rounded-[12px] px-6"
                                         >
                                             <Link href={home()}>
-                                                Lihat produk
+                                                Mulai Belanja
                                             </Link>
                                         </Button>
                                     </div>
@@ -136,11 +136,11 @@ export default function BuyerOrdersIndex({ orders }: Props) {
                                     <Link
                                         key={order.id}
                                         href={orderShow(order.id)}
-                                        className="block rounded-[8px] border border-slate-200 bg-white p-4 shadow-sm"
+                                        className="block rounded-[14px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition hover:border-[#BCE0FF] hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)]"
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
-                                                <p className="font-semibold text-slate-950">
+                                                <p className="font-bold text-slate-900">
                                                     {order.code}
                                                 </p>
                                                 <p className="mt-1 text-xs text-slate-500">
@@ -149,7 +149,7 @@ export default function BuyerOrdersIndex({ orders }: Props) {
                                                     )}
                                                 </p>
                                             </div>
-                                            <Badge className="rounded-full bg-blue-50 text-blue-700">
+                                            <Badge className="rounded-full bg-[#EFF8FF] px-2.5 py-0.5 text-[#0080FF] ring-1 ring-[#BCE0FF]">
                                                 {order.status.label}
                                             </Badge>
                                         </div>
@@ -195,7 +195,7 @@ export default function BuyerOrdersIndex({ orders }: Props) {
                                             <span className="text-sm text-slate-500">
                                                 Total
                                             </span>
-                                            <span className="font-semibold text-slate-950">
+                                            <span className="font-bold text-slate-900 tabular-nums">
                                                 {formatRupiah(
                                                     order.total_price,
                                                 )}
@@ -205,8 +205,8 @@ export default function BuyerOrdersIndex({ orders }: Props) {
                                 ))}
                             </div>
 
-                            <div className="hidden overflow-x-auto md:block">
-                                <Table className="min-w-[760px]">
+                            <div className="hidden overflow-x-auto xl:block">
+                                <Table className="min-w-[680px] w-full">
                                     <TableHeader>
                                         <TableRow className="bg-slate-50">
                                             {[
@@ -235,16 +235,16 @@ export default function BuyerOrdersIndex({ orders }: Props) {
                                                     className="py-12 text-center"
                                                 >
                                                     <Package className="mx-auto size-8 text-slate-400" />
-                                                    <p className="mt-3 text-sm font-medium text-slate-700">
-                                                        Belum ada order.
+                                                    <p className="mt-3 text-base font-bold text-slate-900">
+                                                        Belum ada order
                                                     </p>
+                                                    <p className="mt-1 text-sm text-slate-500">Riwayat pesananmu akan tampil di sini.</p>
                                                     <Button
                                                         asChild
-                                                        variant="outline"
-                                                        className="mt-4 rounded-[8px]"
+                                                        className="mt-4 h-11 rounded-[12px] px-6"
                                                     >
                                                         <Link href={home()}>
-                                                            Lihat produk
+                                                            Mulai Belanja
                                                         </Link>
                                                     </Button>
                                                 </TableCell>
@@ -252,7 +252,7 @@ export default function BuyerOrdersIndex({ orders }: Props) {
                                         )}
                                         {orders.data.map((order) => (
                                             <TableRow key={order.id}>
-                                                <TableCell className="px-5 font-medium text-slate-950">
+                                                <TableCell className="px-5 font-bold text-slate-900">
                                                     {order.code}
                                                 </TableCell>
                                                 <TableCell className="px-5">
@@ -324,7 +324,7 @@ export default function BuyerOrdersIndex({ orders }: Props) {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="px-5">
-                                                    <Badge className="rounded-[6px] bg-blue-50 text-blue-700">
+                                                    <Badge className="rounded-[6px] bg-[#EFF8FF] px-2 py-0.5 text-[#0080FF] ring-1 ring-[#BCE0FF]">
                                                         {order.status.label}
                                                     </Badge>
                                                 </TableCell>
@@ -333,18 +333,19 @@ export default function BuyerOrdersIndex({ orders }: Props) {
                                                         order.created_at,
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="px-5">
+                                                <TableCell className="px-4">
                                                     <Button
                                                         asChild
                                                         variant="outline"
                                                         size="icon"
-                                                        className="size-9 rounded-[8px] border-slate-200 bg-white"
+                                                        className="size-9 rounded-[10px] border-slate-200 bg-white"
                                                     >
                                                         <Link
                                                             href={orderShow(
                                                                 order.id,
                                                             )}
                                                             aria-label={`Lihat order ${order.code}`}
+                                                            title={`Lihat order ${order.code}`}
                                                         >
                                                             <Eye className="size-4" />
                                                         </Link>
@@ -368,8 +369,8 @@ BuyerOrdersIndex.layout = {
 };
 
 const paymentStatusClass: Record<string, string> = {
-    unpaid: 'rounded-[6px] bg-slate-100 text-slate-700',
-    pending_confirmation: 'rounded-[6px] bg-amber-50 text-amber-700',
-    paid: 'rounded-[6px] bg-emerald-50 text-emerald-700',
-    rejected: 'rounded-[6px] bg-rose-50 text-rose-700',
+    unpaid: 'rounded-[6px] bg-slate-100 text-slate-700 ring-1 ring-slate-200',
+    pending_confirmation: 'rounded-[6px] bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+    paid: 'rounded-[6px] bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+    rejected: 'rounded-[6px] bg-[#FEF2F2] text-[#DC2626] ring-1 ring-red-200',
 };

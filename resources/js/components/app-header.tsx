@@ -37,7 +37,7 @@ import { index as ordersIndex } from '@/routes/orders';
 import type { NavItem } from '@/types';
 
 const userMenuClassName =
-    'w-56 rounded-[8px] bg-white text-slate-900 ring-slate-200 [&_[data-slot=dropdown-menu-item]]:text-slate-700 [&_[data-slot=dropdown-menu-item]]:focus:bg-slate-100 [&_[data-slot=dropdown-menu-item]]:focus:text-slate-900 [&_[data-slot=dropdown-menu-label]]:text-slate-500 [&_[data-slot=dropdown-menu-separator]]:bg-slate-200';
+    'w-56 rounded-[14px] bg-white text-slate-900 ring-slate-200 shadow-[0_8px_24px_rgba(15,23,42,0.08)] [&_[data-slot=dropdown-menu-item]]:text-slate-700 [&_[data-slot=dropdown-menu-item]]:focus:bg-slate-100 [&_[data-slot=dropdown-menu-item]]:focus:text-slate-900 [&_[data-slot=dropdown-menu-label]]:text-slate-500 [&_[data-slot=dropdown-menu-separator]]:bg-slate-200';
 
 export function AppHeader() {
     const { auth, buyerHeader, notificationBadge } = usePage().props;
@@ -64,8 +64,8 @@ export function AppHeader() {
     };
 
     return (
-        <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/95 shadow-[0_1px_0_rgba(15,23,42,0.03)] backdrop-blur">
-            <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/95 shadow-[0_1px_2px_rgba(15,23,42,0.05)] backdrop-blur supports-[backdrop-filter]:bg-white/90">
+            <div className="mx-auto flex h-[72px] w-full max-w-7xl items-center justify-between gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
                 <Sheet>
                     <SheetTrigger asChild>
                         <Button
@@ -116,20 +116,22 @@ export function AppHeader() {
                     onSubmit={submitSearch}
                     className="relative hidden w-full max-w-2xl md:block"
                 >
-                    <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+                    <Search className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 text-slate-400" />
                     <Input
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
-                        className="h-11 rounded-full border-slate-200 bg-white pr-10 pl-10 text-sm text-slate-700 shadow-sm focus-visible:border-blue-400 focus-visible:ring-blue-100"
-                        placeholder="Cari produk, alat tulis, buku..."
+                        className="h-11 rounded-[10px] border-slate-200 bg-white pr-11 pl-10 text-sm text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.05)] focus-visible:border-[#0080FF] focus-visible:ring-[#0080FF]/20"
+                        placeholder="Cari produk, kategori, atau brand..."
                         type="search"
+                        aria-label="Cari produk, kategori, atau brand"
                     />
                     {search && (
                         <button
                             type="button"
                             onClick={clearSearch}
-                            className="absolute top-1/2 right-3 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                            className="absolute top-1/2 right-2 flex size-9 -translate-y-1/2 items-center justify-center rounded-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 focus-visible:outline-none"
                             aria-label="Hapus pencarian"
+                            title="Hapus pencarian"
                         >
                             <X className="size-4" />
                         </button>
@@ -153,12 +155,12 @@ export function AppHeader() {
                                 asChild
                                 variant="ghost"
                                 size="icon"
-                                className="relative size-11 rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600"
+                                className="relative size-11 rounded-[12px] text-slate-500 hover:bg-slate-100 hover:text-[#0080FF]"
                             >
-                                <Link href={cartIndex()} aria-label="Cart">
+                                <Link href={cartIndex()} aria-label="Keranjang" title="Keranjang">
                                     <ShoppingCart className="size-5" />
                                     {Boolean(buyerHeader?.cartItemsCount) && (
-                                        <span className="absolute -top-0.5 -right-0.5 min-w-5 rounded-full bg-blue-600 px-1.5 text-center text-[11px] leading-5 font-semibold text-white ring-2 ring-white">
+                                        <span className="absolute -top-1 -right-1 min-w-5 rounded-full bg-[#0080FF] px-1.5 text-center text-[11px] leading-5 font-semibold text-white ring-2 ring-white">
                                             {buyerHeader?.cartItemsCount}
                                         </span>
                                     )}
@@ -185,11 +187,11 @@ export function AppHeader() {
                             <Button
                                 asChild
                                 variant="ghost"
-                                className="h-10 px-4"
+                                className="h-11 px-5"
                             >
                                 <Link href={login()}>Login</Link>
                             </Button>
-                            <Button asChild className="h-10 px-4">
+                            <Button asChild className="h-11 px-5">
                                 <Link href={register()}>Register</Link>
                             </Button>
                         </>
@@ -201,14 +203,14 @@ export function AppHeader() {
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    className="h-11 rounded-full px-1.5 text-slate-900 hover:bg-slate-100 md:px-2"
+                                    className="h-11 rounded-[12px] px-1.5 text-slate-900 hover:bg-slate-100 md:px-2"
                                 >
                                     <Avatar className="size-8 overflow-hidden rounded-full border border-slate-200">
                                         <AvatarImage
                                             src={auth.user.avatar}
                                             alt={auth.user.name}
                                         />
-                                        <AvatarFallback className="rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
+                                        <AvatarFallback className="rounded-full bg-[#EFF8FF] text-sm font-semibold text-[#0080FF]">
                                             {getInitials(auth.user.name)}
                                         </AvatarFallback>
                                     </Avatar>
@@ -237,16 +239,18 @@ export function AppHeader() {
                 <Input
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    className="h-11 rounded-full border-slate-200 bg-white pr-10 pl-10 text-sm text-slate-700 shadow-sm focus-visible:border-blue-400 focus-visible:ring-blue-100"
-                    placeholder="Cari produk..."
+                    className="h-11 rounded-[10px] border-slate-200 bg-white pr-11 pl-10 text-sm text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.05)] focus-visible:border-[#0080FF] focus-visible:ring-[#0080FF]/20"
+                    placeholder="Cari produk, kategori, atau brand..."
                     type="search"
+                    aria-label="Cari produk, kategori, atau brand"
                 />
                 {search && (
                     <button
                         type="button"
                         onClick={clearSearch}
-                        className="absolute top-[8px] right-7 flex size-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 sm:right-9"
+                        className="absolute top-[8px] right-7 flex size-9 items-center justify-center rounded-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 sm:right-9"
                         aria-label="Hapus pencarian"
+                        title="Hapus pencarian"
                     >
                         <X className="size-4" />
                     </button>
@@ -270,9 +274,9 @@ function BuyerNavLink({
             href={item.href}
             prefetch
             className={cn(
-                'flex h-10 items-center gap-2 rounded-full px-3.5 text-sm font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-900',
+                'flex h-11 items-center gap-2 rounded-[12px] px-3.5 text-sm font-semibold text-slate-500 transition duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 focus-visible:outline-none',
                 isActive &&
-                    'bg-blue-50 text-blue-700 shadow-[inset_0_0_0_1px_rgba(0,128,255,0.08)] hover:bg-blue-50',
+                    'bg-[#EFF8FF] text-[#0080FF] shadow-[inset_0_0_0_1px_rgba(0,128,255,0.12)] hover:bg-[#EFF8FF]',
             )}
         >
             {Icon && <Icon className="size-4" />}

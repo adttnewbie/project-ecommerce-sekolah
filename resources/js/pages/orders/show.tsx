@@ -127,11 +127,11 @@ export default function BuyerOrdersShow({ order }: Props) {
                 <div className="mx-auto w-full max-w-7xl space-y-6">
                     <section className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                         <div>
-                            <Badge className="mb-2 rounded-[6px] bg-blue-50 text-blue-700">
+                            <Badge className="mb-2 rounded-[6px] bg-[#EFF8FF] px-2.5 py-0.5 text-[#0080FF] ring-1 ring-[#BCE0FF]">
                                 <ShoppingCart className="size-3.5" />
                                 {order.code}
                             </Badge>
-                            <h1 className="text-2xl font-semibold text-slate-950">
+                            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                                 Detail Order
                             </h1>
                             <p className="mt-1 text-sm text-slate-500">
@@ -141,7 +141,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                         <Button
                             asChild
                             variant="outline"
-                            className="h-9 w-fit rounded-[8px] border-slate-200 bg-white"
+                            className="h-11 w-fit rounded-[12px] border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                         >
                             <Link href={ordersIndex()}>
                                 <ArrowLeft className="size-4" />
@@ -153,9 +153,9 @@ export default function BuyerOrdersShow({ order }: Props) {
                     {(flash.success || flash.error) && (
                         <div
                             role="status"
-                            className={`rounded-[8px] border px-4 py-3 text-sm ${
+                            className={`rounded-[10px] border px-4 py-3 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.05)] ${
                                 flash.error
-                                    ? 'border-rose-200 bg-rose-50 text-rose-700'
+                                    ? 'border-red-200 bg-[#FEF2F2] text-[#DC2626]'
                                     : 'border-emerald-200 bg-emerald-50 text-emerald-700'
                             }`}
                         >
@@ -163,9 +163,9 @@ export default function BuyerOrdersShow({ order }: Props) {
                         </div>
                     )}
 
-                    <Card className="rounded-[8px] border border-slate-100 bg-white shadow-sm">
+                    <Card className="rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
                         <CardHeader>
-                            <CardTitle>Ringkasan</CardTitle>
+                            <CardTitle className="font-bold text-slate-900">Ringkasan</CardTitle>
                             <CardDescription>
                                 Status order dan total transaksi.
                             </CardDescription>
@@ -173,7 +173,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                         <CardContent className="grid gap-4 sm:grid-cols-4">
                             <div>
                                 <p className="text-sm text-slate-500">Status</p>
-                                <Badge className="mt-2 rounded-[6px] bg-blue-50 text-blue-700">
+                                <Badge className="mt-2 rounded-[6px] bg-[#EFF8FF] px-2.5 py-0.5 text-[#0080FF] ring-1 ring-[#BCE0FF]">
                                     {order.status.label}
                                 </Badge>
                             </div>
@@ -181,7 +181,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                 <p className="text-sm text-slate-500">
                                     Total item
                                 </p>
-                                <p className="mt-1 text-lg font-semibold text-slate-950">
+                                <p className="mt-1 text-lg font-bold text-slate-900 tabular-nums">
                                     {order.items.length}
                                 </p>
                             </div>
@@ -194,7 +194,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                         paymentStatusClass[
                                             order.payment.status.code
                                         ] ??
-                                        'mt-2 rounded-[6px] bg-slate-100 text-slate-700'
+                                        'mt-2 rounded-[6px] bg-slate-100 text-slate-700 ring-1 ring-slate-200'
                                     }
                                 >
                                     {order.payment.status.label}
@@ -207,14 +207,14 @@ export default function BuyerOrdersShow({ order }: Props) {
                                         href={order.payment.proof_url}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-blue-700 hover:text-blue-800"
+                                        className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-[#0080FF] hover:text-[#006FE0]"
                                     >
                                         <ExternalLink className="size-3.5" />
                                         Bukti bayar
                                     </a>
                                 )}
                                 {order.payment.rejection_reason && (
-                                    <p className="mt-2 text-xs text-rose-600">
+                                    <p className="mt-2 rounded-[6px] border border-red-200 bg-[#FEF2F2] px-2 py-1 text-xs leading-4 text-[#DC2626]">
                                         {order.payment.rejection_reason}
                                     </p>
                                 )}
@@ -238,12 +238,12 @@ export default function BuyerOrdersShow({ order }: Props) {
                                                     0 &&
                                                 ` • belanja min. ${formatRupiah(order.delivery_fee_min_spend)}`}
                                         </p>
-                                        <p className="mt-1 text-lg font-semibold text-slate-950">
+                                        <p className="mt-1 text-lg font-bold tracking-tight text-slate-900 tabular-nums">
                                             {formatRupiah(order.total_price)}
                                         </p>
                                     </>
                                 ) : (
-                                    <p className="mt-1 text-lg font-semibold text-slate-950">
+                                    <p className="mt-1 text-lg font-bold tracking-tight text-slate-900 tabular-nums">
                                         {formatRupiah(order.total_price)}
                                     </p>
                                 )}
@@ -260,7 +260,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                         <Button
                                             type="submit"
                                             disabled={processing}
-                                            className="w-fit bg-emerald-600 hover:bg-emerald-700"
+                                            className="h-11 rounded-[12px] w-fit bg-emerald-600 shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-emerald-700"
                                         >
                                             <CheckCircle2 className="size-4" />
                                             {processing
@@ -281,7 +281,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                     <DialogTrigger asChild>
                                         <Button
                                             variant="destructive"
-                                            className="w-fit"
+                                            className="h-11 rounded-[12px] w-fit"
                                         >
                                             <XCircle className="size-4" />
                                             Batalkan Pesanan
@@ -324,8 +324,8 @@ export default function BuyerOrdersShow({ order }: Props) {
 
                                                 {order.cancellable_items
                                                     .length > 0 && (
-                                                    <div className="mt-3 rounded-[8px] bg-slate-50 p-3">
-                                                        <p className="mb-2 text-xs font-medium text-slate-700">
+                                                    <div className="mt-3 rounded-[14px] border border-slate-200 bg-slate-50 p-3">
+                                                        <p className="mb-2 text-xs font-semibold text-slate-700">
                                                             Item yang akan
                                                             dibatalkan:
                                                         </p>
@@ -347,7 +347,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                                                         <span className="text-slate-400">
                                                                             •
                                                                         </span>
-                                                                        <span>
+                                                                            <span className="tabular-nums">
                                                                             x
                                                                             {
                                                                                 item.quantity
@@ -391,9 +391,9 @@ export default function BuyerOrdersShow({ order }: Props) {
                         )}
                     </Card>
 
-                    <Card className="gap-0 rounded-[8px] border border-slate-100 bg-white py-0 shadow-sm">
+                    <Card className="gap-0 rounded-[14px] border border-slate-200 bg-white py-0 shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
                         <CardHeader className="border-b border-slate-100 p-6">
-                            <CardTitle>Item Order</CardTitle>
+                            <CardTitle className="font-bold text-slate-900">Item Order</CardTitle>
                             <CardDescription>
                                 Produk yang dibeli dalam order ini.
                             </CardDescription>
@@ -403,15 +403,15 @@ export default function BuyerOrdersShow({ order }: Props) {
                                 {order.items.map((item) => (
                                     <div
                                         key={item.id}
-                                        className="rounded-[8px] border border-slate-200 bg-white p-4"
+                                        className="rounded-[14px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
-                                                <p className="line-clamp-2 font-semibold text-slate-950">
+                                                <p className="line-clamp-2 font-bold text-slate-900">
                                                     {item.product_name}
                                                 </p>
                                                 {item.is_pre_order && (
-                                                    <p className="mt-1 text-xs text-blue-700">
+                                                    <p className="mt-1 text-xs font-medium text-[#0080FF]">
                                                         PO{' '}
                                                         {
                                                             item.pre_order_estimate_days
@@ -426,7 +426,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                                     {item.seller.name}
                                                 </p>
                                             </div>
-                                            <Badge className="shrink-0 rounded-full bg-emerald-50 text-emerald-700">
+                                            <Badge className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-0.5 text-emerald-700 ring-1 ring-emerald-200">
                                                 {item.status.label}
                                             </Badge>
                                         </div>
@@ -435,7 +435,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                                 <p className="text-xs text-slate-500">
                                                     Harga
                                                 </p>
-                                                <p className="mt-1 font-medium text-slate-950">
+                                                <p className="mt-1 font-medium text-slate-900 tabular-nums">
                                                     {formatRupiah(item.price)}
                                                 </p>
                                             </div>
@@ -443,7 +443,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                                 <p className="text-xs text-slate-500">
                                                     Qty
                                                 </p>
-                                                <p className="mt-1 font-medium text-slate-950">
+                                                <p className="mt-1 font-medium text-slate-900 tabular-nums">
                                                     {item.quantity}
                                                 </p>
                                             </div>
@@ -451,7 +451,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                                 <p className="text-xs text-slate-500">
                                                     Subtotal
                                                 </p>
-                                                <p className="mt-1 font-semibold text-slate-950">
+                                                <p className="mt-1 font-bold text-slate-900 tabular-nums">
                                                     {formatRupiah(
                                                         item.subtotal,
                                                     )}
@@ -486,13 +486,13 @@ export default function BuyerOrdersShow({ order }: Props) {
                                     <TableBody>
                                         {order.items.map((item) => (
                                             <TableRow key={item.id}>
-                                                <TableCell className="px-5 font-medium text-slate-950">
+                                                <TableCell className="px-5 font-bold text-slate-900">
                                                     <div>
                                                         <p>
                                                             {item.product_name}
                                                         </p>
                                                         {item.is_pre_order && (
-                                                            <p className="mt-1 text-xs font-normal text-blue-700">
+                                                            <p className="mt-1 text-xs font-medium text-[#0080FF]">
                                                                 PO{' '}
                                                                 {
                                                                     item.pre_order_estimate_days
@@ -516,7 +516,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                                 <TableCell className="px-5">
                                                     {item.quantity}
                                                 </TableCell>
-                                                <TableCell className="px-5 font-semibold text-slate-950">
+                                                <TableCell className="px-5 font-bold text-slate-900 tabular-nums">
                                                     {formatRupiah(
                                                         item.subtotal,
                                                     )}
@@ -526,8 +526,8 @@ export default function BuyerOrdersShow({ order }: Props) {
                                                         className={
                                                             item.status.code ===
                                                             'cancelled'
-                                                                ? 'rounded-[6px] bg-rose-50 text-rose-700'
-                                                                : 'rounded-[6px] bg-emerald-50 text-emerald-700'
+                                                                ? 'rounded-[6px] bg-[#FEF2F2] text-[#DC2626] ring-1 ring-red-200'
+                                                                : 'rounded-[6px] bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
                                                         }
                                                     >
                                                         {item.status.label}
@@ -541,18 +541,18 @@ export default function BuyerOrdersShow({ order }: Props) {
 
                             {order.cancelled_at && (
                                 <div className="border-t border-slate-100 p-6">
-                                    <div className="flex items-start gap-3 rounded-[8px] bg-rose-50 p-4">
-                                        <XCircle className="mt-0.5 size-5 text-rose-600" />
+                                    <div className="flex items-start gap-3 rounded-[14px] border border-red-200 bg-[#FEF2F2] p-4">
+                                        <XCircle className="mt-0.5 size-5 text-[#DC2626]" />
                                         <div>
-                                            <p className="font-medium text-rose-900">
+                                            <p className="font-semibold text-[#7f1d1d]">
                                                 Pesanan Dibatalkan
                                             </p>
-                                            <p className="mt-1 text-sm text-rose-700">
+                                            <p className="mt-1 text-sm text-[#DC2626]">
                                                 Dibatalkan pada{' '}
                                                 {formatDate(order.cancelled_at)}
                                                 {order.cancel_reason && (
                                                     <span className="mt-1 block">
-                                                        <strong className="text-rose-900">
+                                                        <strong className="text-[#7f1d1d]">
                                                             Alasan:
                                                         </strong>{' '}
                                                         {order.cancel_reason}
@@ -576,8 +576,8 @@ BuyerOrdersShow.layout = {
 };
 
 const paymentStatusClass: Record<string, string> = {
-    unpaid: 'mt-2 rounded-[6px] bg-slate-100 text-slate-700',
-    pending_confirmation: 'mt-2 rounded-[6px] bg-amber-50 text-amber-700',
-    paid: 'mt-2 rounded-[6px] bg-emerald-50 text-emerald-700',
-    rejected: 'mt-2 rounded-[6px] bg-rose-50 text-rose-700',
+    unpaid: 'mt-2 rounded-[6px] bg-slate-100 text-slate-700 ring-1 ring-slate-200',
+    pending_confirmation: 'mt-2 rounded-[6px] bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+    paid: 'mt-2 rounded-[6px] bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+    rejected: 'mt-2 rounded-[6px] bg-[#FEF2F2] text-[#DC2626] ring-1 ring-red-200',
 };

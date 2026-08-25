@@ -154,43 +154,41 @@ export default function CatalogShow({ product }: CatalogShowProps) {
             <Head title={product.name} />
             <main className="min-h-[calc(100svh-4rem)] bg-slate-50">
                 <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-                    <div>
-                        <Button
-                            asChild
-                            variant="outline"
-                            className="h-10 w-fit rounded-[8px] border-slate-200 bg-white"
-                        >
-                            <Link href={home()}>
-                                <ArrowLeft className="size-4" />
-                                Home
-                            </Link>
-                        </Button>
-                    </div>
+                    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
+                        <Link href={home()} className="hover:text-[#0080FF] focus-visible:text-[#0080FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 rounded">
+                            Beranda
+                        </Link>
+                        <span aria-hidden className="text-slate-400">/</span>
+                        <span className="text-slate-700">{product.category.name}</span>
+                        <span aria-hidden className="text-slate-400">/</span>
+                        <span className="truncate font-medium text-slate-900" aria-current="page">{product.name}</span>
+                    </nav>
 
                     <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start">
-                        <div className="overflow-hidden rounded-[8px] border border-slate-200 bg-white shadow-sm">
-                            <div className="aspect-square bg-slate-100">
+                        <div className="overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+                            <div className="aspect-square bg-slate-50">
                                 {src ? (
                                     <img
                                         src={src}
                                         alt={product.name}
+                                        loading="lazy"
                                         className="size-full object-cover"
                                     />
                                 ) : (
-                                    <div className="flex size-full items-center justify-center bg-blue-50 text-blue-700">
+                                    <div className="flex size-full items-center justify-center bg-[#EFF8FF] text-[#0080FF]">
                                         <Package className="size-16" />
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        <Card className="rounded-[8px] border border-slate-200 bg-white py-0 shadow-sm lg:sticky lg:top-24">
+                        <Card className="rounded-[14px] border border-slate-200 bg-white py-0 shadow-[0_1px_2px_rgba(15,23,42,0.05)] lg:sticky lg:top-24">
                             <CardContent className="space-y-6 p-5 sm:p-6">
                                 {(flash.success || flash.error) && (
                                     <div
-                                        className={`rounded-[8px] border px-4 py-3 text-sm ${
+                                        className={`rounded-[10px] border px-4 py-3 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.05)] ${
                                             flash.error
-                                                ? 'border-rose-200 bg-rose-50 text-rose-700'
+                                                ? 'border-red-200 bg-[#FEF2F2] text-[#DC2626]'
                                                 : 'border-emerald-200 bg-emerald-50 text-emerald-700'
                                         }`}
                                         role="status"
@@ -200,14 +198,14 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                 )}
 
                                 <div className="flex flex-wrap gap-2">
-                                    <Badge className="rounded-full bg-blue-50 text-blue-700">
+                                    <Badge className="rounded-full bg-[#EFF8FF] px-2.5 py-0.5 text-[#0080FF] ring-1 ring-[#BCE0FF]">
                                         <Tags className="size-3.5" />
                                         {product.category.name}
                                     </Badge>
                                     {product.is_pre_order && preOrderMeta && (
                                         <Badge
                                             className={cn(
-                                                'rounded-full',
+                                                'rounded-full px-2.5 py-0.5 ring-1',
                                                 preOrderMeta.badgeClass,
                                             )}
                                         >
@@ -220,26 +218,13 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                         <Badge
                                             className={
                                                 isOutOfStock
-                                                    ? 'rounded-full bg-orange-50 text-orange-700'
-                                                    : 'rounded-full bg-emerald-50 text-emerald-700'
+                                                    ? 'rounded-full bg-[#FEF2F2] text-[#DC2626] ring-1 ring-red-200'
+                                                    : 'rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
                                             }
                                         >
                                             {isOutOfStock
                                                 ? 'Stok habis'
                                                 : `Stok ${product.stock}`}
-                                        </Badge>
-                                    )}
-                                    {!product.is_pre_order && (
-                                        <Badge
-                                            className={
-                                                isOutOfStock
-                                                    ? 'rounded-full bg-orange-50 text-orange-700'
-                                                    : 'rounded-full bg-emerald-50 text-emerald-700'
-                                            }
-                                        >
-                                            {isOutOfStock
-                                                ? 'Stok habis'
-                                                : `Ready Stock`}
                                         </Badge>
                                     )}
                                 </div>
@@ -249,7 +234,7 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                     preOrderMeta && (
                                         <div
                                             className={cn(
-                                                'rounded-[8px] border px-4 py-3 text-sm',
+                                                'rounded-[14px] border px-4 py-3 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.05)]',
                                                 preOrderMeta.boxClass,
                                                 preOrderMeta.textClass,
                                             )}
@@ -292,10 +277,10 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                     )}
 
                                 <div>
-                                    <h1 className="text-3xl font-semibold tracking-normal text-slate-950 sm:text-4xl">
+                                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
                                         {product.name}
                                     </h1>
-                                    <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-slate-500">
+                                    <p className="mt-3 flex items-center gap-2 text-sm font-medium text-slate-500">
                                         <Store className="size-4" />
                                         {product.owner.name}
                                     </p>
@@ -323,7 +308,7 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                                 </Badge>
                                             </div>
                                         )}
-                                    <p className="text-3xl font-semibold text-slate-950 tabular-nums">
+                                    <p className="text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
                                         {formatRupiah(product.price)}
                                     </p>
                                     {(product.review_summary ||
@@ -357,7 +342,7 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                     <p className="mt-1 text-sm text-slate-500">
                                         Harga produk dari {product.owner.name}.
                                     </p>
-                                    <p className="mt-2 flex items-center gap-1.5 text-sm text-slate-500">
+                                    <p className="mt-2 flex items-center gap-2 text-sm text-slate-500">
                                         <Store className="size-4" />
                                         Ambil di{' '}
                                         {product.pickup_place?.name ??
@@ -366,13 +351,18 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                 </div>
 
                                 {isBuyer ? (
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
+                                        {product.is_pre_order && product.pre_order_min_quantity && product.pre_order_min_quantity > 1 && !isPreOrderClosed && (
+                                            <p className="text-xs text-slate-500">
+                                                Minimum {product.pre_order_min_quantity} item per pesanan pre-order.
+                                            </p>
+                                        )}
                                         <div className="flex flex-wrap gap-2">
                                             {notPurchasable ? (
                                                 <Button
                                                     type="button"
                                                     disabled
-                                                    className="h-11 w-fit px-5"
+                                                    className="h-11 w-full rounded-[12px] sm:w-fit px-6"
                                                 >
                                                     {isOutOfStock
                                                         ? 'Stok habis'
@@ -381,7 +371,7 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                             ) : (
                                                 <Button
                                                     asChild
-                                                    className="h-11 w-fit px-5"
+                                                    className="h-11 w-full sm:w-fit rounded-[12px] bg-[#0080FF] px-6 shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-[#006FE0] active:bg-[#0059B8]"
                                                 >
                                                     <Link
                                                         href={checkoutConfirm({
@@ -390,8 +380,9 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                                                     product.slug,
                                                             },
                                                         })}
+                                                        aria-label="Beli Sekarang — primary"
                                                     >
-                                                        Beli sekarang
+                                                        Beli Sekarang
                                                     </Link>
                                                 </Button>
                                             )}
@@ -401,13 +392,14 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                                     product.slug,
                                                 )}
                                                 disableWhileProcessing
+                                                className="flex items-center gap-2"
                                             >
                                                 {({ processing, errors }) => (
                                                     <>
                                                         <input
                                                             type="hidden"
                                                             name="quantity"
-                                                            value="1"
+                                                            value={product.pre_order_min_quantity ?? 1}
                                                             readOnly
                                                         />
                                                         <Button
@@ -417,15 +409,16 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                                                 processing
                                                             }
                                                             variant="outline"
-                                                            size="icon"
-                                                            className="size-11 rounded-full border-slate-200 bg-white text-blue-700 hover:bg-blue-50"
-                                                            aria-label="Tambahkan ke keranjang"
+                                                            className="h-11 rounded-[12px] border-slate-200 bg-white px-5 text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-slate-50"
+                                                            aria-label="Tambah ke Keranjang"
+                                                            title="Tambah ke Keranjang"
                                                         >
                                                             {processing ? (
                                                                 <Spinner />
                                                             ) : (
-                                                                <ShoppingCart className="size-5" />
+                                                                <ShoppingCart className="size-4" />
                                                             )}
+                                                            Tambah ke Keranjang
                                                         </Button>
                                                         <InputError
                                                             message={
@@ -469,22 +462,22 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                         </Card>
                     </section>
 
-                    <section className="rounded-[8px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                        <h2 className="text-xl font-semibold text-slate-950">
+                    <section className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.05)] sm:p-6">
+                        <h2 className="text-xl font-semibold text-slate-900">
                             Deskripsi produk
                         </h2>
-                        <p className="mt-3 text-base leading-8 whitespace-pre-line text-slate-600">
+                        <p className="mt-3 text-base leading-6 whitespace-pre-line text-slate-600">
                             {product.description}
                         </p>
                     </section>
 
-                    <section className="rounded-[8px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                    <section className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.05)] sm:p-6">
                         <div className="flex flex-wrap items-center justify-between gap-3">
-                            <h2 className="text-xl font-semibold text-slate-950">
+                            <h2 className="text-xl font-semibold text-slate-900">
                                 Ulasan pembeli
                             </h2>
                             {product.review_summary && (
-                                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-sm font-semibold text-amber-700">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-sm font-semibold text-amber-700 ring-1 ring-amber-200">
                                     <Star className="size-4 fill-amber-400 text-amber-400" />
                                     {product.review_summary.average} / 5
                                     <span className="font-normal text-amber-600">
@@ -496,7 +489,7 @@ export default function CatalogShow({ product }: CatalogShowProps) {
 
                         {isBuyer &&
                         (product.can_review || product.my_review) ? (
-                            <div className="mt-5 rounded-[8px] border border-slate-200 bg-slate-50 p-4">
+                            <div className="mt-5 rounded-[14px] border border-slate-200 bg-slate-50 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
                                 <div className="flex flex-wrap items-center justify-between gap-2">
                                     <p className="text-sm font-semibold text-slate-800">
                                         {product.my_review
@@ -520,7 +513,7 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                 {product.my_review?.status.code ===
                                     'rejected' &&
                                     product.my_review.rejection_reason && (
-                                        <p className="mt-2 rounded-[8px] border border-rose-100 bg-rose-50 px-3 py-2 text-xs leading-5 text-rose-700">
+                                        <p className="mt-2 rounded-[10px] border border-red-200 bg-[#FEF2F2] px-3 py-2 text-xs leading-5 text-[#DC2626]">
                                             Alasan:{' '}
                                             {product.my_review.rejection_reason}
                                         </p>
@@ -570,11 +563,11 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                                         onMouseLeave={() =>
                                                             setHoveredRating(0)
                                                         }
-                                                        className="focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:outline-none"
+                                                        className="size-11 rounded-[12px] transition focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 focus-visible:outline-none grid place-items-center hover:bg-amber-50"
                                                     >
                                                         <Star
                                                             className={cn(
-                                                                'size-7 transition',
+                                                                'size-6 transition duration-[180ms]',
                                                                 activeRating >=
                                                                     star
                                                                     ? 'fill-amber-400 text-amber-400'
@@ -589,7 +582,7 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                             />
                                             <Textarea
                                                 name="comment"
-                                                className="min-h-24 rounded-[8px] border-slate-200 bg-white"
+                                                className="min-h-24 rounded-[10px] border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                                                 placeholder={
                                                     product.my_review
                                                         ?.comment ??
@@ -626,19 +619,19 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                 </Form>
                             </div>
                         ) : isBuyer && !product.has_purchased ? (
-                            <div className="mt-5 rounded-[8px] border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                            <div className="mt-5 rounded-[10px] border border-[#BCE0FF] bg-[#EFF8FF] px-4 py-3 text-sm text-[#0059B8]">
                                 Selesaikan pesanan produk ini terlebih dahulu
                                 untuk memberi ulasan.
                             </div>
                         ) : !auth.user ? (
-                            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[8px] border border-slate-200 bg-slate-50 px-4 py-3">
+                            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-slate-200 bg-slate-50 px-4 py-3">
                                 <p className="text-sm text-slate-600">
                                     Login untuk memberi ulasan.
                                 </p>
                                 <Button
                                     asChild
                                     variant="outline"
-                                    className="h-10"
+                                    className="h-11 rounded-[12px]"
                                 >
                                     <Link href={login()}>Login</Link>
                                 </Button>
@@ -656,7 +649,7 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                         key={`${review.user_name}-${review.created_at}`}
                                         className="flex gap-3 border-b border-slate-100 pb-4 last:border-b-0 last:pb-0"
                                     >
-                                        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-blue-50 text-sm font-bold text-blue-700">
+                                        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#EFF8FF] text-sm font-bold text-[#0080FF]">
                                             {review.user_name.charAt(0)}
                                         </span>
                                         <div className="min-w-0 flex-1">
@@ -697,8 +690,36 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                             )}
                         </div>
                     </section>
+
+                    {/* Sticky bottom CTA mobile — §11.3 §16 */}
+                    {isBuyer && (
+                        <div className="fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white p-4 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] lg:hidden">
+                            <div className="flex gap-2">
+                                {notPurchasable ? (
+                                    <Button type="button" disabled className="h-11 flex-1 rounded-[12px]">
+                                        {isOutOfStock ? 'Stok habis' : 'Pre-order ditutup'}
+                                    </Button>
+                                ) : (
+                                    <>
+                                        <Form {...storeCartItem.form(product.slug)} disableWhileProcessing className="flex-1">
+                                            {({ processing }) => (
+                                                <Button type="submit" disabled={processing} variant="outline" className="h-11 w-full rounded-[12px] border-slate-200 bg-white">
+                                                    {processing ? <Spinner /> : <ShoppingCart className="size-4" />}
+                                                    Keranjang
+                                                </Button>
+                                            )}
+                                        </Form>
+                                        <Button asChild className="h-11 flex-1 rounded-[12px] bg-[#0080FF] hover:bg-[#006FE0] active:bg-[#0059B8]">
+                                            <Link href={checkoutConfirm({ query: { product: product.slug } })}>Beli Sekarang</Link>
+                                        </Button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </main>
+            {isBuyer && <div className="h-20 lg:hidden" aria-hidden />}
         </>
     );
 }

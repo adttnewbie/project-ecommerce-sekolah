@@ -210,11 +210,11 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                     <section className="space-y-5">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <Badge className="mb-3 rounded-full bg-blue-50 text-blue-700">
+                                <Badge className="mb-3 rounded-full bg-[#EFF8FF] px-3 py-1 text-[#0080FF] ring-1 ring-[#BCE0FF]">
                                     <CreditCard className="size-3.5" />
                                     Checkout
                                 </Badge>
-                                <h1 className="text-2xl font-semibold text-slate-950">
+                                <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                                     Konfirmasi Pembayaran
                                 </h1>
                                 <p className="mt-1 text-sm text-slate-500">
@@ -224,7 +224,7 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                             <Button
                                 asChild
                                 variant="outline"
-                                className="h-10 w-fit rounded-full border-slate-200 bg-white"
+                                className="h-11 w-fit rounded-[12px] border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                             >
                                 <Link href={cartIndex()}>
                                     <ArrowLeft className="size-4" />
@@ -233,27 +233,27 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                             </Button>
                         </div>
 
-                        <Card className="rounded-[8px] border-slate-200 bg-white shadow-sm">
+                        <Card className="rounded-[14px] border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-lg font-semibold text-slate-950">
-                                    <User className="size-5 text-blue-700" />
+                                <CardTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
+                                    <User className="size-5 text-[#0080FF]" />
                                     Informasi pembeli
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="grid gap-3 sm:grid-cols-2">
-                                <div className="rounded-[8px] border border-slate-200 bg-slate-50 p-3">
+                                <div className="rounded-[14px] border border-slate-200 bg-slate-50 p-3">
                                     <p className="text-xs font-medium text-slate-500">
                                         Nama
                                     </p>
-                                    <p className="mt-1 font-semibold text-slate-950">
+                                    <p className="mt-1 font-semibold text-slate-900">
                                         {buyer?.name ?? '-'}
                                     </p>
                                 </div>
-                                <div className="rounded-[8px] border border-slate-200 bg-slate-50 p-3">
+                                <div className="rounded-[14px] border border-slate-200 bg-slate-50 p-3">
                                     <p className="text-xs font-medium text-slate-500">
                                         Email
                                     </p>
-                                    <p className="mt-1 font-semibold break-all text-slate-950">
+                                    <p className="mt-1 font-semibold break-all text-slate-900">
                                         {buyer?.email ?? '-'}
                                     </p>
                                 </div>
@@ -261,19 +261,18 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                         </Card>
 
                         {items.length === 0 ? (
-                            <div className="rounded-[8px] border border-dashed border-slate-300 bg-white px-5 py-12 text-center">
-                                <div className="mx-auto flex size-12 items-center justify-center rounded-[8px] bg-blue-50 text-blue-700">
+                            <div className="rounded-[14px] border border-dashed border-slate-300 bg-white px-5 py-12 text-center shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+                                <div className="mx-auto flex size-12 items-center justify-center rounded-[14px] bg-[#EFF8FF] text-[#0080FF]">
                                     <ShoppingCart className="size-5" />
                                 </div>
-                                <h2 className="mt-4 text-lg font-semibold text-slate-950">
-                                    Cart masih kosong
+                                <h2 className="mt-4 text-lg font-bold text-slate-900">
+                                    Keranjangmu masih kosong
                                 </h2>
                                 <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                                    Tambahkan produk dulu sebelum konfirmasi
-                                    pembayaran.
+                                    Yuk, temukan produk yang kamu suka dan tambahkan ke keranjang.
                                 </p>
-                                <Button asChild className="mt-5 h-10">
-                                    <Link href={home()}>Lihat produk</Link>
+                                <Button asChild className="mt-5 h-11 rounded-[12px] px-6">
+                                    <Link href={home()}>Mulai Belanja</Link>
                                 </Button>
                             </div>
                         ) : (
@@ -291,13 +290,14 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                             href={catalogShow(
                                                 item.product.slug,
                                             )}
-                                            className="flex gap-3 rounded-[8px] border border-slate-200 bg-white p-3 shadow-sm"
+                                            className="flex gap-3 rounded-[14px] border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition hover:border-[#BCE0FF] hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)]"
                                         >
-                                            <div className="size-20 shrink-0 overflow-hidden rounded-[8px] bg-blue-50 text-blue-700">
+                                            <div className="size-20 shrink-0 overflow-hidden rounded-[14px] bg-[#EFF8FF] text-[#0080FF]">
                                                 {src ? (
                                                     <img
                                                         src={src}
                                                         alt={item.product.name}
+                                                        loading="lazy"
                                                         className="size-full object-cover"
                                                     />
                                                 ) : (
@@ -307,7 +307,7 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                                 )}
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <p className="line-clamp-2 font-semibold text-slate-950">
+                                                <p className="line-clamp-2 font-bold text-slate-900">
                                                     {item.product.name}
                                                 </p>
                                                 <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
@@ -346,7 +346,7 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                                                 'closed' &&
                                                             ' • Pre-order ditutup'}
                                                     </span>
-                                                    <span className="font-semibold text-slate-950">
+                                                    <span className="font-bold text-slate-900 tabular-nums">
                                                         {formatRupiah(
                                                             item.subtotal,
                                                         )}
@@ -355,7 +355,7 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                                 {item.is_valid === false &&
                                                     !!item.invalid_reasons
                                                         ?.length && (
-                                                        <div className="mt-2 rounded-[6px] border border-rose-100 bg-rose-50 px-2 py-1.5 text-xs leading-4 text-rose-700">
+                                                        <div className="mt-2 rounded-[6px] border border-red-200 bg-[#FEF2F2] px-2 py-1.5 text-xs leading-4 text-[#DC2626]">
                                                             {
                                                                 item
                                                                     .invalid_reasons[0]
@@ -370,16 +370,16 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                         )}
                     </section>
 
-                    <Card className="h-fit rounded-[8px] border-slate-200 bg-white shadow-sm lg:sticky lg:top-24">
+                    <Card className="h-fit rounded-[14px] border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] lg:sticky lg:top-24">
                         <CardHeader>
-                            <CardTitle className="text-xl font-semibold text-slate-950">
+                            <CardTitle className="text-xl font-bold text-slate-900">
                                 Ringkasan pembayaran
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex justify-between text-sm text-slate-600">
                                 <span>Total item</span>
-                                <span className="font-semibold text-slate-950">
+                                <span className="font-semibold text-slate-900 tabular-nums">
                                     {summary.total_items}
                                 </span>
                             </div>
@@ -387,13 +387,13 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                 <>
                                     <div className="flex justify-between text-sm text-slate-600">
                                         <span>Subtotal</span>
-                                        <span className="font-semibold text-slate-950">
+                                        <span className="font-semibold text-slate-900 tabular-nums">
                                             {formatRupiah(summary.total_price)}
                                         </span>
                                     </div>
-                                    <div className="flex justify-between text-sm text-blue-700">
+                                    <div className="flex justify-between text-sm text-[#0080FF]">
                                         <span>Biaya antar</span>
-                                        <span className="font-semibold">
+                                        <span className="font-semibold tabular-nums">
                                             {formatRupiah(deliveryFee)}
                                         </span>
                                     </div>
@@ -403,7 +403,7 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                 <span className="text-sm font-medium text-slate-600">
                                     Total bayar
                                 </span>
-                                <span className="text-xl font-semibold text-slate-950">
+                                <span className="text-xl font-bold tracking-tight text-slate-900 tabular-nums">
                                     {formatRupiah(grandTotal)}
                                 </span>
                             </div>
@@ -447,17 +447,15 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                                 )}
                                             </div>
                                         ))}
-                                        <div className="space-y-3">
-                                            <div>
-                                                <h2 className="text-sm font-semibold text-slate-800">
-                                                    Pickup method
-                                                </h2>
-                                                <p className="mt-1 text-xs text-slate-500">
-                                                    Pilih cara menerima pesanan.
-                                                </p>
-                                            </div>
+                                        <fieldset className="space-y-3">
+                                            <legend className="text-sm font-semibold text-slate-800">
+                                                Metode pengambilan
+                                            </legend>
+                                            <p className="text-xs text-slate-500">
+                                                Pilih cara menerima pesanan.
+                                            </p>
                                             <div className="grid gap-2">
-                                                <Label className="flex cursor-pointer items-start gap-3 rounded-[8px] border border-slate-200 bg-white p-3 transition hover:bg-slate-50 has-checked:border-blue-300 has-checked:bg-blue-50">
+                                                <Label className="flex cursor-pointer items-start gap-3 rounded-[14px] border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition duration-[180ms] hover:bg-slate-50 has-checked:border-[#BCE0FF] has-checked:bg-[#EFF8FF]">
                                                     <input
                                                         type="radio"
                                                         name="pickup_method"
@@ -471,12 +469,12 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                                                 'delivery',
                                                             )
                                                         }
-                                                        className="mt-1"
+                                                        className="mt-1 accent-[#0080FF]"
                                                     />
                                                     <span className="flex min-w-0 gap-2">
-                                                        <Truck className="mt-0.5 size-4 shrink-0 text-blue-700" />
+                                                        <Truck className="mt-0.5 size-4 shrink-0 text-[#0080FF]" />
                                                         <span>
-                                                            <span className="block text-sm font-semibold text-slate-950">
+                                                            <span className="block text-sm font-semibold text-slate-900">
                                                                 Diantar
                                                             </span>
                                                             <span className="block text-xs leading-5 text-slate-500">
@@ -488,7 +486,7 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                                     </span>
                                                 </Label>
 
-                                                <Label className="flex cursor-pointer items-start gap-3 rounded-[8px] border border-slate-200 bg-white p-3 transition hover:bg-slate-50 has-checked:border-blue-300 has-checked:bg-blue-50">
+                                                <Label className="flex cursor-pointer items-start gap-3 rounded-[14px] border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition duration-[180ms] hover:bg-slate-50 has-checked:border-[#BCE0FF] has-checked:bg-[#EFF8FF]">
                                                     <input
                                                         type="radio"
                                                         name="pickup_method"
@@ -502,12 +500,12 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                                                 'pickup',
                                                             )
                                                         }
-                                                        className="mt-1"
+                                                        className="mt-1 accent-[#0080FF]"
                                                     />
                                                     <span className="flex min-w-0 gap-2">
-                                                        <MapPin className="mt-0.5 size-4 shrink-0 text-blue-700" />
+                                                        <MapPin className="mt-0.5 size-4 shrink-0 text-[#0080FF]" />
                                                         <span>
-                                                            <span className="block text-sm font-semibold text-slate-950">
+                                                            <span className="block text-sm font-semibold text-slate-900">
                                                                 Ambil di tempat
                                                             </span>
                                                             <span className="block text-xs leading-5 text-slate-500">
@@ -531,7 +529,7 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                                     <Textarea
                                                         id="pickup_location"
                                                         name="pickup_location"
-                                                        className="min-h-24 rounded-[8px] border-slate-200 bg-white"
+                                                        className="min-h-24 rounded-[10px] border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                                                         placeholder="Contoh: titip di meja piket, depan kelas XI RPL 1, atau dekat koperasi."
                                                         required
                                                     />
@@ -542,7 +540,7 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                                     />
                                                 </div>
                                             )}
-                                        </div>
+                                        </fieldset>
 
                                         <div className="space-y-3">
                                             <div>
@@ -560,10 +558,10 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                                 value="cash"
                                                 readOnly
                                             />
-                                            <div className="flex items-start gap-3 rounded-[8px] border border-blue-200 bg-blue-50 p-3">
-                                                <CreditCard className="mt-0.5 size-4 shrink-0 text-blue-700" />
+                                            <div className="flex items-start gap-3 rounded-[14px] border border-[#BCE0FF] bg-[#EFF8FF] p-3">
+                                                <CreditCard className="mt-0.5 size-4 shrink-0 text-[#0080FF]" />
                                                 <div>
-                                                    <p className="text-sm font-semibold text-slate-950">
+                                                    <p className="text-sm font-semibold text-slate-900">
                                                         Tunai
                                                     </p>
                                                     <p className="mt-1 text-xs leading-5 text-slate-500">
@@ -582,6 +580,18 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                             />
                                         </div>
 
+                                        {/* Voucher — Segera hadir §11.5 */}
+                                        <div className="space-y-2">
+                                            <h2 className="text-sm font-semibold text-slate-800">Voucher</h2>
+                                            <div className="flex items-center justify-between gap-3 rounded-[14px] border border-dashed border-slate-300 bg-slate-50 px-4 py-3">
+                                                <div>
+                                                    <p className="text-sm font-medium text-slate-700">Punya kode voucher?</p>
+                                                    <p className="text-xs text-slate-500">Fitur voucher segera hadir.</p>
+                                                </div>
+                                                <Badge className="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-amber-700 ring-1 ring-amber-200">Segera hadir</Badge>
+                                            </div>
+                                        </div>
+
                                         <Button
                                             type="submit"
                                             disabled={
@@ -589,19 +599,19 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                                 items.length === 0 ||
                                                 hasBlockingIssue
                                             }
-                                            className="h-11 w-full"
+                                            className="h-11 w-full rounded-[12px] bg-[#0080FF] shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-[#006FE0] active:bg-[#0059B8]"
                                         >
                                             {processing && <Spinner />}
-                                            Buat pesanan
+                                            Buat Pesanan
                                         </Button>
                                         {hasInvalidStock && (
-                                            <p className="text-xs text-rose-600">
+                                            <p className="rounded-[10px] border border-red-200 bg-[#FEF2F2] px-3 py-2 text-xs leading-5 text-[#DC2626]">
                                                 Ada item dengan stok tidak
                                                 cukup. Update cart dulu.
                                             </p>
                                         )}
                                         {hasInvalidPreOrder && (
-                                            <p className="text-xs text-rose-600">
+                                            <p className="rounded-[10px] border border-red-200 bg-[#FEF2F2] px-3 py-2 text-xs leading-5 text-[#DC2626]">
                                                 Ada item pre-order yang sudah
                                                 tidak dapat dibeli (batas
                                                 waktu lewat atau di bawah
@@ -643,7 +653,7 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="rounded-[8px]"
+                                className="h-11 rounded-[12px]"
                             >
                                 Tetap di halaman
                             </Button>
@@ -651,7 +661,7 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                         <AlertDialogAction asChild>
                             <Button
                                 type="button"
-                                className="rounded-[8px] bg-rose-600 text-white hover:bg-rose-700"
+                                className="h-11 rounded-[12px] bg-[#DC2626] text-white hover:bg-red-700"
                                 onClick={continuePendingNavigation}
                             >
                                 Tinggalkan

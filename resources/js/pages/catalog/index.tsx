@@ -66,14 +66,14 @@ export default function CatalogIndex({
             <main className="min-h-screen bg-slate-50">
                 <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
                     <section className="pt-2 pb-1">
-                        <Badge className="mb-4 rounded-full bg-blue-50 px-3 py-1 text-blue-700">
+                        <Badge className="mb-4 rounded-full bg-[#EFF8FF] px-3 py-1 text-[#0080FF] ring-1 ring-[#BCE0FF]">
                             <Tags className="size-3.5" />
                             Produk approved
                         </Badge>
-                        <h1 className="max-w-3xl text-3xl leading-tight font-semibold tracking-normal text-slate-950 sm:text-4xl">
+                        <h1 className="max-w-3xl text-3xl leading-[1.1] font-bold tracking-tight text-slate-900 sm:text-4xl">
                             Halo, {greetingName}. Mau cari apa hari ini?
                         </h1>
-                        <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+                        <p className="mt-3 max-w-2xl text-base leading-6 text-slate-600">
                             Pilih kategori di bawah, atau gunakan search di
                             navbar untuk menemukan produk sekolah yang sudah
                             disetujui admin.
@@ -97,7 +97,7 @@ export default function CatalogIndex({
                                 </Badge>
                             )}
                         </div>
-                        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+                        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 scrollbar-hide">
                             <Button
                                 asChild
                                 variant={
@@ -107,8 +107,8 @@ export default function CatalogIndex({
                                 }
                                 className={
                                     filters.category === ''
-                                        ? 'h-10 shrink-0 px-4'
-                                        : 'h-10 shrink-0 border-slate-200 bg-white px-4 text-slate-700 hover:bg-slate-50'
+                                        ? 'h-11 shrink-0 rounded-[12px] px-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]'
+                                        : 'h-11 shrink-0 rounded-[12px] border-slate-200 bg-white px-4 text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-slate-50'
                                 }
                             >
                                 <Link
@@ -132,8 +132,8 @@ export default function CatalogIndex({
                                     }
                                     className={
                                         filters.category === category.slug
-                                            ? 'h-10 shrink-0 px-4'
-                                            : 'h-10 shrink-0 border-slate-200 bg-white px-4 text-slate-700 hover:bg-slate-50'
+                                            ? 'h-11 shrink-0 rounded-[12px] px-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]'
+                                            : 'h-11 shrink-0 rounded-[12px] border-slate-200 bg-white px-4 text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-slate-50'
                                     }
                                 >
                                     <Link
@@ -157,7 +157,7 @@ export default function CatalogIndex({
 
                     <section className="flex items-end justify-between gap-4">
                         <div className="max-w-3xl">
-                            <h2 className="text-xl font-semibold text-slate-950">
+                            <h2 className="text-[20px] font-semibold leading-7 text-slate-900">
                                 Produk pilihan
                             </h2>
                             <p className="mt-1 text-sm text-slate-500">
@@ -170,17 +170,20 @@ export default function CatalogIndex({
                     </section>
 
                     {products.data.length === 0 ? (
-                        <section className="rounded-[14px] border border-dashed border-slate-300 bg-white px-5 py-12 text-center">
-                            <div className="mx-auto flex size-12 items-center justify-center rounded-[14px] bg-blue-50 text-blue-700">
+                        <section className="rounded-[14px] border border-dashed border-slate-300 bg-white px-5 py-12 text-center shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+                            <div className="mx-auto flex size-12 items-center justify-center rounded-[14px] bg-[#EFF8FF] text-[#0080FF]">
                                 <Package className="size-5" />
                             </div>
-                            <h2 className="mt-4 text-lg font-semibold text-slate-950">
+                            <h2 className="mt-4 text-lg font-bold text-slate-900">
                                 Produk belum ditemukan
                             </h2>
                             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
                                 Coba gunakan kata kunci lain atau pilih semua
                                 kategori untuk melihat produk yang tersedia.
                             </p>
+                            <Button asChild className="mt-6 h-11 rounded-[12px] px-6">
+                                <Link href={home()}>Mulai Belanja</Link>
+                            </Button>
                         </section>
                     ) : (
                         <section>
@@ -201,9 +204,10 @@ export default function CatalogIndex({
                             <div className="flex items-center gap-2">
                                 <Button
                                     variant="outline"
-                                    size="sm"
+                                    size="default"
                                     disabled={products.current_page <= 1}
                                     asChild
+                                    className="h-11 rounded-[12px]"
                                 >
                                     <Link
                                         href={pageHref(
@@ -220,12 +224,13 @@ export default function CatalogIndex({
                                 </span>
                                 <Button
                                     variant="outline"
-                                    size="sm"
+                                    size="default"
                                     disabled={
                                         products.current_page >=
                                         products.last_page
                                     }
                                     asChild
+                                    className="h-11 rounded-[12px]"
                                 >
                                     <Link
                                         href={pageHref(
