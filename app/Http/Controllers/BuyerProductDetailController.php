@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Enums\OrderItemStatus;
 use App\Enums\ProductStatus;
+use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Review;
+use App\Models\User;
 use App\Traits\OwnerPayloadHelper;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -52,6 +55,50 @@ class BuyerProductDetailController extends Controller
                 ->exists();
         }
 
+        /** @var User|null $viewer */
+        $viewer = $request->user();
+
+        $myReview = null;
+        $hasCompletedPurchase = false;
+
+        if ($viewer !== null) {
+            /** @var Review|null $review */
+            $review = Review::query()
+                ->where('product_id', $product->id)
+                ->where('user_id', $viewer->id)
+                ->first();
+
+            if ($review !== null) {
+                $myReview = [
+                    'rating' => (int) $review->rating,
+                    'comment' => $review->comment,
+                ];
+            }
+
+            $hasCompletedPurchase = OrderItem::query()
+                ->where('product_id', $product->id)
+                ->where('status', OrderItemStatus::Completed)
+                ->whereHas('order', fn ($query) => $query->where('user_id', $viewer->id))
+                ->exists();
+        }
+
+        $canReview = $viewer !== null && $hasCompletedPurchase && $myReview === null;
+
+        $reviews = Review::query()
+            ->where('product_id', $product->id)
+            ->with('user:id,name')
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn (Review $review): array => [
+                'user_name' => $review->user->name,
+                'rating' => (int) $review->rating,
+                'comment' => $review->comment,
+                'created_at' => $review->created_at?->toISOString(),
+            ])
+            ->values()
+            ->all();
+
         $showOriginal = $product->original_price !== null && $product->original_price > $product->price;
 
         return Inertia::render('catalog/show', [
@@ -90,6 +137,10 @@ class BuyerProductDetailController extends Controller
                 'review_summary' => $reviewSummary,
                 'sold_count' => $soldCount,
                 'is_wishlisted' => $isWishlisted,
+                'reviews' => $reviews,
+                'my_review' => $myReview,
+                'can_review' => $canReview,
+                'has_purchased' => $hasCompletedPurchase,
             ],
         ]);
     }

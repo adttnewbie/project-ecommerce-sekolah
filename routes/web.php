@@ -16,6 +16,7 @@ use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\BuyerCatalogController;
 use App\Http\Controllers\BuyerOrderController;
 use App\Http\Controllers\BuyerProductDetailController;
+use App\Http\Controllers\BuyerReviewController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\NotificationController;
@@ -66,6 +67,8 @@ Route::middleware(['auth', EnsureUserIsBuyer::class])->group(function () {
     Route::get('orders/{order}', [BuyerOrderController::class, 'show'])->name('orders.show');
     Route::post('orders/{order}/complete', [BuyerOrderController::class, 'complete'])->name('orders.complete');
     Route::post('orders/{order}/cancel', [BuyerOrderController::class, 'cancel'])->name('orders.cancel');
+    Route::post('catalog/{product:slug}/reviews', [BuyerReviewController::class, 'store'])->name('catalog.reviews.store');
+    Route::put('catalog/{product:slug}/reviews', [BuyerReviewController::class, 'update'])->name('catalog.reviews.update');
     Route::get('seller-application', [SellerApplicationController::class, 'index'])->name('seller-application.index');
     Route::post('seller-application', [SellerApplicationController::class, 'store'])->name('seller-application.store');
 });

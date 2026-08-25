@@ -1,15 +1,37 @@
 import type { PageProps as SharedPageProps } from '@inertiajs/core';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Package, ShoppingCart, Store, Tags } from 'lucide-react';
+import {
+    ArrowLeft,
+    Package,
+    ShoppingCart,
+    Star,
+    Store,
+    Tags,
+} from 'lucide-react';
+import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 import { home, login } from '@/routes';
 import { store as storeCartItem } from '@/routes/cart/items';
 import { confirm as checkoutConfirm } from '@/routes/checkout';
 import type { Auth } from '@/types';
+
+type ReviewSummary = {
+    average: number;
+    count: number;
+};
+
+type ProductReview = {
+    user_name: string;
+    rating: number;
+    comment: string | null;
+    created_at: string | null;
+};
 
 type CatalogProduct = {
     id: number;
@@ -17,6 +39,7 @@ type CatalogProduct = {
     slug: string;
     description: string;
     price: number;
+    original_price: number | null;
     stock: number;
     is_pre_order: boolean;
     fulfillment_type: {
@@ -46,6 +69,15 @@ type CatalogProduct = {
         id: number;
         name: string;
     } | null;
+    review_summary: ReviewSummary | null;
+    sold_count: number | null;
+    reviews: ProductReview[];
+    my_review: {
+        rating: number;
+        comment: string | null;
+    } | null;
+    can_review: boolean;
+    has_purchased: boolean;
 };
 
 type CatalogShowProps = {
@@ -77,11 +109,23 @@ const imageSource = (image: string | null) => {
         : `/storage/${image}`;
 };
 
+const formatDate = (value: string | null) =>
+    value
+        ? new Intl.DateTimeFormat('id-ID', {
+              dateStyle: 'medium',
+          }).format(new Date(value))
+        : '-';
+
 export default function CatalogShow({ product }: CatalogShowProps) {
     const { auth, flash } = usePage<PageProps>().props;
     const src = imageSource(product.image);
     const isOutOfStock = !product.is_pre_order && product.stock <= 0;
     const isBuyer = auth.user?.role === 'buyer';
+    const [formRating, setFormRating] = useState(
+        product.my_review?.rating ?? 0,
+    );
+    const [hoveredRating, setHoveredRating] = useState(0);
+    const activeRating = hoveredRating > 0 ? hoveredRating : formRating;
 
     return (
         <>
@@ -208,6 +252,34 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                     <p className="text-3xl font-semibold text-slate-950 tabular-nums">
                                         {formatRupiah(product.price)}
                                     </p>
+                                    {(product.review_summary ||
+                                        product.sold_count) && (
+                                        <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
+                                            {product.review_summary && (
+                                                <span className="inline-flex items-center gap-1 font-medium text-amber-600">
+                                                    <Star className="size-4 fill-amber-400 text-amber-400" />
+                                                    {
+                                                        product.review_summary
+                                                            .average
+                                                    }
+                                                    <span className="font-normal text-slate-400">
+                                                        ({' '}
+                                                        {
+                                                            product
+                                                                .review_summary
+                                                                .count
+                                                        }{' '}
+                                                        ulasan)
+                                                    </span>
+                                                </span>
+                                            )}
+                                            {product.sold_count !== null && (
+                                                <span>
+                                                    {product.sold_count} terjual
+                                                </span>
+                                            )}
+                                        </p>
+                                    )}
                                     <p className="mt-1 text-sm text-slate-500">
                                         Harga produk dari {product.owner.name}.
                                     </p>
@@ -326,6 +398,197 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                         <p className="mt-3 text-base leading-8 whitespace-pre-line text-slate-600">
                             {product.description}
                         </p>
+                    </section>
+
+                    <section className="rounded-[8px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <h2 className="text-xl font-semibold text-slate-950">
+                                Ulasan pembeli
+                            </h2>
+                            {product.review_summary && (
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-sm font-semibold text-amber-700">
+                                    <Star className="size-4 fill-amber-400 text-amber-400" />
+                                    {product.review_summary.average} / 5
+                                    <span className="font-normal text-amber-600">
+                                        • {product.review_summary.count} ulasan
+                                    </span>
+                                </span>
+                            )}
+                        </div>
+
+                        {isBuyer &&
+                        (product.can_review || product.my_review) ? (
+                            <div className="mt-5 rounded-[8px] border border-slate-200 bg-slate-50 p-4">
+                                <p className="text-sm font-semibold text-slate-800">
+                                    {product.my_review
+                                        ? 'Ulasan kamu'
+                                        : 'Tulis ulasan'}
+                                </p>
+                                <Form
+                                    action={`/catalog/${product.slug}/reviews`}
+                                    method={product.my_review ? 'put' : 'post'}
+                                    disableWhileProcessing
+                                    className="mt-3 space-y-3"
+                                >
+                                    {({ processing, errors }) => (
+                                        <>
+                                            <input
+                                                type="hidden"
+                                                name="rating"
+                                                value={formRating}
+                                                readOnly
+                                            />
+                                            <div
+                                                className="flex items-center gap-1"
+                                                role="radiogroup"
+                                                aria-label="Pilih rating"
+                                            >
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <button
+                                                        key={star}
+                                                        type="button"
+                                                        role="radio"
+                                                        aria-checked={
+                                                            formRating === star
+                                                        }
+                                                        aria-label={`${star} bintang`}
+                                                        onClick={() =>
+                                                            setFormRating(star)
+                                                        }
+                                                        onMouseEnter={() =>
+                                                            setHoveredRating(
+                                                                star,
+                                                            )
+                                                        }
+                                                        onMouseLeave={() =>
+                                                            setHoveredRating(0)
+                                                        }
+                                                        className="focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:outline-none"
+                                                    >
+                                                        <Star
+                                                            className={cn(
+                                                                'size-7 transition',
+                                                                activeRating >=
+                                                                    star
+                                                                    ? 'fill-amber-400 text-amber-400'
+                                                                    : 'text-slate-300',
+                                                            )}
+                                                        />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <InputError
+                                                message={errors.rating}
+                                            />
+                                            <Textarea
+                                                name="comment"
+                                                className="min-h-24 rounded-[8px] border-slate-200 bg-white"
+                                                placeholder={
+                                                    product.my_review
+                                                        ?.comment ??
+                                                    'Bagikan pengalamanmu memakai produk ini (opsional)...'
+                                                }
+                                                defaultValue={
+                                                    product.my_review
+                                                        ?.comment ?? ''
+                                                }
+                                                maxLength={1000}
+                                            />
+                                            <InputError
+                                                message={errors.comment}
+                                            />
+                                            <InputError
+                                                message={errors.review}
+                                            />
+                                            <Button
+                                                type="submit"
+                                                disabled={
+                                                    processing ||
+                                                    (!product.my_review &&
+                                                        formRating === 0)
+                                                }
+                                                className="h-11 w-fit px-5"
+                                            >
+                                                {processing && <Spinner />}
+                                                {product.my_review
+                                                    ? 'Perbarui Ulasan'
+                                                    : 'Kirim Ulasan'}
+                                            </Button>
+                                        </>
+                                    )}
+                                </Form>
+                            </div>
+                        ) : isBuyer && !product.has_purchased ? (
+                            <div className="mt-5 rounded-[8px] border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                                Selesaikan pesanan produk ini terlebih dahulu
+                                untuk memberi ulasan.
+                            </div>
+                        ) : !auth.user ? (
+                            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[8px] border border-slate-200 bg-slate-50 px-4 py-3">
+                                <p className="text-sm text-slate-600">
+                                    Login untuk memberi ulasan.
+                                </p>
+                                <Button
+                                    asChild
+                                    variant="outline"
+                                    className="h-10"
+                                >
+                                    <Link href={login()}>Login</Link>
+                                </Button>
+                            </div>
+                        ) : null}
+
+                        <div className="mt-6 space-y-4">
+                            {product.reviews.length === 0 ? (
+                                <p className="text-sm text-slate-500">
+                                    Belum ada ulasan untuk produk ini.
+                                </p>
+                            ) : (
+                                product.reviews.map((review) => (
+                                    <article
+                                        key={`${review.user_name}-${review.created_at}`}
+                                        className="flex gap-3 border-b border-slate-100 pb-4 last:border-b-0 last:pb-0"
+                                    >
+                                        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-blue-50 text-sm font-bold text-blue-700">
+                                            {review.user_name.charAt(0)}
+                                        </span>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                <p className="text-sm font-semibold text-slate-950">
+                                                    {review.user_name}
+                                                </p>
+                                                <span className="flex items-center gap-0.5">
+                                                    {[1, 2, 3, 4, 5].map(
+                                                        (star) => (
+                                                            <Star
+                                                                key={star}
+                                                                className={cn(
+                                                                    'size-3.5',
+                                                                    review.rating >=
+                                                                        star
+                                                                        ? 'fill-amber-400 text-amber-400'
+                                                                        : 'text-slate-300',
+                                                                )}
+                                                            />
+                                                        ),
+                                                    )}
+                                                </span>
+                                                <span className="text-xs text-slate-400">
+                                                    {formatDate(
+                                                        review.created_at,
+                                                    )}
+                                                </span>
+                                            </div>
+                                            {review.comment && (
+                                                <p className="mt-1 text-sm leading-6 text-slate-600">
+                                                    {review.comment}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </article>
+                                ))
+                            )}
+                        </div>
                     </section>
                 </div>
             </main>
