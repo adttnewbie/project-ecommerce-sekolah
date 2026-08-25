@@ -435,6 +435,41 @@ export default function SellerProductCreate({
                                                 />
                                             </div>
 
+                                            <div className={fieldClassName}>
+                                                <Label
+                                                    htmlFor="original_price"
+                                                    className={labelClassName}
+                                                >
+                                                    Harga sebelum diskon (Rp)
+                                                </Label>
+                                                <div className="relative">
+                                                    <CircleDollarSign className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+                                                    <Input
+                                                        id="original_price"
+                                                        name="original_price"
+                                                        type="number"
+                                                        min={1}
+                                                        max={100000000}
+                                                        step={1}
+                                                        inputMode="numeric"
+                                                        placeholder="10000"
+                                                        className={`${inputClassName} pl-9`}
+                                                        aria-invalid={Boolean(
+                                                            errors.original_price,
+                                                        )}
+                                                    />
+                                                </div>
+                                                <p className="text-xs text-slate-500">
+                                                    Kosongkan jika produk tidak
+                                                    diskon.
+                                                </p>
+                                                <InputError
+                                                    message={
+                                                        errors.original_price
+                                                    }
+                                                />
+                                            </div>
+
                                             {salesMethod === 'self_managed' &&
                                                 fulfillmentType ===
                                                     'ready_stock' && (

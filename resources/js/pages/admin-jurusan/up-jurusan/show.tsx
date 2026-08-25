@@ -693,6 +693,46 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
                                                                         </div>
                                                                         <div className="grid gap-2">
                                                                             <Label
+                                                                                htmlFor={`product-original-price-${up.id}`}
+                                                                                className="text-sm font-medium text-slate-700"
+                                                                            >
+                                                                                Harga
+                                                                                sebelum
+                                                                                diskon
+                                                                                (Rp)
+                                                                            </Label>
+                                                                            <Input
+                                                                                id={`product-original-price-${up.id}`}
+                                                                                name="original_price"
+                                                                                type="number"
+                                                                                min={
+                                                                                    1
+                                                                                }
+                                                                                max={
+                                                                                    100000000
+                                                                                }
+                                                                                placeholder="20000"
+                                                                                className="h-11 rounded-[10px] border-slate-200 bg-white px-3.5 text-sm tabular-nums placeholder:text-slate-400"
+                                                                            />
+                                                                            <p className="text-xs text-slate-500">
+                                                                                Kosongkan
+                                                                                jika
+                                                                                tidak
+                                                                                diskon.
+                                                                                Harus
+                                                                                lebih
+                                                                                tinggi
+                                                                                dari
+                                                                                harga.
+                                                                            </p>
+                                                                            <InputError
+                                                                                message={
+                                                                                    errors.original_price
+                                                                                }
+                                                                            />
+                                                                        </div>
+                                                                        <div className="grid gap-2">
+                                                                            <Label
                                                                                 htmlFor={`product-stock-${up.id}`}
                                                                                 className="text-sm font-medium text-slate-700"
                                                                             >

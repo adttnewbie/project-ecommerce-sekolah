@@ -57,6 +57,7 @@ type SellerProduct = {
     category_id: number;
     description: string;
     price: number;
+    original_price: number | null;
     stock: number;
     fulfillment_type: {
         code: FulfillmentType;
@@ -315,6 +316,45 @@ export default function SellerProductEdit({
                                             </div>
                                             <InputError
                                                 message={errors.price}
+                                            />
+                                        </div>
+
+                                        <div className={fieldClassName}>
+                                            <Label
+                                                htmlFor="original_price"
+                                                className={labelClassName}
+                                            >
+                                                Harga sebelum diskon (Rp)
+                                            </Label>
+                                            <div className="relative">
+                                                <CircleDollarSign className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+                                                <Input
+                                                    id="original_price"
+                                                    name="original_price"
+                                                    type="number"
+                                                    min={1}
+                                                    max={100000000}
+                                                    step={1}
+                                                    inputMode="numeric"
+                                                    placeholder={String(
+                                                        product.price + 5000,
+                                                    )}
+                                                    defaultValue={
+                                                        product.original_price ??
+                                                        ''
+                                                    }
+                                                    className={`${inputClassName} pl-9`}
+                                                    aria-invalid={Boolean(
+                                                        errors.original_price,
+                                                    )}
+                                                />
+                                            </div>
+                                            <p className="text-xs text-slate-500">
+                                                Kosongkan untuk menghapus
+                                                diskon.
+                                            </p>
+                                            <InputError
+                                                message={errors.original_price}
                                             />
                                         </div>
 

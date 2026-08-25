@@ -169,6 +169,50 @@ test('admin jurusan can create product owned by own up jurusan', function () {
     ]);
 });
 
+test('admin jurusan product accepts discount original price with validation', function () {
+    $adminJurusan = User::factory()->create(['role' => UserRole::AdminJurusan]);
+    $upJurusan = UpJurusan::factory()->create(['admin_jurusan_id' => $adminJurusan->id]);
+    $category = Category::factory()->create();
+
+    // Valid discount persists.
+    $this->actingAs($adminJurusan)
+        ->post(route('admin-jurusan.products.store'), [
+            'up_jurusan_id' => $upJurusan->id,
+            'category_id' => $category->id,
+            'name' => 'Gantungan Kunci UP',
+            'description' => 'Gantungan kunci resmi produksi UP jurusan.',
+            'price' => 8000,
+            'original_price' => 12000,
+            'stock' => 10,
+        ])
+        ->assertRedirect(route('admin-jurusan.up-jurusan.index'));
+
+    $this->assertDatabaseHas('products', [
+        'name' => 'Gantungan Kunci UP',
+        'price' => 8000,
+        'original_price' => 12000,
+    ]);
+
+    // A discount at or below the selling price is rejected.
+    $this->actingAs($adminJurusan)
+        ->from(route('admin-jurusan.up-jurusan.index'))
+        ->post(route('admin-jurusan.products.store'), [
+            'up_jurusan_id' => $upJurusan->id,
+            'category_id' => $category->id,
+            'name' => 'Stiker UP',
+            'description' => 'Stiker resmi produksi UP jurusan.',
+            'price' => 5000,
+            'original_price' => 5000,
+            'stock' => 10,
+        ])
+        ->assertRedirect(route('admin-jurusan.up-jurusan.index'))
+        ->assertSessionHasErrors('original_price');
+
+    $this->assertDatabaseMissing('products', [
+        'name' => 'Stiker UP',
+    ]);
+});
+
 test('admin jurusan sees only own up jurusan products on management page', function () {
     $adminJurusan = User::factory()->create(['role' => UserRole::AdminJurusan]);
     $ownUp = UpJurusan::factory()->create(['admin_jurusan_id' => $adminJurusan->id, 'name' => 'UP RPL']);

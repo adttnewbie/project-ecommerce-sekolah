@@ -347,6 +347,13 @@ class AdminJurusanUpJurusanController extends Controller
             'name' => ['required', 'string', 'min:3', 'max:120'],
             'description' => ['required', 'string', 'min:10', 'max:5000'],
             'price' => ['required', 'integer', 'min:1', 'max:100000000'],
+            'original_price' => [
+                'nullable',
+                'integer',
+                'min:1',
+                'max:100000000',
+                'gt:price',
+            ],
             'stock' => ['required', 'integer', 'min:0', 'max:100000'],
         ]);
 
@@ -363,6 +370,7 @@ class AdminJurusanUpJurusanController extends Controller
             'slug' => $this->uniqueSlug($validated['name']),
             'description' => $validated['description'],
             'price' => $validated['price'],
+            'original_price' => $validated['original_price'] ?? null,
             'stock' => $validated['stock'],
             'sales_method' => ProductSalesMethod::UpJurusan,
             'status' => ProductStatus::Approved,

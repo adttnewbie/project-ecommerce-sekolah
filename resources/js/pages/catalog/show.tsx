@@ -255,6 +255,27 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                 </div>
 
                                 <div>
+                                    {product.original_price !== null &&
+                                        product.original_price >
+                                            product.price && (
+                                            <div className="mb-1 flex flex-wrap items-center gap-2">
+                                                <p className="text-sm text-slate-400 tabular-nums line-through">
+                                                    {formatRupiah(
+                                                        product.original_price,
+                                                    )}
+                                                </p>
+                                                <Badge className="rounded-full bg-emerald-50 text-emerald-700">
+                                                    -
+                                                    {Math.round(
+                                                        ((product.original_price -
+                                                            product.price) /
+                                                            product.original_price) *
+                                                            100,
+                                                    )}
+                                                    %
+                                                </Badge>
+                                            </div>
+                                        )}
                                     <p className="text-3xl font-semibold text-slate-950 tabular-nums">
                                         {formatRupiah(product.price)}
                                     </p>

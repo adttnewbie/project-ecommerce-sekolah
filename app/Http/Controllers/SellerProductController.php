@@ -148,6 +148,9 @@ class SellerProductController extends Controller
                 'slug' => $this->uniqueSlug($request->string('name')->toString()),
                 'description' => $request->string('description')->toString(),
                 'price' => $request->integer('price'),
+                'original_price' => $request->filled('original_price')
+                    ? $request->integer('original_price')
+                    : null,
                 'stock' => $salesMethod === ProductSalesMethod::UpJurusan ? 0 : $request->integer('stock'),
                 'sales_method' => $salesMethod,
                 'fulfillment_type' => $fulfillmentType,
@@ -207,6 +210,7 @@ class SellerProductController extends Controller
                 'category_id' => $product->category_id,
                 'description' => $product->description,
                 'price' => $product->price,
+                'original_price' => $product->original_price,
                 'stock' => $product->stock,
                 'fulfillment_type' => [
                     'code' => $product->fulfillment_type->value,
@@ -248,6 +252,9 @@ class SellerProductController extends Controller
             'slug' => $this->uniqueSlug($request->string('name')->toString(), $product),
             'description' => $request->string('description')->toString(),
             'price' => $request->integer('price'),
+            'original_price' => $request->filled('original_price')
+                ? $request->integer('original_price')
+                : null,
             'fulfillment_type' => ProductFulfillmentType::from($request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value)),
             'pre_order_estimate_days' => $request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value) === ProductFulfillmentType::PreOrder->value
                 ? $request->integer('pre_order_estimate_days')

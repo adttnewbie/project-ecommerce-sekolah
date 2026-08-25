@@ -5,6 +5,7 @@ use App\Enums\ProductStatus;
 use App\Enums\UpJurusanConsignmentStatus;
 use App\Enums\UserRole;
 use App\Models\Category;
+use App\Models\Product;
 use App\Models\UpJurusan;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -256,3 +257,94 @@ test('buyer and admin cannot use seller product create endpoints', function (Use
     UserRole::Buyer,
     UserRole::Admin,
 ]);
+
+test('seller can set a discount original price above the selling price', function () {
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $category = Category::factory()->create();
+
+    $this->actingAs($seller)
+        ->from(route('seller.products.create'))
+        ->post(route('seller.products.store'), [
+            'name' => 'Kaos Kelas Diskon',
+            'category_id' => $category->id,
+            'description' => 'Kaos kelas dengan harga promo spesial.',
+            'price' => 50000,
+            'original_price' => 75000,
+            'stock' => 4,
+        ])
+        ->assertRedirect(route('seller.products.index'));
+
+    $this->assertDatabaseHas('products', [
+        'seller_id' => $seller->id,
+        'name' => 'Kaos Kelas Diskon',
+        'price' => 50000,
+        'original_price' => 75000,
+    ]);
+});
+
+test('discount original price must be higher than the selling price', function () {
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $category = Category::factory()->create();
+
+    foreach ([40000, 50000] as $invalid) {
+        $this->actingAs($seller)
+            ->from(route('seller.products.create'))
+            ->post(route('seller.products.store'), [
+                'name' => 'Kaos Kelas Diskon',
+                'category_id' => $category->id,
+                'description' => 'Kaos kelas dengan harga promo spesial.',
+                'price' => 50000,
+                'original_price' => $invalid,
+                'stock' => 4,
+            ])
+            ->assertRedirect(route('seller.products.create'))
+            ->assertSessionHasErrors('original_price');
+    }
+
+    $this->assertDatabaseMissing('products', [
+        'seller_id' => $seller->id,
+    ]);
+});
+
+test('seller can update and clear the discount original price', function () {
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $category = Category::factory()->create();
+    $product = Product::factory()
+        ->for($seller, 'seller')
+        ->for($category)
+        ->create([
+            'price' => 20000,
+            'original_price' => 30000,
+        ]);
+
+    // Clearing the field removes the discount.
+    $this->actingAs($seller)
+        ->put(route('seller.products.update', $product), [
+            'name' => $product->name,
+            'category_id' => $product->category_id,
+            'description' => $product->description,
+            'price' => 20000,
+            'stock' => 5,
+            'fulfillment_type' => ProductFulfillmentType::ReadyStock->value,
+            'status' => ProductStatus::Pending->value,
+        ])
+        ->assertRedirect(route('seller.products.index'));
+
+    expect($product->fresh()->original_price)->toBeNull();
+
+    // Providing a value again sets it.
+    $this->actingAs($seller)
+        ->put(route('seller.products.update', $product), [
+            'name' => $product->name,
+            'category_id' => $product->category_id,
+            'description' => $product->description,
+            'price' => 20000,
+            'original_price' => 35000,
+            'stock' => 5,
+            'fulfillment_type' => ProductFulfillmentType::ReadyStock->value,
+            'status' => ProductStatus::Pending->value,
+        ])
+        ->assertRedirect(route('seller.products.index'));
+
+    expect($product->fresh()->original_price)->toBe(35000);
+});
