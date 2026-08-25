@@ -34,6 +34,7 @@ const revenueChartConfig = {
 
 export function UpJurusanRevenueChart({ up }: { up: UpJurusanLike }) {
     const hasData = up.revenue_chart.some((i) => i.revenue > 0);
+
     return (
         <Card className="rounded-xl border-slate-200 shadow-sm">
             <CardHeader className="border-b border-slate-100">

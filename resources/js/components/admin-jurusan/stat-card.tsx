@@ -76,5 +76,6 @@ export function StatCard({
             </Link>
         );
     }
+
     return content;
 }

@@ -14,6 +14,7 @@ import {
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { StatusBadge } from '@/components/admin-jurusan/status-badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -24,7 +25,6 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -78,8 +78,15 @@ const steps = [
 
 function stepperIndex(code: string) {
     const idx = steps.findIndex((s) => s.code === code);
-    if (idx !== -1) return idx;
-    if (code === 'rejected' || code === 'cancelled') return 0;
+
+    if (idx !== -1) {
+return idx;
+}
+
+    if (code === 'rejected' || code === 'cancelled') {
+return 0;
+}
+
     return 0;
 }
 
@@ -98,7 +105,10 @@ export default function AdminJurusanConsignmentShow({ consignment }: Props) {
     };
 
     const estimatedSellerPerItem = useMemo(() => {
-        if (commission === null) return consignment.product.price;
+        if (commission === null) {
+return consignment.product.price;
+}
+
         return Math.round(consignment.product.price * (1 - commission / 100));
     }, [commission, consignment.product.price]);
 
@@ -173,6 +183,7 @@ export default function AdminJurusanConsignmentShow({ consignment }: Props) {
                                     stepperIndex(consignment.status.code) >= i;
                                 const isCurrent =
                                     stepperIndex(consignment.status.code) === i;
+
                                 return (
                                     <div
                                         key={s.code}
@@ -716,6 +727,7 @@ function RejectConsignmentDialog({
     consignment: Props['consignment'];
 }) {
     const [reason, setReason] = useState('');
+
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>

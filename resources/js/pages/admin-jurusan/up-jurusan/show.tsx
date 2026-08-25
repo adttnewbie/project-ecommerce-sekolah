@@ -11,10 +11,10 @@ import {
     Warehouse,
 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
-import InputError from '@/components/input-error';
 import { PageHeader } from '@/components/admin-jurusan/page-header';
 import { UpJurusanRevenueChart } from '@/components/admin-jurusan/up-jurusan/revenue-chart';
 import { UpJurusanSummary } from '@/components/admin-jurusan/up-jurusan/summary';
+import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -93,7 +93,7 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
     const [previewPrice, setPreviewPrice] = useState('');
     const [previewStock, setPreviewStock] = useState('');
     const [previewCategoryId, setPreviewCategoryId] = useState('');
-    const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+    const [, setIsCategoryOpen] = useState(false);
     const selectOpenRef = useRef(false);
     const handleCategoryOpen = (open: boolean) => {
         selectOpenRef.current = open;
@@ -101,8 +101,12 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
     };
 
     const filteredProducts = useMemo(() => {
-        if (!productSearch) return up.products;
+        if (!productSearch) {
+            return up.products;
+        }
+
         const q = productSearch.toLowerCase();
+
         return up.products.filter(
             (p) =>
                 p.name.toLowerCase().includes(q) ||
@@ -278,6 +282,7 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
                                         open={isProductDialogOpen}
                                         onOpenChange={(open) => {
                                             setIsProductDialogOpen(open);
+
                                             if (!open) {
                                                 setPreviewName('');
                                                 setPreviewDescription('');
@@ -301,12 +306,14 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
                                         <DialogContent
                                             className="flex max-h-[90vh] flex-col gap-0 overflow-hidden rounded-[18px] bg-white p-0 shadow-lg ring-1 ring-slate-200 sm:max-w-xl"
                                             onInteractOutside={(e) => {
-                                                if (selectOpenRef.current)
+                                                if (selectOpenRef.current) {
                                                     e.preventDefault();
+                                                }
                                             }}
                                             onPointerDownOutside={(e) => {
-                                                if (selectOpenRef.current)
+                                                if (selectOpenRef.current) {
                                                     e.preventDefault();
+                                                }
                                             }}
                                         >
                                             <DialogHeader className="shrink-0 border-b border-slate-100 p-6 pb-4 text-left">
@@ -360,8 +367,7 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
                                                     setPreviewStock('');
                                                     setPreviewCategoryId('');
                                                     setIsCategoryOpen(false);
-                                                    selectOpenRef.current =
-                                                        false;
+                                                    selectOpenRef.current = false;
                                                 }}
                                                 className="flex min-h-0 flex-1 flex-col"
                                             >
@@ -384,9 +390,7 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
                                                         Number(previewStock);
                                                     const hasStock =
                                                         previewStock !== '' &&
-                                                        !Number.isNaN(
-                                                            stockNum,
-                                                        );
+                                                        !Number.isNaN(stockNum);
 
                                                     return (
                                                         <>
@@ -681,7 +685,7 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
                                                                                     errors.price
                                                                                 }
                                                                             />
-                                                                            <p className="text-xs tabular-nums text-slate-500">
+                                                                            <p className="text-xs text-slate-500 tabular-nums">
                                                                                 {hasPrice
                                                                                     ? `Preview: ${formatRupiah(priceNum)}`
                                                                                     : '1 – 100.000.000. Contoh: 15000'}
@@ -752,8 +756,7 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
                                                                         <Boxes className="size-3.5" />
                                                                         Preview
                                                                         Katalog
-                                                                        &
-                                                                        POS
+                                                                        & POS
                                                                     </p>
                                                                     <div className="mt-3 flex gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
                                                                         <div className="grid size-16 shrink-0 place-items-center rounded-[10px] bg-slate-50 text-slate-400 ring-1 ring-slate-100">
@@ -778,7 +781,7 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
                                                                                     'Deskripsi akan tampil maksimal 2 baris di katalog.'}
                                                                             </p>
                                                                             <div className="mt-2 flex items-center justify-between gap-2">
-                                                                                <span className="text-sm font-bold tabular-nums text-slate-900">
+                                                                                <span className="text-sm font-bold text-slate-900 tabular-nums">
                                                                                     {hasPrice
                                                                                         ? formatRupiah(
                                                                                               priceNum,
@@ -798,17 +801,16 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
                                                                     </div>
                                                                     <p className="mt-2 text-xs leading-5 text-slate-500">
                                                                         Produk
-                                                                        UP
-                                                                        tidak
+                                                                        UP tidak
                                                                         perlu
                                                                         approval.
                                                                         Pastikan
-                                                                        harga
-                                                                        & stok
+                                                                        harga &
+                                                                        stok
                                                                         benar
                                                                         sebelum
-                                                                        simpan
-                                                                        — bisa
+                                                                        simpan —
+                                                                        bisa
                                                                         diedit
                                                                         nanti
                                                                         via
@@ -972,9 +974,7 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
                                                         </p>
                                                     </div>
                                                     <Badge className="shrink-0 rounded-md bg-emerald-50 text-emerald-700">
-                                                        {
-                                                            product.status.label
-                                                        }
+                                                        {product.status.label}
                                                     </Badge>
                                                 </div>
                                                 <div className="mt-3 flex items-center justify-between">

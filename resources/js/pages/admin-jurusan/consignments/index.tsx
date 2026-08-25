@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { EmptyState } from '@/components/admin-jurusan/empty-state';
 import { PageHeader } from '@/components/admin-jurusan/page-header';
 import { StatusBadge } from '@/components/admin-jurusan/status-badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -14,7 +15,6 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -65,6 +65,7 @@ export default function AdminJurusanConsignments({ consignments }: Props) {
         consignments.data.forEach((i) => {
             c[i.status.code] = (c[i.status.code] ?? 0) + 1;
         });
+
         return c;
     }, [consignments.data]);
 
@@ -76,6 +77,7 @@ export default function AdminJurusanConsignments({ consignments }: Props) {
                 item.product_name.toLowerCase().includes(q.toLowerCase()) ||
                 item.seller_name.toLowerCase().includes(q.toLowerCase()) ||
                 item.up_jurusan_name.toLowerCase().includes(q.toLowerCase());
+
             return matchStatus && matchSearch;
         });
     }, [consignments.data, status, q]);
@@ -431,6 +433,7 @@ function RejectConsignmentDialog({
     item: Props['consignments']['data'][number];
 }) {
     const [reason, setReason] = useState('');
+
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>

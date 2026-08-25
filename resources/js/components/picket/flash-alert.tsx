@@ -1,5 +1,5 @@
 import { AlertCircle, CheckCircle2, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -11,16 +11,28 @@ type FlashAlertProps = {
     dismissible?: boolean;
 };
 
-export function FlashAlert({ success, error, className, dismissible = true }: FlashAlertProps) {
+export function FlashAlert({
+    success,
+    error,
+    className,
+    dismissible = true,
+}: FlashAlertProps) {
     const [visible, setVisible] = useState(true);
     const message = error || success;
     const isError = Boolean(error);
 
-    useEffect(() => {
-        setVisible(true);
-    }, [message]);
+    // Re-show the alert whenever a new flash message arrives by adjusting
+    // state during render (React-recommended alternative to an effect).
+    const [lastMessage, setLastMessage] = useState(message);
 
-    if (!message || !visible) return null;
+    if (message !== lastMessage) {
+        setLastMessage(message);
+        setVisible(true);
+    }
+
+    if (!message || !visible) {
+        return null;
+    }
 
     return (
         <Alert
@@ -33,11 +45,21 @@ export function FlashAlert({ success, error, className, dismissible = true }: Fl
                 className,
             )}
         >
-            {isError ? <AlertCircle className="size-4" /> : <CheckCircle2 className="size-4" />}
-            <AlertTitle className={cn(isError ? 'text-rose-800' : 'text-emerald-800')}>
+            {isError ? (
+                <AlertCircle className="size-4" />
+            ) : (
+                <CheckCircle2 className="size-4" />
+            )}
+            <AlertTitle
+                className={cn(isError ? 'text-rose-800' : 'text-emerald-800')}
+            >
                 {isError ? 'Gagal' : 'Berhasil'}
             </AlertTitle>
-            <AlertDescription className={cn(isError ? 'text-rose-700' : 'text-emerald-700')}>{message}</AlertDescription>
+            <AlertDescription
+                className={cn(isError ? 'text-rose-700' : 'text-emerald-700')}
+            >
+                {message}
+            </AlertDescription>
             {dismissible && (
                 <Button
                     type="button"
@@ -46,7 +68,9 @@ export function FlashAlert({ success, error, className, dismissible = true }: Fl
                     onClick={() => setVisible(false)}
                     className={cn(
                         'absolute top-2 right-2 size-7 rounded-full',
-                        isError ? 'text-rose-600 hover:bg-rose-100' : 'text-emerald-600 hover:bg-emerald-100',
+                        isError
+                            ? 'text-rose-600 hover:bg-rose-100'
+                            : 'text-emerald-600 hover:bg-emerald-100',
                     )}
                     aria-label="Tutup notifikasi"
                 >

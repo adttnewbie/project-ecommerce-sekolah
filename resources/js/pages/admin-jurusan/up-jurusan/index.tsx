@@ -8,9 +8,9 @@ import {
     Users,
     Warehouse,
 } from 'lucide-react';
-import InputError from '@/components/input-error';
 import { EmptyState } from '@/components/admin-jurusan/empty-state';
 import { PageHeader } from '@/components/admin-jurusan/page-header';
+import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -192,6 +192,7 @@ export default function AdminJurusanUpJurusan({ upJurusans }: Props) {
                                 {upJurusans.map((up) => {
                                     const hasPicket =
                                         up.picket_officers.length > 0;
+
                                     return (
                                         <Link
                                             key={up.id}
