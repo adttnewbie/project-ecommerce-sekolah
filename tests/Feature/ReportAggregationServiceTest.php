@@ -397,10 +397,12 @@ test('stock movement source enum covers required channels', function () {
     expect(StockMovementSource::values())->toBe([
         'pos_sale',
         'online_order',
+        'delivery_fee',
         'reverse',
         'correction',
     ])->and(StockMovementSource::salesSources())->toBe([
         'pos_sale',
         'online_order',
+        'delivery_fee',
     ]);
 });
