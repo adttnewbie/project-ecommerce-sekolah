@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Eye, Package, ShoppingCart } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Eye, Package, ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,6 +49,12 @@ type BuyerOrder = {
     created_at: string | null;
 };
 
+type ActiveSanction = {
+    type: { code: string; label: string };
+    reason: string | null;
+    ends_at: string | null;
+};
+
 type Props = {
     orders: {
         data: BuyerOrder[];
@@ -56,6 +62,7 @@ type Props = {
         to: number | null;
         total: number;
     };
+    active_sanction: ActiveSanction | null;
 };
 
 const formatRupiah = (value: number) =>
@@ -73,7 +80,7 @@ const formatDate = (value: string | null) =>
           }).format(new Date(value))
         : '-';
 
-export default function BuyerOrdersIndex({ orders }: Props) {
+export default function BuyerOrdersIndex({ orders, active_sanction }: Props) {
     return (
         <>
             <Head title="Orders Saya" />
@@ -103,6 +110,32 @@ export default function BuyerOrdersIndex({ orders }: Props) {
                             </Link>
                         </Button>
                     </section>
+
+                    {active_sanction && (
+                        <div className="flex items-start gap-3 rounded-[12px] border border-amber-200 bg-amber-50 p-4">
+                            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600" />
+                            <div className="space-y-1 text-sm">
+                                <p className="font-semibold text-amber-800">
+                                    Sanksi aktif: {active_sanction.type.label}
+                                    {active_sanction.ends_at &&
+                                        ` — sampai ${formatDate(active_sanction.ends_at)}`}
+                                </p>
+                                {active_sanction.reason && (
+                                    <p className="text-amber-700">
+                                        {active_sanction.reason}
+                                    </p>
+                                )}
+                                {active_sanction.type.code !== 'warning' && (
+                                    <p className="text-amber-700">
+                                        Checkout dan/atau memberi ulasan
+                                        dinonaktifkan selama sanksi berlaku.
+                                        Hubungi admin untuk informasi lebih
+                                        lanjut.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     <Card className="gap-0 rounded-[14px] border border-slate-200 bg-white py-0 shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
                         <CardHeader className="border-b border-slate-100 p-6">

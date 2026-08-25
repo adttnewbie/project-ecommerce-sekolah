@@ -8,6 +8,7 @@ import {
     MessageSquareWarning,
     Package,
     Settings,
+    ShieldAlert,
     ShoppingCart,
     Store,
     Tags,
@@ -310,6 +311,11 @@ function getMainNavItems(
         { title: 'Kategori', href: '/admin/categories', icon: Tags },
         { title: 'Pesanan', href: '/admin/orders', icon: ShoppingCart },
         { title: 'Pengguna', href: '/admin/users', icon: Users },
+        {
+            title: 'Sanksi Buyer',
+            href: '/admin/sanctions',
+            icon: ShieldAlert,
+        },
         {
             title: 'Biaya Antar',
             href: adminDeliveryFeeEdit(),

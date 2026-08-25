@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\BuyerViolationType;
 use App\Enums\ReviewStatus;
 use App\Events\ReviewModerationDecided;
 use App\Http\Requests\Admin\RejectReviewRequest;
 use App\Models\Review;
+use App\Support\BuyerSanctionService;
 use App\Support\DomainEventService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -101,6 +103,13 @@ class AdminReviewModerationController extends Controller
                     'review_id' => $review->id,
                     'reason' => $reason,
                 ],
+            );
+
+            BuyerSanctionService::recordViolation(
+                (int) $review->user_id,
+                BuyerViolationType::ReviewRejected,
+                review: $review,
+                description: $reason !== '' ? 'Ulasan ditolak moderasi: '.$reason : 'Ulasan ditolak moderasi',
             );
 
             ReviewModerationDecided::dispatch(

@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\BuyerViolationType;
 use App\Enums\OrderItemStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
@@ -431,6 +432,13 @@ class OrderLivenessService
                     'status_changed_at' => now(),
                 ]);
             }
+
+            BuyerSanctionService::recordViolation(
+                (int) $current->user_id,
+                BuyerViolationType::UnconfirmedReceipt,
+                order: $current,
+                description: 'Pesanan diselesaikan paksa oleh admin karena pembeli tidak mengonfirmasi penerimaan',
+            );
 
             OrderStatusSync::sync($current->fresh(['items']));
 

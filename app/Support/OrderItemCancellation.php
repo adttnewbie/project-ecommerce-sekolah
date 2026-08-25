@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\BuyerViolationType;
 use App\Enums\OrderItemStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\StockMovementSource;
@@ -41,7 +42,14 @@ class OrderItemCancellation
         DB::transaction(function () use ($order, $actor, $reason, $force, $clearOrderFlags) {
             /** @var Order $current */
             $current = Order::query()
-                ->with(['items:id,order_id,status,payment_status', 'items.order:id,user_id'])
+                ->with([
+                    // product columns feed prohibitedCancellationReason checks
+                    // for seller/picket actors; omitting them silently breaks
+                    // their authorization path.
+                    'items:id,order_id,status,payment_status,product_id',
+                    'items.order:id,user_id',
+                    'items.product:id,seller_id,up_jurusan_id,sales_method',
+                ])
                 ->lockForUpdate()
                 ->findOrFail($order->id);
 
@@ -139,6 +147,15 @@ class OrderItemCancellation
                 'restored_quantity' => $restoredQuantity,
             ],
         );
+
+        if ($isExpiry) {
+            BuyerSanctionService::recordViolation(
+                (int) $current->order->user_id,
+                BuyerViolationType::UnpaidExpired,
+                order: $current->order,
+                description: 'Pesanan tidak dibayar sampai batas waktu '.self::UNPAID_EXPIRY_HOURS.' jam',
+            );
+        }
 
         OrderPaymentSync::sync($current->order);
         OrderStatusSync::sync($current->order->fresh(['items']));

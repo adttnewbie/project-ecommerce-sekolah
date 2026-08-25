@@ -12,6 +12,7 @@ use App\Http\Controllers\AdminOrderController;
 use App\Http\Controllers\AdminProductController;
 use App\Http\Controllers\AdminProductModerationController;
 use App\Http\Controllers\AdminReviewModerationController;
+use App\Http\Controllers\AdminSanctionController;
 use App\Http\Controllers\AdminSellerApplicationController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\BuyerCatalogController;
@@ -61,15 +62,15 @@ Route::middleware(['auth', EnsureUserIsBuyer::class])->group(function () {
     Route::delete('cart/items/{cartItem}', [CartController::class, 'destroy'])->name('cart.items.destroy');
     Route::post('wishlist/{product:slug}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 
-    Route::get('checkout/confirm', [CheckoutController::class, 'confirm'])->name('checkout.confirm');
-    Route::post('checkout', CheckoutController::class)->name('checkout')->middleware('throttle:checkout');
+    Route::get('checkout/confirm', [CheckoutController::class, 'confirm'])->name('checkout.confirm')->middleware('buyer.not-banned:checkout');
+    Route::post('checkout', CheckoutController::class)->name('checkout')->middleware(['throttle:checkout', 'buyer.not-banned:checkout']);
 
     Route::get('orders', [BuyerOrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [BuyerOrderController::class, 'show'])->name('orders.show');
     Route::post('orders/{order}/complete', [BuyerOrderController::class, 'complete'])->name('orders.complete');
     Route::post('orders/{order}/cancel', [BuyerOrderController::class, 'cancel'])->name('orders.cancel');
-    Route::post('catalog/{product:slug}/reviews', [BuyerReviewController::class, 'store'])->name('catalog.reviews.store');
-    Route::put('catalog/{product:slug}/reviews', [BuyerReviewController::class, 'update'])->name('catalog.reviews.update');
+    Route::post('catalog/{product:slug}/reviews', [BuyerReviewController::class, 'store'])->name('catalog.reviews.store')->middleware('buyer.not-banned:review');
+    Route::put('catalog/{product:slug}/reviews', [BuyerReviewController::class, 'update'])->name('catalog.reviews.update')->middleware('buyer.not-banned:review');
     Route::get('seller-application', [SellerApplicationController::class, 'index'])->name('seller-application.index');
     Route::post('seller-application', [SellerApplicationController::class, 'store'])->name('seller-application.store');
 });
@@ -99,6 +100,10 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     Route::post('admin/orders/{order}/mark-review', [AdminOrderController::class, 'markReview'])->name('admin.orders.mark-review');
     Route::get('admin/settings/delivery-fee', [AdminDeliveryFeeSettingsController::class, 'edit'])->name('admin.settings.delivery-fee.edit');
     Route::put('admin/settings/delivery-fee', [AdminDeliveryFeeSettingsController::class, 'update'])->name('admin.settings.delivery-fee.update');
+    Route::get('admin/sanctions', [AdminSanctionController::class, 'index'])->name('admin.sanctions.index');
+    Route::post('admin/sanctions', [AdminSanctionController::class, 'store'])->name('admin.sanctions.store');
+    Route::post('admin/sanctions/{sanction}/lift', [AdminSanctionController::class, 'lift'])->name('admin.sanctions.lift');
+    Route::put('admin/sanctions/settings', [AdminSanctionController::class, 'updateSettings'])->name('admin.sanctions.settings');
 });
 
 Route::middleware(['auth', EnsureUserIsSeller::class])

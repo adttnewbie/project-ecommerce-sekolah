@@ -116,4 +116,20 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->hasMany(NotificationDismissal::class);
     }
+
+    /**
+     * @return HasMany<BuyerViolation, $this>
+     */
+    public function buyerViolations(): HasMany
+    {
+        return $this->hasMany(BuyerViolation::class);
+    }
+
+    /**
+     * @return HasMany<Sanction, $this>
+     */
+    public function sanctions(): HasMany
+    {
+        return $this->hasMany(Sanction::class);
+    }
 }

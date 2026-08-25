@@ -15,6 +15,8 @@ use App\Events\ProductModerationDecided;
 use App\Events\ProductPendingModeration;
 use App\Events\ReviewModerationDecided;
 use App\Events\ReviewPendingModeration;
+use App\Events\SanctionIssued;
+use App\Events\SanctionLifted;
 use App\Events\SellerApplicationPending;
 use App\Listeners\AdminJurusanConsignmentNotify;
 use App\Listeners\AdminJurusanDailyReportNotify;
@@ -26,6 +28,8 @@ use App\Listeners\AdminSellerApplicationNotify;
 use App\Listeners\BuyerItemCancelledNotify;
 use App\Listeners\BuyerOrderStatusNotify;
 use App\Listeners\BuyerPaymentDecidedNotify;
+use App\Listeners\BuyerSanctionIssuedNotify;
+use App\Listeners\BuyerSanctionLiftedNotify;
 use App\Listeners\CreateLowStockNotification;
 use App\Listeners\CreateModerationResultNotification;
 use App\Listeners\CreatePendingOrderNotification;
@@ -101,6 +105,14 @@ class EventServiceProvider extends ServiceProvider
 
         AdminNotificationTriggered::class => [
             AdminNotificationNotify::class,
+        ],
+
+        SanctionIssued::class => [
+            BuyerSanctionIssuedNotify::class,
+        ],
+
+        SanctionLifted::class => [
+            BuyerSanctionLiftedNotify::class,
         ],
     ];
 

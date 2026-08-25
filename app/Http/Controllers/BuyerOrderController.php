@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\BuyerViolationType;
 use App\Enums\OrderItemStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
+use App\Support\BuyerSanctionService;
 use App\Support\OrderItemCancellation;
 use App\Support\OrderItemFulfillment;
 use App\Support\OrderSettlementService;
@@ -39,6 +41,7 @@ class BuyerOrderController extends Controller
 
         return Inertia::render('orders/index', [
             'orders' => $orders->through(fn (Order $order) => $this->orderPayload($order, 3)),
+            'active_sanction' => $this->activeSanctionPayload($buyer),
         ]);
     }
 
@@ -105,10 +108,23 @@ class BuyerOrderController extends Controller
             'cancel_reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $hadInProduction = $order->items()
+            ->where('status', OrderItemStatus::InProduction->value)
+            ->exists();
+
         OrderItemCancellation::cancelOrder(
             $order,
             $buyer,
             $validated['cancel_reason'] ?? 'Dibatalkan oleh pembeli',
+        );
+
+        BuyerSanctionService::recordViolation(
+            (int) $buyer->id,
+            $hadInProduction ? BuyerViolationType::CancelInProduction : BuyerViolationType::ExcessiveCancel,
+            order: $order,
+            description: $hadInProduction
+                ? 'Membatalkan pesanan setelah produksi dimulai'
+                : 'Membatalkan pesanan',
         );
 
         return to_route('orders.show', $order)
@@ -199,6 +215,27 @@ class BuyerOrderController extends Controller
                 ->values()
                 ->all(),
             'created_at' => $order->created_at?->toIso8601String(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function activeSanctionPayload(User $buyer): ?array
+    {
+        $sanction = BuyerSanctionService::activeSanction($buyer);
+
+        if ($sanction === null) {
+            return null;
+        }
+
+        return [
+            'type' => [
+                'code' => $sanction->type->value,
+                'label' => $sanction->type->label(),
+            ],
+            'reason' => $sanction->reason,
+            'ends_at' => $sanction->ends_at?->toIso8601String(),
         ];
     }
 
