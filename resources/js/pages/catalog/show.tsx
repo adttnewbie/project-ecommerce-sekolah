@@ -2,6 +2,7 @@ import type { PageProps as SharedPageProps } from '@inertiajs/core';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
+    Clock3,
     Package,
     ShoppingCart,
     Star,
@@ -75,6 +76,11 @@ type CatalogProduct = {
     my_review: {
         rating: number;
         comment: string | null;
+        status: {
+            code: 'pending' | 'approved' | 'rejected';
+            label: string;
+        };
+        rejection_reason: string | null;
     } | null;
     can_review: boolean;
     has_purchased: boolean;
@@ -419,11 +425,40 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                         {isBuyer &&
                         (product.can_review || product.my_review) ? (
                             <div className="mt-5 rounded-[8px] border border-slate-200 bg-slate-50 p-4">
-                                <p className="text-sm font-semibold text-slate-800">
-                                    {product.my_review
-                                        ? 'Ulasan kamu'
-                                        : 'Tulis ulasan'}
-                                </p>
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <p className="text-sm font-semibold text-slate-800">
+                                        {product.my_review
+                                            ? 'Ulasan kamu'
+                                            : 'Tulis ulasan'}
+                                    </p>
+                                    {product.my_review?.status.code ===
+                                        'pending' && (
+                                        <Badge className="rounded-full bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+                                            <Clock3 className="size-3.5" />
+                                            Menunggu moderasi
+                                        </Badge>
+                                    )}
+                                    {product.my_review?.status.code ===
+                                        'rejected' && (
+                                        <Badge className="rounded-full bg-rose-50 text-rose-700 ring-1 ring-rose-200">
+                                            Ditolak
+                                        </Badge>
+                                    )}
+                                </div>
+                                {product.my_review?.status.code ===
+                                    'rejected' &&
+                                    product.my_review.rejection_reason && (
+                                        <p className="mt-2 rounded-[8px] border border-rose-100 bg-rose-50 px-3 py-2 text-xs leading-5 text-rose-700">
+                                            Alasan:{' '}
+                                            {product.my_review.rejection_reason}
+                                        </p>
+                                    )}
+                                {product.my_review && (
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        Perubahan ulasan akan dimoderasi ulang
+                                        sebelum tampil kembali.
+                                    </p>
+                                )}
                                 <Form
                                     action={`/catalog/${product.slug}/reviews`}
                                     method={product.my_review ? 'put' : 'post'}

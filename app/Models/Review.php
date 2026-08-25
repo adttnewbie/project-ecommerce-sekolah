@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ReviewStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,11 +12,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $product_id
  * @property int $user_id
  * @property int $rating
+ * @property ReviewStatus $status
+ * @property string|null $rejection_reason
  * @property string|null $comment
  * @property Product $product
  * @property User $user
  */
-#[Fillable(['product_id', 'user_id', 'rating', 'comment'])]
+#[Fillable(['product_id', 'user_id', 'rating', 'status', 'rejection_reason', 'comment'])]
 class Review extends Model
 {
     /**
@@ -25,6 +28,7 @@ class Review extends Model
     {
         return [
             'rating' => 'integer',
+            'status' => ReviewStatus::class,
         ];
     }
 

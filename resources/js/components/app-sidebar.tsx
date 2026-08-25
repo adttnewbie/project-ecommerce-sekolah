@@ -5,6 +5,7 @@ import {
     ClipboardList,
     FileText,
     LayoutDashboard,
+    MessageSquareWarning,
     Package,
     Settings,
     ShoppingCart,
@@ -29,6 +30,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as adminProductModerationIndex } from '@/routes/admin/products/moderation';
+import { index as adminReviewsIndex } from '@/routes/admin/reviews';
 import { edit as adminDeliveryFeeEdit } from '@/routes/admin/settings/delivery-fee';
 import { index as cartIndex } from '@/routes/cart';
 import { index as catalogIndex } from '@/routes/catalog';
@@ -293,6 +295,11 @@ function getMainNavItems(
             title: 'Moderasi Produk',
             href: adminProductModerationIndex(),
             icon: ClipboardCheck,
+        },
+        {
+            title: 'Moderasi Ulasan',
+            href: adminReviewsIndex(),
+            icon: MessageSquareWarning,
         },
         {
             title: 'Pengajuan Seller',

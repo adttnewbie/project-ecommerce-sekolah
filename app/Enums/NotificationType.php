@@ -7,6 +7,7 @@ enum NotificationType: string
     case Order = 'order';
     case Stock = 'stock';
     case Product = 'product';
+    case Review = 'review';
     case Payment = 'payment';
     case System = 'system';
     case Promotion = 'promotion';
@@ -20,6 +21,7 @@ enum NotificationType: string
             self::Order => 'Pesanan',
             self::Stock => 'Stok',
             self::Product => 'Produk',
+            self::Review => 'Ulasan',
             self::Payment => 'Pembayaran',
             self::System => 'Sistem',
             self::Promotion => 'Promosi',
@@ -35,6 +37,7 @@ enum NotificationType: string
             self::Order => '\App\Components\Icons\OrderNotificationIcon',
             self::Stock => '\App\Components\Icons\StockNotificationIcon',
             self::Product => '\App\Components\Icons\ProductNotificationIcon',
+            self::Review => '\App\Components\Icons\ReviewNotificationIcon',
             self::Payment => '\App\Components\Icons\PaymentNotificationIcon',
             self::System => '\App\Components\Icons\SystemNotificationIcon',
             self::Promotion => '\App\Components\Icons\PromotionNotificationIcon',
@@ -47,9 +50,10 @@ enum NotificationType: string
     public function accentColor(): string
     {
         return match ($this) {
-            self::Order => '#4f46e5',      // Blue-600
+            self::Order => '#4f46e5',      // Indigo-600
             self::Stock => '#f59e0b',      // Amber-500
             self::Product => '#10b981',    // Emerald-500
+            self::Review => '#8b5cf6',     // Violet-500
             self::Payment => '#3b82f6',    // Blue-500
             self::System => '#6b7280',     // Gray-500
             self::Promotion => '#ec4899',  // Pink-500

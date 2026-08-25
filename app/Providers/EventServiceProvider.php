@@ -13,12 +13,15 @@ use App\Events\OrderPaymentApproved;
 use App\Events\PendingOrderCreated;
 use App\Events\ProductModerationDecided;
 use App\Events\ProductPendingModeration;
+use App\Events\ReviewModerationDecided;
+use App\Events\ReviewPendingModeration;
 use App\Events\SellerApplicationPending;
 use App\Listeners\AdminJurusanConsignmentNotify;
 use App\Listeners\AdminJurusanDailyReportNotify;
 use App\Listeners\AdminNotificationNotify;
 use App\Listeners\AdminOrderNotify;
 use App\Listeners\AdminProductModerationNotify;
+use App\Listeners\AdminReviewModerationNotify;
 use App\Listeners\AdminSellerApplicationNotify;
 use App\Listeners\BuyerItemCancelledNotify;
 use App\Listeners\BuyerOrderStatusNotify;
@@ -27,6 +30,7 @@ use App\Listeners\CreateLowStockNotification;
 use App\Listeners\CreateModerationResultNotification;
 use App\Listeners\CreatePendingOrderNotification;
 use App\Listeners\CreateProductModerationNotification;
+use App\Listeners\CreateReviewModerationResultNotification;
 use App\Listeners\PersistBuyerOrderNotice;
 use App\Listeners\PicketOfficerOrderNotify;
 use App\Listeners\PicketVerificationNotify;
@@ -49,6 +53,14 @@ class EventServiceProvider extends ServiceProvider
 
         ProductModerationDecided::class => [
             CreateModerationResultNotification::class,
+        ],
+
+        ReviewPendingModeration::class => [
+            AdminReviewModerationNotify::class,
+        ],
+
+        ReviewModerationDecided::class => [
+            CreateReviewModerationResultNotification::class,
         ],
 
         LowStockDetected::class => [

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\OrderItemStatus;
 use App\Enums\ProductStatus;
+use App\Enums\ReviewStatus;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Review;
@@ -38,8 +39,13 @@ class BuyerProductDetailController extends Controller
             ->sum('quantity');
         $soldCount = $soldCount > 0 ? (int) $soldCount : null;
 
-        $reviewCount = $product->reviews()->count();
-        $reviewAvg = $reviewCount > 0 ? $product->reviews()->avg('rating') : null;
+        // Public aggregates only count approved reviews.
+        $reviewCount = $product->reviews()
+            ->where('status', ReviewStatus::Approved)
+            ->count();
+        $reviewAvg = $reviewCount > 0
+            ? $product->reviews()->where('status', ReviewStatus::Approved)->avg('rating')
+            : null;
         $reviewSummary = null;
         if ($reviewCount > 0 && $reviewAvg !== null) {
             $reviewSummary = [
@@ -72,6 +78,11 @@ class BuyerProductDetailController extends Controller
                 $myReview = [
                     'rating' => (int) $review->rating,
                     'comment' => $review->comment,
+                    'status' => [
+                        'code' => $review->status->value,
+                        'label' => $review->status->label(),
+                    ],
+                    'rejection_reason' => $review->rejection_reason,
                 ];
             }
 
@@ -86,6 +97,7 @@ class BuyerProductDetailController extends Controller
 
         $reviews = Review::query()
             ->where('product_id', $product->id)
+            ->where('status', ReviewStatus::Approved)
             ->with('user:id,name')
             ->latest()
             ->limit(10)

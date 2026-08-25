@@ -11,6 +11,7 @@ use App\Http\Controllers\AdminJurusanUpJurusanController;
 use App\Http\Controllers\AdminOrderController;
 use App\Http\Controllers\AdminProductController;
 use App\Http\Controllers\AdminProductModerationController;
+use App\Http\Controllers\AdminReviewModerationController;
 use App\Http\Controllers\AdminSellerApplicationController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\BuyerCatalogController;
@@ -77,6 +78,9 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     Route::get('dashboard', AdminDashboardController::class)->name('dashboard');
     Route::get('admin/products', [AdminProductController::class, 'index'])->name('admin.products.index');
     Route::get('admin/products/moderation', [AdminProductModerationController::class, 'index'])->name('admin.products.moderation.index');
+    Route::get('admin/reviews', [AdminReviewModerationController::class, 'index'])->name('admin.reviews.index');
+    Route::post('admin/reviews/{review}/approve', [AdminReviewModerationController::class, 'approve'])->name('admin.reviews.approve');
+    Route::post('admin/reviews/{review}/reject', [AdminReviewModerationController::class, 'reject'])->name('admin.reviews.reject');
     Route::post('admin/products/{product}/approve', [AdminProductModerationController::class, 'approve'])->name('admin.products.moderation.approve');
     Route::post('admin/products/{product}/reject', [AdminProductModerationController::class, 'reject'])->name('admin.products.moderation.reject');
     Route::get('admin/categories', [AdminCategoryController::class, 'index'])->name('admin.categories.index');

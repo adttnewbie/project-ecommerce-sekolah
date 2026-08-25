@@ -2,6 +2,7 @@
 
 use App\Enums\OrderItemStatus;
 use App\Enums\ProductStatus;
+use App\Enums\ReviewStatus;
 use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -42,7 +43,10 @@ test('buyer with a completed order item can submit a review once', function () {
             'comment' => 'Barangnya rapi dan sesuai deskripsi.',
         ])
         ->assertRedirect(route('catalog.show', $product))
-        ->assertSessionHas('success', 'Ulasan berhasil dikirim. Terima kasih!');
+        ->assertSessionHas(
+            'success',
+            'Ulasan berhasil dikirim dan menunggu moderasi. Terima kasih!',
+        );
 
     expect(Review::query()
         ->where('product_id', $product->id)
@@ -119,7 +123,10 @@ test('buyer can update their own review', function () {
             'comment' => 'Makin lama makin suka.',
         ])
         ->assertRedirect(route('catalog.show', $product))
-        ->assertSessionHas('success', 'Ulasan berhasil diperbarui.');
+        ->assertSessionHas(
+            'success',
+            'Ulasan berhasil diperbarui dan menunggu moderasi.',
+        );
 
     expect(Review::query()
         ->where('product_id', $product->id)
@@ -154,6 +161,7 @@ test('detail payload exposes reviews my review and eligibility flags', function 
         'user_id' => $otherBuyer->id,
         'rating' => 4,
         'comment' => 'Bagus nih.',
+        'status' => ReviewStatus::Approved,
     ]);
 
     // Before writing anything: eligible to review.
@@ -176,7 +184,8 @@ test('detail payload exposes reviews my review and eligibility flags', function 
         'comment' => null,
     ]);
 
-    // After writing: no longer eligible, own review exposed.
+    // After writing: no longer eligible, own review exposed but the public
+    // list still only shows approved reviews (own new one is pending).
     $this->actingAs($buyer)
         ->get(route('catalog.show', $product))
         ->assertOk()
@@ -184,7 +193,7 @@ test('detail payload exposes reviews my review and eligibility flags', function 
             ->component('catalog/show')
             ->where('product.can_review', false)
             ->where('product.my_review.rating', 2)
-            ->has('product.reviews', 2));
+            ->has('product.reviews', 1));
 });
 
 test('guest detail payload carries no eligibility to review', function () {

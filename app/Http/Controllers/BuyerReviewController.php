@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrderItemStatus;
+use App\Enums\ReviewStatus;
+use App\Events\ReviewPendingModeration;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Review;
@@ -25,20 +27,31 @@ class BuyerReviewController extends Controller
         self::assertNotReviewedYet($product, $user);
 
         try {
-            Review::query()->create([
+            $review = Review::query()->create([
                 'product_id' => $product->id,
                 'user_id' => $user->id,
                 'rating' => $validated['rating'],
+                'status' => ReviewStatus::Pending,
                 'comment' => $validated['comment'] ?? null,
             ]);
         } catch (UniqueConstraintViolationException) {
             // A concurrent submit won the unique (product, user) race; the
             // buyer effectively already has their review in place.
+            return redirect()
+                ->route('catalog.show', $product)
+                ->with('success', 'Ulasan berhasil dikirim. Terima kasih!');
         }
+
+        ReviewPendingModeration::dispatch(
+            reviewId: $review->id,
+            productName: $product->name,
+            productSlug: $product->slug,
+            buyerName: $user->name,
+        );
 
         return redirect()
             ->route('catalog.show', $product)
-            ->with('success', 'Ulasan berhasil dikirim. Terima kasih!');
+            ->with('success', 'Ulasan berhasil dikirim dan menunggu moderasi. Terima kasih!');
     }
 
     public function update(Request $request, Product $product): RedirectResponse
@@ -56,14 +69,24 @@ class BuyerReviewController extends Controller
 
         $validated = $this->validatePayload($request);
 
+        // Edited content always re-enters moderation.
         $review->update([
             'rating' => $validated['rating'],
+            'status' => ReviewStatus::Pending,
+            'rejection_reason' => null,
             'comment' => $validated['comment'] ?? null,
         ]);
 
+        ReviewPendingModeration::dispatch(
+            reviewId: $review->id,
+            productName: $product->name,
+            productSlug: $product->slug,
+            buyerName: $user->name,
+        );
+
         return redirect()
             ->route('catalog.show', $product)
-            ->with('success', 'Ulasan berhasil diperbarui.');
+            ->with('success', 'Ulasan berhasil diperbarui dan menunggu moderasi.');
     }
 
     /**
