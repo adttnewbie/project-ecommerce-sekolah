@@ -57,6 +57,12 @@ class PaymentTransitionService
 
             OrderPaymentSync::sync($current->order);
             OrderStatusSync::sync($current->order);
+
+            $current->order->refresh();
+
+            if ($current->order->payment_status === PaymentStatus::Paid) {
+                DeliveryFeeService::recordForOrder($current->order, $actor);
+            }
         });
     }
 

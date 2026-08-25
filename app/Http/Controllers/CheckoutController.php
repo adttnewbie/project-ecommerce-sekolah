@@ -18,6 +18,8 @@ use App\Models\UpJurusanConsignment;
 use App\Models\UpJurusanStockMovement;
 use App\Models\User;
 use App\Support\ConsignmentTransitionService;
+use App\Support\DeliveryFeeService;
+use App\Support\DeliveryFeeSettings;
 use App\Support\MoneyCalculationService;
 use App\Support\OrderItemCancellation;
 use App\Support\PreOrderRules;
@@ -78,6 +80,7 @@ class CheckoutController extends Controller
                 'total_items' => $items->sum('quantity'),
                 'total_price' => $items->sum('subtotal'),
                 'has_invalid_items' => $items->contains(fn (array $item) => $item['is_valid'] === false),
+                'delivery_fee_tiers' => DeliveryFeeSettings::tiers(),
             ],
         ]);
     }
@@ -163,7 +166,7 @@ class CheckoutController extends Controller
 
                         $totalPrice = $this->createOrderItem($order, $product, $quantity, $user, $pendingBySeller);
 
-                        $order->update(['total_price' => $totalPrice]);
+                        $this->applyTotals($order, $totalPrice, $validated['pickup_method']);
 
                         return $order;
                     }
@@ -194,9 +197,7 @@ class CheckoutController extends Controller
                         $processedIds[] = $cartItem->id;
                     }
 
-                    $order->update([
-                        'total_price' => $totalPrice,
-                    ]);
+                    $this->applyTotals($order, $totalPrice, $validated['pickup_method']);
 
                     CartItem::query()
                         ->where('user_id', $user->id)
@@ -244,6 +245,24 @@ class CheckoutController extends Controller
                 'cart' => 'Kamu sudah memiliki terlalu banyak pesanan yang belum dibayar. Selesaikan atau batalkan pesanan lama sebelum membuat yang baru.',
             ]);
         }
+    }
+
+    /**
+     * Finalize order totals: delivery orders carry the fee of the highest
+     * tier rule whose min_spend the item subtotal reaches, snapshotted at
+     * checkout.
+     */
+    private function applyTotals(Order $order, int $itemsTotal, string $pickupMethod): void
+    {
+        $isDelivery = $pickupMethod === 'delivery';
+        $tier = $isDelivery ? DeliveryFeeService::matchingTier($itemsTotal) : null;
+        $deliveryFee = (int) ($tier['fee'] ?? 0);
+
+        $order->update([
+            'total_price' => $itemsTotal + $deliveryFee,
+            'delivery_fee' => $deliveryFee,
+            'delivery_fee_min_spend' => $tier !== null ? (int) $tier['min_spend'] : null,
+        ]);
     }
 
     /**

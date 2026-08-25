@@ -6,6 +6,7 @@ enum StockMovementSource: string
 {
     case PosSale = 'pos_sale';
     case OnlineOrder = 'online_order';
+    case DeliveryFee = 'delivery_fee';
     case Reverse = 'reverse';
     case Correction = 'correction';
 
@@ -14,6 +15,7 @@ enum StockMovementSource: string
         return match ($this) {
             self::PosSale => 'POS',
             self::OnlineOrder => 'Online',
+            self::DeliveryFee => 'Biaya Antar',
             self::Reverse => 'Reverse',
             self::Correction => 'Koreksi',
         };
@@ -37,6 +39,7 @@ enum StockMovementSource: string
         return [
             self::PosSale->value,
             self::OnlineOrder->value,
+            self::DeliveryFee->value,
         ];
     }
 }

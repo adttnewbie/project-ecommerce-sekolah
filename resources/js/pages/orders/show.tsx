@@ -59,6 +59,9 @@ type BuyerOrder = {
         rejection_reason: string | null;
     };
     total_price: number;
+    delivery_fee: number;
+    delivery_fee_min_spend: number | null;
+    items_total: number;
     items: {
         id: number;
         product_name: string;
@@ -219,9 +222,30 @@ export default function BuyerOrdersShow({ order }: Props) {
                                 <p className="text-sm text-slate-500">
                                     Total harga
                                 </p>
-                                <p className="mt-1 text-lg font-semibold text-slate-950">
-                                    {formatRupiah(order.total_price)}
-                                </p>
+                                {order.delivery_fee > 0 ? (
+                                    <>
+                                        <p className="mt-1 text-sm text-slate-500">
+                                            Subtotal{' '}
+                                            {formatRupiah(order.items_total)}
+                                        </p>
+                                        <p className="text-sm text-slate-500">
+                                            Biaya antar{' '}
+                                            {formatRupiah(order.delivery_fee)}
+                                            {order.delivery_fee_min_spend !==
+                                                null &&
+                                                order.delivery_fee_min_spend >
+                                                    0 &&
+                                                ` • belanja min. ${formatRupiah(order.delivery_fee_min_spend)}`}
+                                        </p>
+                                        <p className="mt-1 text-lg font-semibold text-slate-950">
+                                            {formatRupiah(order.total_price)}
+                                        </p>
+                                    </>
+                                ) : (
+                                    <p className="mt-1 text-lg font-semibold text-slate-950">
+                                        {formatRupiah(order.total_price)}
+                                    </p>
+                                )}
                             </div>
                         </CardContent>
                         {order.can_complete && (

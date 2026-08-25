@@ -26,6 +26,8 @@ use Illuminate\Support\Carbon;
  * @property int|null $payment_confirmed_by
  * @property string|null $payment_rejection_reason
  * @property int $total_price
+ * @property int $delivery_fee
+ * @property int|null $delivery_fee_min_spend
  * @property string $pickup_method
  * @property string|null $pickup_location
  * @property Carbon|null $expires_at
@@ -39,7 +41,7 @@ use Illuminate\Support\Carbon;
  * @property array<int, string>|null $stuck_reasons
  * @property User $user
  */
-#[Fillable(['code', 'user_id', 'status', 'payment_status', 'payment_method', 'payment_proof_path', 'payment_confirmed_at', 'payment_confirmed_by', 'payment_rejection_reason', 'total_price', 'pickup_method', 'pickup_location', 'expires_at', 'cancelled_at', 'cancelled_by', 'cancel_reason', 'requires_manual_review', 'requires_manual_review_at', 'requires_manual_review_reason', 'stuck_detected_at', 'stuck_reasons'])]
+#[Fillable(['code', 'user_id', 'status', 'payment_status', 'payment_method', 'payment_proof_path', 'payment_confirmed_at', 'payment_confirmed_by', 'payment_rejection_reason', 'total_price', 'delivery_fee', 'delivery_fee_min_spend', 'pickup_method', 'pickup_location', 'expires_at', 'cancelled_at', 'cancelled_by', 'cancel_reason', 'requires_manual_review', 'requires_manual_review_at', 'requires_manual_review_reason', 'stuck_detected_at', 'stuck_reasons'])]
 class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
@@ -61,6 +63,8 @@ class Order extends Model
             'stuck_detected_at' => 'datetime',
             'stuck_reasons' => 'array',
             'total_price' => 'integer',
+            'delivery_fee' => 'integer',
+            'delivery_fee_min_spend' => 'integer',
         ];
     }
 

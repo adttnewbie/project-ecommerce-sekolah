@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property int $id
  * @property int|null $up_jurusan_consignment_id
+ * @property int|null $up_jurusan_id
  * @property int|null $product_id
  * @property int|null $up_jurusan_pos_sale_id
  * @property int|null $order_id
@@ -25,11 +26,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $note
  * @property int|null $reverses_movement_id
  * @property UpJurusanConsignment|null $consignment
+ * @property UpJurusan|null $upJurusan
  * @property Product|null $product
  * @property UpJurusanPosSale|null $posSale
  * @property User $user
  */
-#[Fillable(['up_jurusan_consignment_id', 'product_id', 'up_jurusan_pos_sale_id', 'order_id', 'user_id', 'type', 'source', 'quantity', 'unit_price', 'gross_amount', 'commission_amount', 'seller_amount', 'note', 'reverses_movement_id'])]
+#[Fillable(['up_jurusan_consignment_id', 'up_jurusan_id', 'product_id', 'up_jurusan_pos_sale_id', 'order_id', 'user_id', 'type', 'source', 'quantity', 'unit_price', 'gross_amount', 'commission_amount', 'seller_amount', 'note', 'reverses_movement_id'])]
 class UpJurusanStockMovement extends Model
 {
     /**
@@ -53,6 +55,14 @@ class UpJurusanStockMovement extends Model
     public function consignment(): BelongsTo
     {
         return $this->belongsTo(UpJurusanConsignment::class, 'up_jurusan_consignment_id');
+    }
+
+    /**
+     * @return BelongsTo<UpJurusan, $this>
+     */
+    public function upJurusan(): BelongsTo
+    {
+        return $this->belongsTo(UpJurusan::class);
     }
 
     /**

@@ -29,6 +29,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as adminProductModerationIndex } from '@/routes/admin/products/moderation';
+import { edit as adminDeliveryFeeEdit } from '@/routes/admin/settings/delivery-fee';
 import { index as cartIndex } from '@/routes/cart';
 import { index as catalogIndex } from '@/routes/catalog';
 import { index as ordersIndex } from '@/routes/orders';
@@ -302,5 +303,10 @@ function getMainNavItems(
         { title: 'Kategori', href: '/admin/categories', icon: Tags },
         { title: 'Pesanan', href: '/admin/orders', icon: ShoppingCart },
         { title: 'Pengguna', href: '/admin/users', icon: Users },
+        {
+            title: 'Biaya Antar',
+            href: adminDeliveryFeeEdit(),
+            icon: Settings,
+        },
     ];
 }

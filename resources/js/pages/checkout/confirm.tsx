@@ -66,11 +66,17 @@ type CheckoutItem = {
     };
 };
 
+type DeliveryFeeTier = {
+    min_spend: number;
+    fee: number;
+};
+
 type Props = {
     items: CheckoutItem[];
     summary: {
         total_items: number;
         total_price: number;
+        delivery_fee_tiers: DeliveryFeeTier[];
     };
 };
 
@@ -100,6 +106,15 @@ export default function CheckoutConfirm({ items, summary }: Props) {
     const [pickupMethod, setPickupMethod] = useState<'pickup' | 'delivery'>(
         'pickup',
     );
+    const matchedTier =
+        pickupMethod === 'delivery'
+            ? ([...summary.delivery_fee_tiers]
+                  .sort((a, b) => a.min_spend - b.min_spend)
+                  .filter((tier) => summary.total_price >= tier.min_spend)
+                  .at(-1) ?? null)
+            : null;
+    const deliveryFee = matchedTier?.fee ?? 0;
+    const grandTotal = summary.total_price + deliveryFee;
     const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
     const [pendingLeaveUrl, setPendingLeaveUrl] = useState<string | null>(null);
     const allowNavigationRef = useRef(false);
@@ -336,12 +351,28 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                     {summary.total_items}
                                 </span>
                             </div>
+                            {deliveryFee > 0 && (
+                                <>
+                                    <div className="flex justify-between text-sm text-slate-600">
+                                        <span>Subtotal</span>
+                                        <span className="font-semibold text-slate-950">
+                                            {formatRupiah(summary.total_price)}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-sm text-blue-700">
+                                        <span>Biaya antar</span>
+                                        <span className="font-semibold">
+                                            {formatRupiah(deliveryFee)}
+                                        </span>
+                                    </div>
+                                </>
+                            )}
                             <div className="flex justify-between border-t border-slate-100 pt-4">
                                 <span className="text-sm font-medium text-slate-600">
                                     Total bayar
                                 </span>
                                 <span className="text-xl font-semibold text-slate-950">
-                                    {formatRupiah(summary.total_price)}
+                                    {formatRupiah(grandTotal)}
                                 </span>
                             </div>
                             <Form

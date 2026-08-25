@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 type Props = {
     badge?: string;
@@ -10,6 +11,7 @@ type Props = {
     description: string;
     actions?: ReactNode;
     meta?: ReactNode;
+    descriptionClassName?: string;
 };
 
 export function PageHeader({
@@ -19,6 +21,7 @@ export function PageHeader({
     description,
     actions,
     meta,
+    descriptionClassName,
 }: Props) {
     return (
         <Card className="rounded-xl border-slate-200 shadow-sm">
@@ -36,7 +39,12 @@ export function PageHeader({
                         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
                             {title}
                         </h1>
-                        <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+                        <p
+                            className={cn(
+                                'mt-1 max-w-2xl text-sm leading-6 text-slate-500',
+                                descriptionClassName,
+                            )}
+                        >
                             {description}
                         </p>
                         {meta && <div className="mt-3">{meta}</div>}

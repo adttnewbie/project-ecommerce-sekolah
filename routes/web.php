@@ -3,6 +3,7 @@
 use App\Enums\UserRole;
 use App\Http\Controllers\AdminCategoryController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminDeliveryFeeSettingsController;
 use App\Http\Controllers\AdminJurusanConsignmentController;
 use App\Http\Controllers\AdminJurusanDashboardController;
 use App\Http\Controllers\AdminJurusanReportController;
@@ -87,6 +88,8 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     Route::post('admin/orders/{order}/cancel', [AdminOrderController::class, 'cancel'])->name('admin.orders.cancel');
     Route::post('admin/orders/{order}/force-complete', [AdminOrderController::class, 'forceComplete'])->name('admin.orders.force-complete');
     Route::post('admin/orders/{order}/mark-review', [AdminOrderController::class, 'markReview'])->name('admin.orders.mark-review');
+    Route::get('admin/settings/delivery-fee', [AdminDeliveryFeeSettingsController::class, 'edit'])->name('admin.settings.delivery-fee.edit');
+    Route::put('admin/settings/delivery-fee', [AdminDeliveryFeeSettingsController::class, 'update'])->name('admin.settings.delivery-fee.update');
 });
 
 Route::middleware(['auth', EnsureUserIsSeller::class])

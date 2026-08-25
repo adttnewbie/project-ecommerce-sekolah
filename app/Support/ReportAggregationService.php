@@ -34,7 +34,9 @@ class ReportAggregationService
             ->whereIn('source', $sources)
             ->where(function (Builder $query) use ($upJurusanId) {
                 $query->whereHas('consignment', fn (Builder $q) => $q->where('up_jurusan_id', $upJurusanId))
-                    ->orWhereHas('product', fn (Builder $q) => $q->where('up_jurusan_id', $upJurusanId));
+                    ->orWhereHas('product', fn (Builder $q) => $q->where('up_jurusan_id', $upJurusanId))
+                    // Delivery-fee movements carry no product/consignment.
+                    ->orWhere('up_jurusan_id', $upJurusanId);
             })
             ->when($date !== null, fn (Builder $q) => $q->whereDate('created_at', $date))
             ->when($from !== null, fn (Builder $q) => $q->where('created_at', '>=', $from))

@@ -162,6 +162,8 @@ class OrderItemCancellation
                 'cancelled_by' => $actor->id,
                 'cancel_reason' => $reason,
             ]);
+
+            DeliveryFeeService::reverseForOrder($order, $actor);
         }
     }
 

@@ -147,6 +147,9 @@ class BuyerOrderController extends Controller
                 ->values()
                 ->all(),
             'total_price' => $order->total_price,
+            'delivery_fee' => (int) $order->delivery_fee,
+            'delivery_fee_min_spend' => $order->delivery_fee_min_spend === null ? null : (int) $order->delivery_fee_min_spend,
+            'items_total' => (int) $order->total_price - (int) $order->delivery_fee,
             'payment' => [
                 'status' => [
                     'code' => $order->payment_status->value,
