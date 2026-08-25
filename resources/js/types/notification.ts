@@ -18,6 +18,70 @@ export interface NotificationTypeConfig {
     label: string;
 }
 
+/**
+ * EduCart Design System semantic mapping:
+ * - primary #0080FF → order/payment/promotion (aksi utama, Info)
+ * - warning #EA580C bg #FFF7ED → stock (stok hampir habis)
+ * - success #16A34A bg #ECFDF3 → product (moderasi berhasil)
+ * - neutral slate → system
+ * Sesuai design.md:115-130 Aturan penggunaan warna.
+ */
+export interface NotificationTypeStyle {
+    accent: string;
+    bg: string;
+    border: string;
+    iconBg: string;
+    iconColor: string;
+}
+
+export const NOTIFICATION_TYPE_STYLE: Record<
+    NotificationType,
+    NotificationTypeStyle
+> = {
+    order: {
+        accent: '#0080FF',
+        bg: '#EFF8FF',
+        border: '#BCE0FF',
+        iconBg: '#EFF8FF',
+        iconColor: '#0080FF',
+    },
+    payment: {
+        accent: '#0080FF',
+        bg: '#EFF8FF',
+        border: '#BCE0FF',
+        iconBg: '#EFF8FF',
+        iconColor: '#0080FF',
+    },
+    promotion: {
+        accent: '#0080FF',
+        bg: '#EFF8FF',
+        border: '#BCE0FF',
+        iconBg: '#EFF8FF',
+        iconColor: '#0080FF',
+    },
+    stock: {
+        accent: '#EA580C',
+        bg: '#FFF7ED',
+        border: '#FED7AA',
+        iconBg: '#FFF7ED',
+        iconColor: '#EA580C',
+    },
+    product: {
+        accent: '#16A34A',
+        bg: '#ECFDF3',
+        border: '#BBF7D0',
+        iconBg: '#ECFDF3',
+        iconColor: '#16A34A',
+    },
+    system: {
+        accent: '#64748B',
+        bg: '#F8FAFC',
+        border: '#E2E8F0',
+        iconBg: '#F1F5F9',
+        iconColor: '#64748B',
+    },
+};
+
 // Type configuration object - exported for use in components
 export const NOTIFICATION_TYPE_CONFIG: Record<
     NotificationType,
@@ -25,32 +89,32 @@ export const NOTIFICATION_TYPE_CONFIG: Record<
 > = {
     order: {
         icon: 'ShoppingCart',
-        accentColor: '#4f46e5',
+        accentColor: NOTIFICATION_TYPE_STYLE.order.accent,
         label: 'Pesanan',
     },
     stock: {
         icon: 'Boxes',
-        accentColor: '#f59e0b',
+        accentColor: NOTIFICATION_TYPE_STYLE.stock.accent,
         label: 'Stok',
     },
     product: {
         icon: 'Package',
-        accentColor: '#10b981',
+        accentColor: NOTIFICATION_TYPE_STYLE.product.accent,
         label: 'Produk',
     },
     payment: {
         icon: 'CreditCard',
-        accentColor: '#3b82f6',
+        accentColor: NOTIFICATION_TYPE_STYLE.payment.accent,
         label: 'Pembayaran',
     },
     system: {
         icon: 'Settings',
-        accentColor: '#6b7280',
+        accentColor: NOTIFICATION_TYPE_STYLE.system.accent,
         label: 'Sistem',
     },
     promotion: {
         icon: 'Gift',
-        accentColor: '#ec4899',
+        accentColor: NOTIFICATION_TYPE_STYLE.promotion.accent,
         label: 'Promosi',
     },
 };

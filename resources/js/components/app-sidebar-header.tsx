@@ -1,6 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
-    Bell,
     Boxes,
     ChevronDown,
     CircleHelp,
@@ -11,6 +10,7 @@ import {
     Users,
 } from 'lucide-react';
 import { useState } from 'react';
+import { NotificationBellTrigger } from '@/components/notifications/notification-bell-trigger';
 import { NotificationDropdown } from '@/components/notifications/notification-dropdown';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -253,20 +253,10 @@ export function AppSidebarHeader({
                             emptyTitle="Tidak ada notifikasi baru"
                             emptyText="Kabar terbaru soal pesanan Anda akan muncul di sini"
                         >
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
-                                aria-label="Notifikasi"
-                            >
-                                <Bell className="size-5" />
-                                {unreadCount > 0 && (
-                                    <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
-                                        {unreadCount > 99 ? '99+' : unreadCount}
-                                    </span>
-                                )}
-                            </Button>
+                            <NotificationBellTrigger
+                                count={unreadCount}
+                                ariaLabel="Notifikasi"
+                            />
                         </NotificationDropdown>
                     </>
                 ) : role === 'seller' ? (
@@ -276,20 +266,10 @@ export function AppSidebarHeader({
                             unreadCount={unreadCount}
                             ariaLabel="Notifikasi"
                         >
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
-                                aria-label="Notifikasi"
-                            >
-                                <Bell className="size-5" />
-                                {unreadCount > 0 && (
-                                    <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
-                                        {unreadCount > 99 ? '99+' : unreadCount}
-                                    </span>
-                                )}
-                            </Button>
+                            <NotificationBellTrigger
+                                count={unreadCount}
+                                ariaLabel="Notifikasi"
+                            />
                         </NotificationDropdown>
 
                         <Dialog>
@@ -352,24 +332,19 @@ export function AppSidebarHeader({
                 ) : role === 'admin' || role === 'admin_jurusan' ? (
                     <>
                         <NotificationDropdown
-                            notifications={adminHeader?.notifications}
+                            notifications={
+                                role === 'admin_jurusan'
+                                    ? (adminJurusanHeader?.notifications ??
+                                      adminHeader?.notifications)
+                                    : adminHeader?.notifications
+                            }
                             unreadCount={unreadCount}
                             ariaLabel={`Notifikasi ${userRole || 'Admin'}`}
                         >
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
-                                aria-label={`Notifikasi ${userRole || 'Admin'}`}
-                            >
-                                <Bell className="size-5" />
-                                {unreadCount > 0 && (
-                                    <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
-                                        {unreadCount > 99 ? '99+' : unreadCount}
-                                    </span>
-                                )}
-                            </Button>
+                            <NotificationBellTrigger
+                                count={unreadCount}
+                                ariaLabel={`Notifikasi ${userRole || 'Admin'}`}
+                            />
                         </NotificationDropdown>
 
                         <Dialog>
@@ -406,20 +381,10 @@ export function AppSidebarHeader({
                             unreadCount={unreadCount}
                             ariaLabel={`Notifikasi ${userRole}`}
                         >
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
-                                aria-label={`Notifikasi ${userRole}`}
-                            >
-                                <Bell className="size-5" />
-                                {unreadCount > 0 && (
-                                    <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
-                                        {unreadCount > 99 ? '99+' : unreadCount}
-                                    </span>
-                                )}
-                            </Button>
+                            <NotificationBellTrigger
+                                count={unreadCount}
+                                ariaLabel={`Notifikasi ${userRole}`}
+                            />
                         </NotificationDropdown>
 
                         <Dialog>
@@ -450,29 +415,6 @@ export function AppSidebarHeader({
                                 </DialogHeader>
                             </DialogContent>
                         </Dialog>
-                    </>
-                ) : role === 'admin_jurusan' ? (
-                    <>
-                        <NotificationDropdown
-                            notifications={adminJurusanHeader?.notifications}
-                            unreadCount={unreadCount}
-                            ariaLabel={`Notifikasi ${userRole}`}
-                        >
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="relative rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 aria-expanded:bg-slate-100 aria-expanded:text-blue-600"
-                                aria-label={`Notifikasi ${userRole}`}
-                            >
-                                <Bell className="size-5" />
-                                {unreadCount > 0 && (
-                                    <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
-                                        {unreadCount > 99 ? '99+' : unreadCount}
-                                    </span>
-                                )}
-                            </Button>
-                        </NotificationDropdown>
                     </>
                 ) : !auth.user ? (
                     <>

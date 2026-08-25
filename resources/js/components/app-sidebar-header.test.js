@@ -4,11 +4,19 @@ import { getSearchConfig } from '@/components/app-sidebar-header';
 const url = (href) => (typeof href === 'string' ? href : href.url);
 
 describe('dashboard header search', () => {
-    test.each([
-        ['picket_officer', null],
-        ['admin_jurusan', null],
-    ])('does not expose search for %s', (role, expected) => {
-        expect(getSearchConfig(role, 'kaos')).toBe(expected);
+    test('does not expose search for admin_jurusan', () => {
+        expect(getSearchConfig('admin_jurusan', 'kaos')).toBe(null);
+    });
+
+    test('exposes multi-target search for picket_officer', () => {
+        const config = getSearchConfig('picket_officer', 'kaos');
+
+        expect(config?.ariaLabel).toBe('Pencarian picket');
+        expect(config?.targets.map((target) => url(target.href))).toEqual([
+            '/picket/pos',
+            '/picket/orders',
+            '/picket/receiving',
+        ]);
     });
 
     test.each([

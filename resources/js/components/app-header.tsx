@@ -1,6 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
-    Bell,
     ChevronDown,
     Home as HomeIcon,
     Menu,
@@ -11,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import AppLogo from '@/components/app-logo';
+import { NotificationBellTrigger } from '@/components/notifications/notification-bell-trigger';
 import { NotificationDropdown } from '@/components/notifications/notification-dropdown';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -172,22 +172,10 @@ export function AppHeader() {
                                 emptyTitle="Tidak ada notifikasi baru"
                                 emptyText="Kabar terbaru soal pesanan Anda akan muncul di sini"
                             >
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="relative size-11 rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600"
-                                    aria-label="Notifikasi"
-                                >
-                                    <Bell className="size-5" />
-                                    {(notificationBadge?.count ?? 0) > 0 && (
-                                        <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-[6px] bg-red-500 px-1 text-[10px] leading-none font-semibold text-white">
-                                            {notificationBadge.count > 99
-                                                ? '99+'
-                                                : notificationBadge.count}
-                                        </span>
-                                    )}
-                                </Button>
+                                <NotificationBellTrigger
+                                    count={notificationBadge?.count ?? 0}
+                                    ariaLabel="Notifikasi"
+                                />
                             </NotificationDropdown>
                         </>
                     )}
