@@ -1,17 +1,13 @@
 import type { PageProps as SharedPageProps } from '@inertiajs/core';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Package, Search, Store, Tags } from 'lucide-react';
+import { Package, Search, Tags } from 'lucide-react';
+import { ProductCard  } from '@/components/product/product-card';
+import type {ProductCardProduct} from '@/components/product/product-card';
+import { ProductGrid } from '@/components/product/product-grid';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 import { home } from '@/routes';
-import { index as catalogIndex, show as catalogShow } from '@/routes/catalog';
+import { index as catalogIndex } from '@/routes/catalog';
 import type { Auth } from '@/types';
 
 type CatalogCategory = {
@@ -20,38 +16,7 @@ type CatalogCategory = {
     slug: string;
 };
 
-type CatalogProduct = {
-    id: number;
-    name: string;
-    slug: string;
-    description: string;
-    price: number;
-    stock: number;
-    is_pre_order: boolean;
-    fulfillment_type: {
-        code: 'ready_stock' | 'pre_order';
-        label: string;
-    };
-    pre_order_estimate_days: number | null;
-    pre_order_deadline: string | null;
-    pre_order_min_quantity: number | null;
-    pre_order_note: string | null;
-    image: string | null;
-    seller: {
-        id: number;
-        name: string;
-    } | null;
-    owner: {
-        id: number;
-        name: string;
-        type: 'seller' | 'up_jurusan';
-    };
-    category: {
-        id: number;
-        name: string;
-        slug: string;
-    };
-};
+type CatalogProduct = ProductCardProduct;
 
 type CatalogPaginator = {
     data: CatalogProduct[];
@@ -74,23 +39,6 @@ type CatalogIndexProps = {
 type PageProps = {
     auth: Auth;
 } & SharedPageProps;
-
-const formatRupiah = (value: number) =>
-    new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 0,
-    }).format(value);
-
-const imageSource = (image: string | null) => {
-    if (!image) {
-        return null;
-    }
-
-    return image.startsWith('http') || image.startsWith('/')
-        ? image
-        : `/storage/${image}`;
-};
 
 export default function CatalogIndex({
     categories,
@@ -222,8 +170,8 @@ export default function CatalogIndex({
                     </section>
 
                     {products.data.length === 0 ? (
-                        <section className="rounded-[8px] border border-dashed border-slate-300 bg-white px-5 py-12 text-center">
-                            <div className="mx-auto flex size-12 items-center justify-center rounded-[8px] bg-blue-50 text-blue-700">
+                        <section className="rounded-[14px] border border-dashed border-slate-300 bg-white px-5 py-12 text-center">
+                            <div className="mx-auto flex size-12 items-center justify-center rounded-[14px] bg-blue-50 text-blue-700">
                                 <Package className="size-5" />
                             </div>
                             <h2 className="mt-4 text-lg font-semibold text-slate-950">
@@ -235,71 +183,12 @@ export default function CatalogIndex({
                             </p>
                         </section>
                     ) : (
-                        <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-                            {products.data.map((product) => {
-                                const src = imageSource(product.image);
-
-                                return (
-                                    <Link
-                                        key={product.id}
-                                        href={catalogShow(product.slug)}
-                                        className="group block h-full rounded-[8px] focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none"
-                                    >
-                                        <Card className="h-full overflow-hidden rounded-[8px] border border-slate-200 bg-white py-0 shadow-sm transition duration-200 group-hover:-translate-y-0.5 group-hover:border-blue-200 group-hover:shadow-md">
-                                            <div className="aspect-square bg-slate-100">
-                                                {src ? (
-                                                    <img
-                                                        src={src}
-                                                        alt={product.name}
-                                                        className="size-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="flex size-full items-center justify-center bg-blue-50 text-blue-700">
-                                                        <Package className="size-9" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <CardHeader className="space-y-2 p-3 pb-2 sm:p-4 sm:pb-2">
-                                                <div className="flex flex-wrap gap-2">
-                                                    <Badge className="rounded-full bg-slate-100 text-slate-700">
-                                                        <Tags className="size-3.5" />
-                                                        {product.category.name}
-                                                    </Badge>
-                                                    <Badge className="rounded-full bg-emerald-50 text-emerald-700">
-                                                        {product.is_pre_order
-                                                            ? `PO ${product.pre_order_estimate_days} hari`
-                                                            : `Stok ${product.stock}`}
-                                                    </Badge>
-                                                </div>
-                                                <CardTitle className="line-clamp-2 text-sm leading-5 font-semibold text-slate-950 sm:text-base sm:leading-6">
-                                                    {product.name}
-                                                </CardTitle>
-                                                <CardDescription className="line-clamp-2 text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">
-                                                    {product.description}
-                                                </CardDescription>
-                                            </CardHeader>
-                                            <CardContent className="space-y-3 p-3 pt-0 sm:p-4 sm:pt-0">
-                                                <p className="text-base font-semibold text-slate-950 sm:text-xl">
-                                                    {formatRupiah(
-                                                        product.price,
-                                                    )}
-                                                </p>
-                                                <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
-                                                    <p className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-slate-500">
-                                                        <Store className="size-3.5 shrink-0" />
-                                                        <span className="truncate">
-                                                            {product.owner.name}
-                                                        </span>
-                                                    </p>
-                                                    <span className="text-xs font-semibold text-blue-700">
-                                                        Detail
-                                                    </span>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    </Link>
-                                );
-                            })}
+                        <section>
+                            <ProductGrid>
+                                {products.data.map((product) => (
+                                    <ProductCard key={product.id} product={product} />
+                                ))}
+                            </ProductGrid>
                         </section>
                     )}
 

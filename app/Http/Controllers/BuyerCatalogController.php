@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrderItemStatus;
 use App\Enums\ProductFulfillmentType;
 use App\Enums\ProductStatus;
 use App\Models\Category;
 use App\Models\Product;
 use App\Traits\OwnerPayloadHelper;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,6 +22,7 @@ class BuyerCatalogController extends Controller
         $search = trim((string) $request->query('search', ''));
         $category = trim((string) $request->query('category', ''));
         $category = $category === 'all' ? '' : $category;
+        $user = $request->user();
 
         return Inertia::render('catalog/index', [
             'filters' => [
@@ -44,6 +47,10 @@ class BuyerCatalogController extends Controller
             'products' => Product::query()
                 ->with(['category:id,name,slug', 'seller:id,name', 'upJurusan:id,name'])
                 ->with('upJurusanConsignments:id,product_id,received_quantity,sold_quantity')
+                ->withSum(['orderItems as sold_count' => fn (Builder $q) => $q->where('status', OrderItemStatus::Completed)], 'quantity')
+                ->withCount(['reviews as review_count'])
+                ->withAvg(['reviews as review_avg' => fn (Builder $q) => $q], 'rating')
+                ->when($user, fn (Builder $q) => $q->withExists(['wishlists as is_wishlisted' => fn (Builder $qq) => $qq->where('user_id', $user->id)]))
                 ->where('status', ProductStatus::Approved)
                 ->where(fn ($query) => $query
                     ->where('fulfillment_type', ProductFulfillmentType::PreOrder)
@@ -61,34 +68,65 @@ class BuyerCatalogController extends Controller
                 ->latest()
                 ->paginate(12)
                 ->withQueryString()
-                ->through(fn (Product $product): array => [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'slug' => $product->slug,
-                    'description' => $product->description,
-                    'price' => $product->price,
-                    'stock' => $product->availableStock(),
-                    'is_pre_order' => $product->isPreOrder(),
-                    'fulfillment_type' => [
-                        'code' => $product->fulfillment_type->value,
-                        'label' => $product->fulfillment_type->label(),
-                    ],
-                    'pre_order_estimate_days' => $product->pre_order_estimate_days,
-                    'pre_order_deadline' => $product->pre_order_deadline?->toDateString(),
-                    'pre_order_min_quantity' => $product->pre_order_min_quantity,
-                    'pre_order_note' => $product->pre_order_note,
-                    'image' => $product->image,
-                    'seller' => $product->seller ? [
-                        'id' => $product->seller->id,
-                        'name' => $product->seller->name,
-                    ] : null,
-                    'owner' => $this->catalogOwnerPayload($product),
-                    'category' => [
-                        'id' => $product->category->id,
-                        'name' => $product->category->name,
-                        'slug' => $product->category->slug,
-                    ],
-                ]),
+                ->through(function (Product $product) use ($user): array {
+                    $reviewCount = (int) ($product->getAttribute('review_count') ?? 0);
+                    $reviewAvg = $product->getAttribute('review_avg');
+                    $soldCountRaw = $product->getAttribute('sold_count');
+                    $originalPrice = $product->original_price;
+
+                    $reviewSummary = null;
+                    if ($reviewCount > 0 && $reviewAvg !== null) {
+                        $reviewSummary = [
+                            'average' => round((float) $reviewAvg, 1),
+                            'count' => $reviewCount,
+                        ];
+                    }
+
+                    $soldCount = null;
+                    if ($soldCountRaw !== null && (int) $soldCountRaw > 0) {
+                        $soldCount = (int) $soldCountRaw;
+                    }
+
+                    $isWishlisted = false;
+                    if ($user) {
+                        $isWishlisted = (bool) ($product->getAttribute('is_wishlisted') ?? false);
+                    }
+
+                    $showOriginal = $originalPrice !== null && $originalPrice > $product->price;
+
+                    return [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'slug' => $product->slug,
+                        'description' => $product->description,
+                        'price' => $product->price,
+                        'original_price' => $showOriginal ? $originalPrice : null,
+                        'stock' => $product->availableStock(),
+                        'is_pre_order' => $product->isPreOrder(),
+                        'fulfillment_type' => [
+                            'code' => $product->fulfillment_type->value,
+                            'label' => $product->fulfillment_type->label(),
+                        ],
+                        'pre_order_estimate_days' => $product->pre_order_estimate_days,
+                        'pre_order_deadline' => $product->pre_order_deadline?->toDateString(),
+                        'pre_order_min_quantity' => $product->pre_order_min_quantity,
+                        'pre_order_note' => $product->pre_order_note,
+                        'image' => $product->image,
+                        'seller' => $product->seller ? [
+                            'id' => $product->seller->id,
+                            'name' => $product->seller->name,
+                        ] : null,
+                        'owner' => $this->catalogOwnerPayload($product),
+                        'category' => [
+                            'id' => $product->category->id,
+                            'name' => $product->category->name,
+                            'slug' => $product->category->slug,
+                        ],
+                        'review_summary' => $reviewSummary,
+                        'sold_count' => $soldCount,
+                        'is_wishlisted' => $isWishlisted,
+                    ];
+                }),
         ]);
     }
 

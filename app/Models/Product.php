@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\DB;
  * @property string $slug
  * @property string $description
  * @property int $price
+ * @property int|null $original_price
  * @property int $stock
  * @property ProductSalesMethod $sales_method
  * @property ProductFulfillmentType $fulfillment_type
@@ -39,7 +40,7 @@ use Illuminate\Support\Facades\DB;
  * @property UpJurusan|null $upJurusan
  * @property Category $category
  */
-#[Fillable(['seller_id', 'up_jurusan_id', 'category_id', 'name', 'slug', 'description', 'price', 'stock', 'sales_method', 'fulfillment_type', 'pre_order_estimate_days', 'pre_order_deadline', 'pre_order_min_quantity', 'pre_order_note', 'status', 'rejection_reason', 'image'])]
+#[Fillable(['seller_id', 'up_jurusan_id', 'category_id', 'name', 'slug', 'description', 'price', 'original_price', 'stock', 'sales_method', 'fulfillment_type', 'pre_order_estimate_days', 'pre_order_deadline', 'pre_order_min_quantity', 'pre_order_note', 'status', 'rejection_reason', 'image'])]
 class Product extends Model
 {
     public const int LOW_STOCK_THRESHOLD = 5;
@@ -91,6 +92,7 @@ class Product extends Model
     {
         return [
             'price' => 'integer',
+            'original_price' => 'integer',
             'stock' => 'integer',
             'sales_method' => ProductSalesMethod::class,
             'fulfillment_type' => ProductFulfillmentType::class,
@@ -147,6 +149,22 @@ class Product extends Model
     public function upJurusanConsignments(): HasMany
     {
         return $this->hasMany(UpJurusanConsignment::class);
+    }
+
+    /**
+     * @return HasMany<Review, $this>
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
+     * @return HasMany<Wishlist, $this>
+     */
+    public function wishlists(): HasMany
+    {
+        return $this->hasMany(Wishlist::class);
     }
 
     public function usesConsignmentStock(): bool

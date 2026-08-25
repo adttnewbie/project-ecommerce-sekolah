@@ -26,6 +26,7 @@ use App\Http\Controllers\SellerDashboardController;
 use App\Http\Controllers\SellerInventoryController;
 use App\Http\Controllers\SellerOrderController;
 use App\Http\Controllers\SellerProductController;
+use App\Http\Controllers\WishlistController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureUserIsAdminJurusan;
 use App\Http\Middleware\EnsureUserIsBuyer;
@@ -56,6 +57,7 @@ Route::middleware(['auth', EnsureUserIsBuyer::class])->group(function () {
     Route::post('cart/items/{product:slug}', [CartController::class, 'store'])->name('cart.items.store');
     Route::put('cart/items/{cartItem}', [CartController::class, 'update'])->name('cart.items.update');
     Route::delete('cart/items/{cartItem}', [CartController::class, 'destroy'])->name('cart.items.destroy');
+    Route::post('wishlist/{product:slug}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 
     Route::get('checkout/confirm', [CheckoutController::class, 'confirm'])->name('checkout.confirm');
     Route::post('checkout', CheckoutController::class)->name('checkout')->middleware('throttle:checkout');

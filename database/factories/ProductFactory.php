@@ -33,6 +33,7 @@ class ProductFactory extends Factory
             'slug' => Str::slug($name).'-'.fake()->unique()->numberBetween(1000, 9999),
             'description' => fake()->paragraph(),
             'price' => fake()->numberBetween(5_000, 250_000),
+            'original_price' => null,
             'stock' => fake()->numberBetween(0, 50),
             'sales_method' => ProductSalesMethod::SelfManaged,
             'fulfillment_type' => ProductFulfillmentType::ReadyStock,
