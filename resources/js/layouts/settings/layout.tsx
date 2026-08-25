@@ -39,9 +39,15 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { auth } = usePage().props;
     const getInitials = useInitials();
     const roleLabel = auth.user?.role ? (roleLabels[auth.user.role] ?? auth.user.role) : null;
+    const isBuyer = auth.user?.role === 'buyer';
 
     return (
-        <div className="px-4 py-6">
+        <div
+            className={cn(
+                'mx-auto w-full max-w-7xl',
+                isBuyer ? 'px-4 py-6 sm:px-6 lg:px-8' : 'px-4 py-6',
+            )}
+        >
             <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <Heading
                     title="Pengaturan"
@@ -61,7 +67,12 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                 )}
             </div>
 
-            <div className="flex flex-col lg:flex-row lg:space-x-12">
+            <div
+                className={cn(
+                    'flex flex-col gap-6',
+                    isBuyer ? 'lg:flex-row lg:gap-8' : 'lg:flex-row lg:space-x-12',
+                )}
+            >
                 <aside className="w-full max-w-xl lg:w-48 lg:shrink-0">
                     <div className="space-y-4 lg:sticky lg:top-20">
                         {auth.user && (
