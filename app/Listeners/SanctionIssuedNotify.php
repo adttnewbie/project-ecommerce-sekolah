@@ -2,10 +2,12 @@
 
 namespace App\Listeners;
 
+use App\Enums\UserRole;
 use App\Events\SanctionIssued;
+use App\Models\User;
 use App\Support\NotificationDispatch;
 
-class BuyerSanctionIssuedNotify
+class SanctionIssuedNotify
 {
     /**
      * Handle the event.
@@ -13,11 +15,11 @@ class BuyerSanctionIssuedNotify
     public function handle(SanctionIssued $event): void
     {
         NotificationDispatch::toUser(
-            $event->buyerId,
+            $event->userId,
             'system',
             $event->notificationKey(),
             [
-                'href' => route('orders.index', absolute: false),
+                'href' => self::href($event->userId),
                 'title' => $event->notificationTitle(),
                 'description' => $event->notificationDescription(),
                 'data' => [
@@ -27,5 +29,14 @@ class BuyerSanctionIssuedNotify
                 ],
             ],
         );
+    }
+
+    private static function href(int $userId): string
+    {
+        $role = User::query()->whereKey($userId)->value('role');
+
+        return $role === UserRole::Seller->value
+            ? route('seller.dashboard', absolute: false)
+            : route('orders.index', absolute: false);
     }
 }

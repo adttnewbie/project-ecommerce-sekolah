@@ -5,15 +5,19 @@ namespace App\Http\Controllers;
 use App\Enums\BuyerViolationType;
 use App\Enums\SanctionStatus;
 use App\Enums\SanctionType;
+use App\Enums\SellerViolationType;
 use App\Enums\UserRole;
 use App\Models\BuyerViolation;
 use App\Models\Sanction;
+use App\Models\SellerViolation;
 use App\Models\User;
 use App\Support\BuyerSanctionService;
 use App\Support\SanctionSettings;
+use App\Support\SellerSanctionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -31,6 +35,12 @@ class AdminSanctionController extends Controller
             ->with(['user:id,name,email', 'order:id,code', 'review:id,product_id'])
             ->latest('occurred_at')
             ->paginate(15, ['*'], 'violations_page')
+            ->withQueryString();
+
+        $sellerViolations = SellerViolation::query()
+            ->with(['user:id,name,email', 'order:id,code', 'product:id,name,slug'])
+            ->latest('occurred_at')
+            ->paginate(15, ['*'], 'seller_violations_page')
             ->withQueryString();
 
         return Inertia::render('admin/sanctions/index', [
@@ -52,7 +62,7 @@ class AdminSanctionController extends Controller
                 'ends_at' => $sanction->ends_at?->toIso8601String(),
                 'is_expired' => $sanction->ends_at !== null && $sanction->ends_at->isPast(),
                 'can_lift' => $sanction->status === SanctionStatus::Active,
-                'buyer' => [
+                'user' => [
                     'id' => $sanction->user->id,
                     'name' => $sanction->user->name,
                     'email' => $sanction->user->email,
@@ -75,13 +85,44 @@ class AdminSanctionController extends Controller
                     'email' => $violation->user->email,
                 ],
             ]),
+            'seller_violations' => $sellerViolations->through(fn (SellerViolation $violation): array => [
+                'id' => $violation->id,
+                'type' => [
+                    'code' => $violation->type->value,
+                    'label' => $violation->type->label(),
+                ],
+                'points' => $violation->points,
+                'description' => $violation->description,
+                'occurred_at' => $violation->occurred_at->toIso8601String(),
+                'order_id' => $violation->order_id,
+                'order_code' => $violation->order?->code,
+                'product_name' => $violation->product?->name,
+                'seller' => [
+                    'id' => $violation->user->id,
+                    'name' => $violation->user->name,
+                    'email' => $violation->user->email,
+                ],
+            ]),
             'buyers' => User::query()
                 ->where('role', UserRole::Buyer)
                 ->orderBy('name')
                 ->get(['id', 'name', 'email']),
+            'sellers' => User::query()
+                ->where('role', UserRole::Seller)
+                ->orderBy('name')
+                ->get(['id', 'name', 'email']),
             'settings' => SanctionSettings::all(),
+            'seller_settings' => SanctionSettings::sellerAll(),
             'violation_types' => collect(BuyerViolationType::cases())
                 ->map(fn (BuyerViolationType $type): array => [
+                    'code' => $type->value,
+                    'label' => $type->label(),
+                    'points' => $type->defaultPoints(),
+                ])
+                ->values()
+                ->all(),
+            'seller_violation_types' => collect(SellerViolationType::cases())
+                ->map(fn (SellerViolationType $type): array => [
                     'code' => $type->value,
                     'label' => $type->label(),
                     'points' => $type->defaultPoints(),
@@ -95,7 +136,7 @@ class AdminSanctionController extends Controller
     {
         $validated = $request->validate([
             'user_id' => ['required', 'integer', 'exists:users,id'],
-            'type' => ['required', 'in:'.implode(',', [SanctionType::CheckoutBan->value, SanctionType::ReviewBan->value, SanctionType::PermanentBan->value])],
+            'type' => ['required', 'string'],
             'reason' => ['nullable', 'string', 'max:1000'],
             'ends_at' => ['nullable', 'date', 'after:now'],
         ]);
@@ -106,13 +147,29 @@ class AdminSanctionController extends Controller
         /** @var User $actor */
         $actor = $request->user();
 
-        BuyerSanctionService::issueSanction(
-            target: $target,
-            type: SanctionType::from($validated['type']),
-            actor: $actor,
-            reason: $validated['reason'] ?? null,
-            endsAt: isset($validated['ends_at']) ? Carbon::parse($validated['ends_at']) : null,
-        );
+        if ($target->role === UserRole::Seller) {
+            SellerSanctionService::issueSanction(
+                target: $target,
+                type: SanctionType::from($validated['type']),
+                actor: $actor,
+                reason: $validated['reason'] ?? null,
+                endsAt: isset($validated['ends_at']) ? Carbon::parse($validated['ends_at']) : null,
+            );
+        } else {
+            if (! in_array($validated['type'], [SanctionType::CheckoutBan->value, SanctionType::ReviewBan->value, SanctionType::PermanentBan->value], true)) {
+                throw ValidationException::withMessages([
+                    'type' => 'Jenis sanksi tidak valid untuk target ini.',
+                ]);
+            }
+
+            BuyerSanctionService::issueSanction(
+                target: $target,
+                type: SanctionType::from($validated['type']),
+                actor: $actor,
+                reason: $validated['reason'] ?? null,
+                endsAt: isset($validated['ends_at']) ? Carbon::parse($validated['ends_at']) : null,
+            );
+        }
 
         return back()->with('success', 'Sanksi berhasil diberikan.');
     }
@@ -122,7 +179,11 @@ class AdminSanctionController extends Controller
         /** @var User $actor */
         $actor = $request->user();
 
-        BuyerSanctionService::lift($sanction, $actor);
+        if ($sanction->user->role === UserRole::Seller) {
+            SellerSanctionService::lift($sanction, $actor);
+        } else {
+            BuyerSanctionService::lift($sanction, $actor);
+        }
 
         return back()->with('success', 'Sanksi berhasil dicabut.');
     }
@@ -138,5 +199,18 @@ class AdminSanctionController extends Controller
         SanctionSettings::update($validated);
 
         return back()->with('success', 'Pengaturan sanksi disimpan.');
+    }
+
+    public function updateSellerSettings(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'window_days' => ['required', 'integer', 'min:1', 'max:365'],
+            'warning_points' => ['required', 'integer', 'min:1', 'max:100'],
+            'payment_confirm_sla_hours' => ['required', 'integer', 'min:1', 'max:720'],
+        ]);
+
+        SanctionSettings::updateSeller($validated);
+
+        return back()->with('success', 'Pengaturan sanksi penjual disimpan.');
     }
 }

@@ -13,7 +13,7 @@ class SanctionIssued
 
     public function __construct(
         public readonly int $sanctionId,
-        public readonly int $buyerId,
+        public readonly int $userId,
         public readonly SanctionType $type,
         public readonly ?string $reason = null,
     ) {}
@@ -30,11 +30,13 @@ class SanctionIssued
             SanctionType::CheckoutBan => 'Checkout diblokir sementara',
             SanctionType::ReviewBan => 'Ulasan diblokir sementara',
             SanctionType::PermanentBan => 'Akun diblokir permanen',
+            SanctionType::ListingBan => 'Pembuatan produk diblokir sementara',
+            SanctionType::SellingSuspension => 'Penjualan disuspen sementara',
         };
     }
 
     public function notificationDescription(): string
     {
-        return $this->reason ?? 'Sanksi diberikan karena pelanggaran ketentuan toko.';
+        return $this->reason ?? 'Sanksi diberikan karena pelanggaran ketentuan.';
     }
 }

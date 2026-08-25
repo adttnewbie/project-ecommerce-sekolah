@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Enums\ProductSalesMethod;
 use App\Enums\ProductStatus;
+use App\Enums\SellerViolationType;
 use App\Events\ProductModerationDecided;
 use App\Http\Requests\Admin\RejectProductRequest;
 use App\Models\Product;
 use App\Support\DomainEventService;
+use App\Support\SellerSanctionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -120,6 +122,13 @@ class AdminProductModerationController extends Controller
                 sellerId: (int) $product->seller_id,
                 decision: 'rejected',
                 reason: $reason !== '' ? $reason : null,
+            );
+
+            SellerSanctionService::recordViolation(
+                (int) $product->seller_id,
+                SellerViolationType::ProductModerationRejected,
+                product: $product,
+                description: 'Produk ditolak moderasi'.($reason !== '' ? ": {$reason}" : ''),
             );
         });
 

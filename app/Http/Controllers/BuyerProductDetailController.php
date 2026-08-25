@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Review;
 use App\Models\User;
+use App\Support\SellerSanctionService;
 use App\Traits\OwnerPayloadHelper;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -21,6 +22,10 @@ class BuyerProductDetailController extends Controller
     public function __invoke(Request $request, Product $product): Response
     {
         abort_unless($product->status === ProductStatus::Approved, 404);
+        abort_if(
+            $product->seller_id !== null && SellerSanctionService::isSellerSuspended((int) $product->seller_id),
+            404,
+        );
 
         $product->load([
             'category:id,name,slug',

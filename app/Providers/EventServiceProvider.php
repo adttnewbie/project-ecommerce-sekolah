@@ -28,8 +28,6 @@ use App\Listeners\AdminSellerApplicationNotify;
 use App\Listeners\BuyerItemCancelledNotify;
 use App\Listeners\BuyerOrderStatusNotify;
 use App\Listeners\BuyerPaymentDecidedNotify;
-use App\Listeners\BuyerSanctionIssuedNotify;
-use App\Listeners\BuyerSanctionLiftedNotify;
 use App\Listeners\CreateLowStockNotification;
 use App\Listeners\CreateModerationResultNotification;
 use App\Listeners\CreatePendingOrderNotification;
@@ -38,6 +36,8 @@ use App\Listeners\CreateReviewModerationResultNotification;
 use App\Listeners\PersistBuyerOrderNotice;
 use App\Listeners\PicketOfficerOrderNotify;
 use App\Listeners\PicketVerificationNotify;
+use App\Listeners\SanctionIssuedNotify;
+use App\Listeners\SanctionLiftedNotify;
 use App\Listeners\SellerCancelledOrderNotify;
 use App\Listeners\SellerPaymentPaidNotify;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -108,11 +108,11 @@ class EventServiceProvider extends ServiceProvider
         ],
 
         SanctionIssued::class => [
-            BuyerSanctionIssuedNotify::class,
+            SanctionIssuedNotify::class,
         ],
 
         SanctionLifted::class => [
-            BuyerSanctionLiftedNotify::class,
+            SanctionLiftedNotify::class,
         ],
     ];
 

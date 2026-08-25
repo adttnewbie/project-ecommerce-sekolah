@@ -6,29 +6,29 @@ use App\Enums\SanctionType;
 use App\Enums\UserRole;
 use App\Models\Sanction;
 use App\Models\User;
-use App\Support\BuyerSanctionService;
+use App\Support\SellerSanctionService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnsureBuyerNotBanned
+class EnsureSellerNotBanned
 {
     /**
      * @param  Closure(Request): (Response)  $next
      */
-    public function handle(Request $request, Closure $next, string $scope = 'checkout'): Response
+    public function handle(Request $request, Closure $next, string $scope = 'listing'): Response
     {
         /** @var User|null $user */
         $user = $request->user();
 
-        if ($user === null || $user->role !== UserRole::Buyer) {
+        if ($user === null || $user->role !== UserRole::Seller) {
             return $next($request);
         }
 
-        $blocker = $scope === 'review'
-            ? BuyerSanctionService::activeReviewBlocker($user)
-            : BuyerSanctionService::activeCheckoutBlocker($user);
+        $blocker = $scope === 'selling'
+            ? SellerSanctionService::activeSellingBlocker($user)
+            : SellerSanctionService::activeListingBlocker($user);
 
         if ($blocker === null) {
             return $next($request);
@@ -36,18 +36,18 @@ class EnsureBuyerNotBanned
 
         throw ValidationException::withMessages([
             'sanction' => self::message($blocker),
-        ])->redirectTo(route('orders.index'));
+        ])->redirectTo(route('seller.dashboard'));
     }
 
     private static function message(Sanction $sanction): string
     {
         $base = match ($sanction->type) {
-            SanctionType::CheckoutBan => 'Kamu sedang diblokir dari checkout',
-            SanctionType::ReviewBan => 'Kamu sedang diblokir dari memberi ulasan',
+            SanctionType::ListingBan => 'Kamu sedang diblokir dari mengelola produk',
+            SanctionType::SellingSuspension => 'Penjualanmu sedang disuspen',
             SanctionType::PermanentBan => 'Akunmu diblokir permanen',
             SanctionType::Warning,
-            SanctionType::ListingBan,
-            SanctionType::SellingSuspension => '',
+            SanctionType::CheckoutBan,
+            SanctionType::ReviewBan => '',
         };
 
         if ($base === '') {

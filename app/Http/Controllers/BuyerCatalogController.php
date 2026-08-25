@@ -7,6 +7,7 @@ use App\Enums\ProductFulfillmentType;
 use App\Enums\ProductStatus;
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\SellerSanctionService;
 use App\Traits\OwnerPayloadHelper;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -23,6 +24,7 @@ class BuyerCatalogController extends Controller
         $category = trim((string) $request->query('category', ''));
         $category = $category === 'all' ? '' : $category;
         $user = $request->user();
+        $suspendedSellerIds = SellerSanctionService::suspendedSellerIds();
 
         return Inertia::render('catalog/index', [
             'filters' => [
@@ -32,6 +34,9 @@ class BuyerCatalogController extends Controller
             'categories' => Category::query()
                 ->whereHas('products', fn ($query) => $query
                     ->where('status', ProductStatus::Approved)
+                    ->where(fn ($query) => $query
+                        ->whereNull('seller_id')
+                        ->orWhereNotIn('seller_id', $suspendedSellerIds))
                     ->where(fn ($query) => $query
                         ->where('fulfillment_type', ProductFulfillmentType::PreOrder)
                         ->orWhere('stock', '>', 0)
@@ -52,6 +57,9 @@ class BuyerCatalogController extends Controller
                 ->withAvg(['reviews as review_avg' => fn (Builder $q) => $q], 'rating')
                 ->when($user, fn (Builder $q) => $q->withExists(['wishlists as is_wishlisted' => fn (Builder $qq) => $qq->where('user_id', $user->id)]))
                 ->where('status', ProductStatus::Approved)
+                ->where(fn ($query) => $query
+                    ->whereNull('seller_id')
+                    ->orWhereNotIn('seller_id', $suspendedSellerIds))
                 ->where(fn ($query) => $query
                     ->where('fulfillment_type', ProductFulfillmentType::PreOrder)
                     ->orWhere('stock', '>', 0)

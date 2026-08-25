@@ -5,6 +5,8 @@ namespace App\Support;
 use App\Enums\BuyerViolationType;
 use App\Enums\OrderItemStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\ProductSalesMethod;
+use App\Enums\SellerViolationType;
 use App\Enums\UserRole;
 use App\Events\BuyerOrderStateChanged;
 use App\Models\Order;
@@ -80,21 +82,9 @@ class OrderLivenessService
                         OrderItemStatus::Sent->value,
                         OrderItemStatus::Completed->value,
                         OrderItemStatus::Cancelled->value,
-                    ])
-                    ->where(function (Builder $q) use ($threshold) {
-                        $q->where(function (Builder $inner) use ($threshold) {
-                            $inner->whereNotNull('status_changed_at')
-                                ->where('status_changed_at', '<=', $threshold);
-                        })->orWhere(function (Builder $inner) use ($threshold) {
-                            $inner->whereNull('status_changed_at')
-                                ->whereNotNull('payment_confirmed_at')
-                                ->where('payment_confirmed_at', '<=', $threshold);
-                        })->orWhere(function (Builder $inner) use ($threshold) {
-                            $inner->whereNull('status_changed_at')
-                                ->whereNull('payment_confirmed_at')
-                                ->where('updated_at', '<=', $threshold);
-                        });
-                    });
+                    ]);
+
+                self::applyIdleThreshold($items, $threshold);
             });
     }
 
@@ -271,6 +261,33 @@ class OrderLivenessService
         return 'active';
     }
 
+    /**
+     * Items count as idle from their last status change, falling back to the
+     * payment confirmation time and finally the last row update.
+     *
+     * @template TModel of \Illuminate\Database\Eloquent\Model
+     *
+     * @param  Builder<TModel>  $items
+     * @return Builder<TModel>
+     */
+    private static function applyIdleThreshold(Builder $items, CarbonInterface $threshold): Builder
+    {
+        return $items->where(function (Builder $q) use ($threshold) {
+            $q->where(function (Builder $inner) use ($threshold) {
+                $inner->whereNotNull('status_changed_at')
+                    ->where('status_changed_at', '<=', $threshold);
+            })->orWhere(function (Builder $inner) use ($threshold) {
+                $inner->whereNull('status_changed_at')
+                    ->whereNotNull('payment_confirmed_at')
+                    ->where('payment_confirmed_at', '<=', $threshold);
+            })->orWhere(function (Builder $inner) use ($threshold) {
+                $inner->whereNull('status_changed_at')
+                    ->whereNull('payment_confirmed_at')
+                    ->where('updated_at', '<=', $threshold);
+            });
+        });
+    }
+
     public static function detectAndMarkStuck(?CarbonInterface $now = null): int
     {
         $now ??= now();
@@ -295,6 +312,116 @@ class OrderLivenessService
             });
 
         return $marked;
+    }
+
+    /**
+     * Record SLA violations against sellers from the hourly sweep:
+     * paid orders not shipped in time, late pre-orders, and ignored
+     * payment confirmations. Consignment stock is picket-managed and
+     * therefore never attributed to the seller.
+     */
+    public static function recordSellerSlaViolations(?CarbonInterface $now = null): int
+    {
+        $now ??= now();
+
+        return self::recordSlowFulfillmentViolations($now)
+            + self::recordPreOrderLateViolations($now)
+            + self::recordUnconfirmedPaymentViolations($now);
+    }
+
+    private static function recordSlowFulfillmentViolations(CarbonInterface $now): int
+    {
+        return self::recordSellerItemViolations(
+            self::applyIdleThreshold(
+                OrderItem::query()
+                    ->where('payment_status', PaymentStatus::Paid)
+                    ->whereNotIn('status', [
+                        OrderItemStatus::Sent->value,
+                        OrderItemStatus::Completed->value,
+                        OrderItemStatus::Cancelled->value,
+                    ])
+                    ->whereHas('order', fn (Builder $order) => $order
+                        ->whereIn('status', ActorLifecycle::activeOrderStatuses())),
+                $now->copy()->subHours(self::FULFILLMENT_IDLE_HOURS),
+            ),
+            SellerViolationType::SlowFulfillment,
+            'Pesanan sudah dibayar tetapi belum dikirim dalam '.self::FULFILLMENT_IDLE_HOURS.' jam',
+        );
+    }
+
+    private static function recordPreOrderLateViolations(CarbonInterface $now): int
+    {
+        return self::recordSellerItemViolations(
+            OrderItem::query()
+                ->where('is_pre_order', true)
+                ->whereNotNull('pre_order_deadline')
+                ->where('pre_order_deadline', '<=', $now->toDateString())
+                ->where('payment_status', PaymentStatus::Paid)
+                ->whereNotIn('status', [
+                    OrderItemStatus::Sent->value,
+                    OrderItemStatus::Completed->value,
+                    OrderItemStatus::Cancelled->value,
+                ]),
+            SellerViolationType::PreOrderLate,
+            'Pre-order melewati batas waktu produksi tanpa dikirim',
+        );
+    }
+
+    private static function recordUnconfirmedPaymentViolations(CarbonInterface $now): int
+    {
+        return self::recordSellerItemViolations(
+            OrderItem::query()
+                ->where('payment_status', PaymentStatus::PendingConfirmation)
+                ->where('updated_at', '<=', $now->copy()->subHours(SanctionSettings::paymentConfirmSlaHours())),
+            SellerViolationType::UnconfirmedPayment,
+            'Bukti pembayaran tidak dikonfirmasi dalam '.SanctionSettings::paymentConfirmSlaHours().' jam',
+        );
+    }
+
+    /**
+     * Record one violation per seller per order for every item matching the
+     * given base query. Deduplication (per order + type) happens inside the
+     * sanction service.
+     *
+     * @param  Builder<OrderItem>  $baseQuery
+     */
+    private static function recordSellerItemViolations(
+        Builder $baseQuery,
+        SellerViolationType $type,
+        string $description,
+    ): int {
+        $recorded = 0;
+
+        $baseQuery
+            ->whereHas('product', fn (Builder $product) => $product
+                ->where('sales_method', ProductSalesMethod::SelfManaged)
+                ->whereNotNull('seller_id'))
+            ->with(['order:id,user_id', 'product:id,seller_id,sales_method'])
+            ->orderBy('id')
+            ->chunkById(200, function ($items) use ($type, $description, &$recorded): void {
+                /** @var OrderItem $item */
+                foreach ($items as $item) {
+                    $sellerId = $item->product->seller_id;
+
+                    if ($sellerId === null) {
+                        continue;
+                    }
+
+                    $violation = SellerSanctionService::recordViolation(
+                        (int) $sellerId,
+                        $type,
+                        order: $item->order,
+                        product: $item->product,
+                        description: $description,
+                    );
+
+                    if ($violation !== null) {
+                        $recorded++;
+                    }
+                }
+            });
+
+        return $recorded;
     }
 
     public static function expireUnpaidOrders(User $actor, ?CarbonInterface $now = null): int

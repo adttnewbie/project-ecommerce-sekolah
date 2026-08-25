@@ -13,7 +13,7 @@ class SanctionLifted
 
     public function __construct(
         public readonly int $sanctionId,
-        public readonly int $buyerId,
+        public readonly int $userId,
         public readonly SanctionType $type,
     ) {}
 
@@ -29,6 +29,8 @@ class SanctionLifted
             SanctionType::CheckoutBan => 'Blokir checkout dicabut',
             SanctionType::ReviewBan => 'Blokir ulasan dicabut',
             SanctionType::PermanentBan => 'Blokir permanen dicabut',
+            SanctionType::ListingBan => 'Blokir produk dicabut',
+            SanctionType::SellingSuspension => 'Suspensi penjualan dicabut',
         };
     }
 

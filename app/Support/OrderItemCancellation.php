@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Enums\BuyerViolationType;
 use App\Enums\OrderItemStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\SellerViolationType;
 use App\Enums\StockMovementSource;
 use App\Enums\UserRole;
 use App\Events\OrderItemCancelled;
@@ -116,6 +117,7 @@ class OrderItemCancellation
         self::restock($current, $actor);
 
         $restoredQuantity = (int) $current->quantity;
+        $previousStatus = $current->status;
         $isExpiry = is_string($reason)
             && str_contains($reason, 'melewati batas waktu pembayaran');
 
@@ -154,6 +156,22 @@ class OrderItemCancellation
                 BuyerViolationType::UnpaidExpired,
                 order: $current->order,
                 description: 'Pesanan tidak dibayar sampai batas waktu '.self::UNPAID_EXPIRY_HOURS.' jam',
+            );
+        } elseif ($actor->role === UserRole::Seller
+            && (int) ($current->product->seller_id ?? 0) === (int) $actor->id
+        ) {
+            $wasInProduction = in_array($previousStatus, [
+                OrderItemStatus::InProduction,
+                OrderItemStatus::Ready,
+            ], true);
+
+            SellerSanctionService::recordViolation(
+                (int) $actor->id,
+                $wasInProduction ? SellerViolationType::CancelAfterProduction : SellerViolationType::ExcessiveCancel,
+                order: $current->order,
+                description: $wasInProduction
+                    ? 'Pesanan dibatalkan setelah produksi dimulai'
+                    : 'Pesanan dibatalkan oleh penjual',
             );
         }
 

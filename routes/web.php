@@ -104,6 +104,7 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     Route::post('admin/sanctions', [AdminSanctionController::class, 'store'])->name('admin.sanctions.store');
     Route::post('admin/sanctions/{sanction}/lift', [AdminSanctionController::class, 'lift'])->name('admin.sanctions.lift');
     Route::put('admin/sanctions/settings', [AdminSanctionController::class, 'updateSettings'])->name('admin.sanctions.settings');
+    Route::put('admin/sanctions/seller-settings', [AdminSanctionController::class, 'updateSellerSettings'])->name('admin.sanctions.seller-settings');
 });
 
 Route::middleware(['auth', EnsureUserIsSeller::class])
@@ -112,14 +113,19 @@ Route::middleware(['auth', EnsureUserIsSeller::class])
     ->group(function () {
         Route::get('dashboard', SellerDashboardController::class)->name('dashboard');
         Route::get('products', [SellerProductController::class, 'index'])->name('products.index');
-        Route::get('products/create', [SellerProductController::class, 'create'])->name('products.create');
-        Route::post('products', [SellerProductController::class, 'store'])->name('products.store');
-        Route::get('products/{product}/edit', [SellerProductController::class, 'edit'])->name('products.edit');
-        Route::put('products/{product}', [SellerProductController::class, 'update'])->name('products.update');
+        Route::get('products/create', [SellerProductController::class, 'create'])->name('products.create')
+            ->middleware('seller.not-banned:listing');
+        Route::post('products', [SellerProductController::class, 'store'])->name('products.store')
+            ->middleware('seller.not-banned:listing');
+        Route::get('products/{product}/edit', [SellerProductController::class, 'edit'])->name('products.edit')
+            ->middleware('seller.not-banned:listing');
+        Route::put('products/{product}', [SellerProductController::class, 'update'])->name('products.update')
+            ->middleware('seller.not-banned:listing');
         Route::delete('products/{product}', [SellerProductController::class, 'destroy'])->name('products.destroy');
 
         Route::get('inventory', [SellerInventoryController::class, 'index'])->name('inventory.index');
-        Route::patch('inventory/{product}', [SellerInventoryController::class, 'update'])->name('inventory.update');
+        Route::patch('inventory/{product}', [SellerInventoryController::class, 'update'])->name('inventory.update')
+            ->middleware('seller.not-banned:listing');
 
         Route::get('orders', [SellerOrderController::class, 'index'])->name('orders.index');
         Route::get('orders/offline/{movement}', [SellerOrderController::class, 'showOffline'])->name('orders.offline.show');

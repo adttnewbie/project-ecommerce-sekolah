@@ -2,42 +2,42 @@
 
 namespace App\Support;
 
-use App\Enums\BuyerViolationType;
 use App\Enums\SanctionStatus;
 use App\Enums\SanctionType;
+use App\Enums\SellerViolationType;
 use App\Enums\UserRole;
 use App\Events\SanctionIssued;
 use App\Events\SanctionLifted;
-use App\Models\BuyerViolation;
 use App\Models\Order;
-use App\Models\Review;
+use App\Models\Product;
 use App\Models\Sanction;
+use App\Models\SellerViolation;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-class BuyerSanctionService
+class SellerSanctionService
 {
     /**
-     * Record a buyer violation and evaluate automatic warnings.
+     * Record a seller violation and evaluate automatic warnings.
      *
-     * Safe to call inside an existing DB transaction (uses savepoints when
-     * nested). Order-linked violations are deduplicated per order so retried
-     * or raced hooks never double-count.
+     * Safe to call inside an existing DB transaction. Order-linked violations
+     * are deduplicated per order so retried or raced hooks never double-count;
+     * moderation violations are deduplicated per product.
      */
     public static function recordViolation(
-        int $buyerId,
-        BuyerViolationType $type,
+        int $sellerId,
+        SellerViolationType $type,
         ?Order $order = null,
-        ?Review $review = null,
+        ?Product $product = null,
         ?string $description = null,
         ?CarbonInterface $occurredAt = null,
-    ): ?BuyerViolation {
-        return DB::transaction(function () use ($buyerId, $type, $order, $review, $description, $occurredAt) {
-            if ($order !== null && $type !== BuyerViolationType::ReviewRejected) {
-                $alreadyRecorded = BuyerViolation::query()
-                    ->where('user_id', $buyerId)
+    ): ?SellerViolation {
+        return DB::transaction(function () use ($sellerId, $type, $order, $product, $description, $occurredAt) {
+            if ($order !== null && $type !== SellerViolationType::ProductModerationRejected) {
+                $alreadyRecorded = SellerViolation::query()
+                    ->where('user_id', $sellerId)
                     ->where('type', $type->value)
                     ->where('order_id', $order->id)
                     ->exists();
@@ -47,17 +47,29 @@ class BuyerSanctionService
                 }
             }
 
-            $violation = BuyerViolation::query()->create([
-                'user_id' => $buyerId,
+            if ($product !== null && $type === SellerViolationType::ProductModerationRejected) {
+                $alreadyRecorded = SellerViolation::query()
+                    ->where('user_id', $sellerId)
+                    ->where('type', $type->value)
+                    ->where('product_id', $product->id)
+                    ->exists();
+
+                if ($alreadyRecorded) {
+                    return null;
+                }
+            }
+
+            $violation = SellerViolation::query()->create([
+                'user_id' => $sellerId,
                 'type' => $type->value,
                 'points' => $type->defaultPoints(),
                 'description' => $description,
                 'order_id' => $order?->id,
-                'review_id' => $review?->id,
+                'product_id' => $product?->id,
                 'occurred_at' => $occurredAt ?? now(),
             ]);
 
-            self::evaluateAutoWarning($buyerId);
+            self::evaluateAutoWarning($sellerId);
 
             return $violation;
         });
@@ -75,15 +87,21 @@ class BuyerSanctionService
     ): Sanction {
         self::assertAdmin($actor);
 
-        if ($target->role !== UserRole::Buyer) {
+        if ($target->role !== UserRole::Seller) {
             throw ValidationException::withMessages([
-                'sanction' => 'Sanksi hanya dapat diberikan kepada buyer.',
+                'sanction' => 'Sanksi penjual hanya dapat diberikan kepada seller.',
             ]);
         }
 
         if ($type === SanctionType::Warning) {
             throw ValidationException::withMessages([
                 'sanction' => 'Peringatan diberikan otomatis oleh sistem.',
+            ]);
+        }
+
+        if (! in_array($type, [SanctionType::ListingBan, SanctionType::SellingSuspension, SanctionType::PermanentBan], true)) {
+            throw ValidationException::withMessages([
+                'sanction' => "Sanksi {$type->label()} hanya berlaku untuk buyer.",
             ]);
         }
 
@@ -99,7 +117,7 @@ class BuyerSanctionService
 
             if ($duplicate) {
                 throw ValidationException::withMessages([
-                    'sanction' => "Sanksi {$type->label()} sudah aktif untuk buyer ini.",
+                    'sanction' => "Sanksi {$type->label()} sudah aktif untuk seller ini.",
                 ]);
             }
 
@@ -115,7 +133,6 @@ class BuyerSanctionService
                 'ends_at' => $type === SanctionType::PermanentBan ? null : $endsAt,
                 'metadata' => [
                     'violation_points_window' => self::windowPoints((int) $current->id),
-                    'receipt_violations_window' => self::windowReceiptCount((int) $current->id),
                 ],
             ]);
 
@@ -159,27 +176,45 @@ class BuyerSanctionService
     }
 
     /**
-     * The buyer's most severe currently-active sanction that blocks checkout.
+     * The seller's most severe currently-active sanction that blocks product listing.
      */
-    public static function activeCheckoutBlocker(User $user): ?Sanction
+    public static function activeListingBlocker(User $user): ?Sanction
     {
-        return self::activeBlocker($user, fn (SanctionType $type) => $type->blocksCheckout());
+        return self::activeBlocker($user, fn (SanctionType $type) => $type->blocksListing());
     }
 
     /**
-     * The most severe currently-active sanction of any kind, warnings included.
+     * The seller's most severe currently-active sanction that blocks selling
+     * (products hidden from the buyer catalog).
      */
-    public static function activeSanction(User $user): ?Sanction
+    public static function activeSellingBlocker(User $user): ?Sanction
     {
-        return self::activeBlocker($user, fn (SanctionType $type) => true);
+        return self::activeBlocker($user, fn (SanctionType $type) => $type->blocksSelling());
     }
 
     /**
-     * The buyer's most severe currently-active sanction that blocks reviews.
+     * IDs of sellers whose products must be hidden from the buyer catalog.
+     *
+     * @return array<int, int>
      */
-    public static function activeReviewBlocker(User $user): ?Sanction
+    public static function suspendedSellerIds(): array
     {
-        return self::activeBlocker($user, fn (SanctionType $type) => $type->blocksReview());
+        return Sanction::query()
+            ->where('status', SanctionStatus::Active->value)
+            ->where(fn ($query) => $query
+                ->whereNull('ends_at')
+                ->orWhere('ends_at', '>', now()))
+            ->get(['user_id', 'type'])
+            ->filter(fn (Sanction $sanction) => $sanction->type->blocksSelling())
+            ->map(fn (Sanction $sanction) => (int) $sanction->user_id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    public static function isSellerSuspended(int $sellerId): bool
+    {
+        return in_array($sellerId, self::suspendedSellerIds(), true);
     }
 
     private static function activeBlocker(User $user, callable $blocks): ?Sanction
@@ -198,13 +233,13 @@ class BuyerSanctionService
         )->first();
     }
 
-    private static function evaluateAutoWarning(int $buyerId, ?CarbonInterface $now = null): void
+    private static function evaluateAutoWarning(int $sellerId, ?CarbonInterface $now = null): void
     {
         $now ??= now();
-        $windowStart = SanctionSettings::windowStart($now);
+        $windowStart = SanctionSettings::sellerWindowStart($now);
 
         $alreadyWarnedThisWindow = Sanction::query()
-            ->where('user_id', $buyerId)
+            ->where('user_id', $sellerId)
             ->where('type', SanctionType::Warning->value)
             ->where('issued_by', null)
             ->where('starts_at', '>=', $windowStart)
@@ -214,30 +249,23 @@ class BuyerSanctionService
             return;
         }
 
-        $points = self::windowPoints($buyerId, $now);
-        $receiptCount = self::windowReceiptCount($buyerId, $now);
+        $points = self::windowPoints($sellerId, $now);
 
-        $pointsTriggered = $points >= SanctionSettings::warningPoints();
-        $receiptTriggered = $receiptCount >= SanctionSettings::receiptForceCompleteCount();
-
-        if (! $pointsTriggered && ! $receiptTriggered) {
+        if ($points < SanctionSettings::sellerWarningPoints()) {
             return;
         }
 
         /** @var Sanction $warning */
         $warning = Sanction::query()->create([
-            'user_id' => $buyerId,
+            'user_id' => $sellerId,
             'type' => SanctionType::Warning->value,
-            'reason' => $pointsTriggered
-                ? "Akumulasi {$points} poin pelanggaran dalam ".SanctionSettings::windowDays().' hari terakhir'
-                : "Pesanan yang diselesaikan paksa admin sebanyak {$receiptCount} kali dalam ".SanctionSettings::windowDays().' hari terakhir',
+            'reason' => "Akumulasi {$points} poin pelanggaran dalam ".SanctionSettings::sellerWindowDays().' hari terakhir',
             'issued_by' => null,
             'status' => SanctionStatus::Active->value,
             'starts_at' => $now,
             'metadata' => [
                 'violation_points_window' => $points,
-                'receipt_violations_window' => $receiptCount,
-                'trigger' => $pointsTriggered ? 'points_threshold' : 'receipt_threshold',
+                'trigger' => 'points_threshold',
             ],
         ]);
 
@@ -251,19 +279,10 @@ class BuyerSanctionService
 
     private static function windowPoints(int $userId, ?CarbonInterface $now = null): int
     {
-        return (int) BuyerViolation::query()
+        return (int) SellerViolation::query()
             ->where('user_id', $userId)
-            ->where('occurred_at', '>=', SanctionSettings::windowStart($now))
+            ->where('occurred_at', '>=', SanctionSettings::sellerWindowStart($now))
             ->sum('points');
-    }
-
-    private static function windowReceiptCount(int $userId, ?CarbonInterface $now = null): int
-    {
-        return BuyerViolation::query()
-            ->where('user_id', $userId)
-            ->where('type', BuyerViolationType::UnconfirmedReceipt->value)
-            ->where('occurred_at', '>=', SanctionSettings::windowStart($now))
-            ->count();
     }
 
     private static function assertAdmin(User $actor): void

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureBuyerNotBanned;
+use App\Http\Middleware\EnsureSellerNotBanned;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'buyer.not-banned' => EnsureBuyerNotBanned::class,
+            'seller.not-banned' => EnsureSellerNotBanned::class,
         ]);
 
         $middleware->web(append: [

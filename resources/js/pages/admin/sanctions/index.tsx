@@ -63,7 +63,7 @@ type SanctionRow = {
     ends_at: string | null;
     is_expired: boolean;
     can_lift: boolean;
-    buyer: { id: number; name: string; email: string };
+    user: { id: number; name: string; email: string };
 };
 
 type ViolationRow = {
@@ -77,12 +77,30 @@ type ViolationRow = {
     buyer: { id: number; name: string; email: string };
 };
 
-type BuyerOption = { id: number; name: string; email: string };
+type SellerViolationRow = {
+    id: number;
+    type: CodeLabel;
+    points: number;
+    description: string | null;
+    occurred_at: string;
+    order_id: number | null;
+    order_code: string | null;
+    product_name: string | null;
+    seller: { id: number; name: string; email: string };
+};
+
+type UserOption = { id: number; name: string; email: string };
 
 type SanctionSettings = {
     window_days: number;
     warning_points: number;
     receipt_force_complete_count: number;
+};
+
+type SellerSanctionSettings = {
+    window_days: number;
+    warning_points: number;
+    payment_confirm_sla_hours: number;
 };
 
 type Paginated<T> = {
@@ -101,9 +119,13 @@ type Paginated<T> = {
 type Props = {
     sanctions: Paginated<SanctionRow>;
     violations: Paginated<ViolationRow>;
-    buyers: BuyerOption[];
+    seller_violations: Paginated<SellerViolationRow>;
+    buyers: UserOption[];
+    sellers: UserOption[];
     settings: SanctionSettings;
+    seller_settings: SellerSanctionSettings;
     violation_types: Array<CodeLabel & { points: number }>;
+    seller_violation_types: Array<CodeLabel & { points: number }>;
 };
 
 const formatDate = (value: string) =>
@@ -122,7 +144,10 @@ const sanctionBadgeClass = (code: string) => {
         case 'checkout_ban':
             return 'bg-orange-50 text-orange-700 ring-1 ring-orange-200';
         case 'review_ban':
+        case 'listing_ban':
             return 'bg-violet-50 text-violet-700 ring-1 ring-violet-200';
+        case 'selling_suspension':
+            return 'bg-sky-50 text-sky-700 ring-1 ring-sky-200';
         default:
             return 'bg-rose-50 text-rose-700 ring-1 ring-rose-200';
     }
@@ -133,7 +158,9 @@ function PaginationBar({
 }: {
     paginator: Paginated<unknown>;
 }) {
-    if (!paginator || paginator.last_page <= 1) return null;
+    if (!paginator || paginator.last_page <= 1) {
+return null;
+}
 
     const hasLinks = paginator.links && paginator.links.length > 3;
 
@@ -159,6 +186,7 @@ function PaginationBar({
                             rawLabel.includes('...') ||
                             rawLabel === '...' ||
                             rawLabel.includes('&hellip;');
+
                         if (isEllipsis) {
                             return (
                                 <span
@@ -169,11 +197,13 @@ function PaginationBar({
                                 </span>
                             );
                         }
+
                         const label = isFirst
                             ? 'Sebelumnya'
                             : isLast
                               ? 'Berikutnya'
                               : rawLabel.replace(/<[^>]*>/g, '').trim();
+
                         return (
                             <Button
                                 key={`${rawLabel}-${idx}`}
@@ -213,6 +243,7 @@ function PaginationBar({
     // Fallback: prev/next via urls or current_page
     const prevUrl = paginator.prev_page_url ?? null;
     const nextUrl = paginator.next_page_url ?? null;
+
     return (
         <div className="flex flex-col gap-3 border-t border-slate-100 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-500">
@@ -262,34 +293,62 @@ function PaginationBar({
 export default function AdminSanctions({
     sanctions,
     violations,
+    seller_violations,
     buyers,
+    sellers,
     settings,
+    seller_settings,
     violation_types,
+    seller_violation_types,
 }: Props) {
     const { flash } = usePage().props;
 
-    const [buyerQuery, setBuyerQuery] = useState('');
-    const [selectedBuyerId, setSelectedBuyerId] = useState<string>('');
+    type Role = 'buyer' | 'seller';
 
-    const selectedBuyer = useMemo(
-        () => buyers.find((b) => String(b.id) === selectedBuyerId) ?? null,
-        [buyers, selectedBuyerId],
+    const [role, setRole] = useState<Role>('buyer');
+    const [userQuery, setUserQuery] = useState('');
+    const [selectedUserId, setSelectedUserId] = useState<string>('');
+
+    const userPool: UserOption[] =
+        role === 'seller'
+            ? sellers
+            : buyers;
+    const selectedUser = useMemo(
+        () =>
+            userPool.find((u) => String(u.id) === selectedUserId) ?? null,
+        [userPool, selectedUserId],
     );
 
-    const filteredBuyers = useMemo(() => {
-        const q = buyerQuery.trim().toLowerCase();
-        if (!q) return buyers;
-        return buyers.filter((b) =>
-            `${b.name} ${b.email}`.toLowerCase().includes(q),
+    const filteredUsers = useMemo(() => {
+        const q = userQuery.trim().toLowerCase();
+
+        if (!q) {
+            return userPool;
+        }
+
+        return userPool.filter((u) =>
+            `${u.name} ${u.email}`.toLowerCase().includes(q),
         );
-    }, [buyers, buyerQuery]);
+    }, [userPool, userQuery]);
 
     const sanctionsTotal = sanctions.total ?? sanctions.data.length;
     const violationsTotal = violations.total ?? violations.data.length;
+    const sellerViolationsTotal =
+        seller_violations.total ?? seller_violations.data.length;
+
+    const handleRoleChange = (next: Role) => {
+        if (next === role) {
+            return;
+        }
+
+        setRole(next);
+        setSelectedUserId('');
+        setUserQuery('');
+    };
 
     return (
         <>
-            <Head title="Sanksi Buyer" />
+            <Head title="Sanksi Buyer & Seller" />
             {/* pertahankan spacing-x parent: p-4 sm:p-6 + space-y-6 */}
             <main className="min-h-[calc(100svh-4rem)] bg-slate-50 p-4 sm:p-6">
                 <div className="space-y-6">
@@ -302,8 +361,15 @@ export default function AdminSanctions({
                                 </Badge>
                                 <Badge className="rounded-[6px] bg-amber-50 text-amber-700 ring-1 ring-amber-200">
                                     <Gavel className="size-3.5" />
-                                    {violationsTotal} pelanggaran terbaru
+                                    {violationsTotal} pelanggaran buyer
                                 </Badge>
+                                {sellerViolationsTotal > 0 && (
+                                    <Badge className="rounded-[6px] bg-violet-50 text-violet-700 ring-1 ring-violet-200">
+                                        <Gavel className="size-3.5" />
+                                        {sellerViolationsTotal}{' '}
+                                        pelanggaran seller
+                                    </Badge>
+                                )}
                                 {sanctionsTotal > 0 && (
                                     <Badge className="rounded-[6px] bg-slate-100 text-slate-700 ring-1 ring-slate-200">
                                         <ShieldX className="size-3.5" />
@@ -312,12 +378,12 @@ export default function AdminSanctions({
                                 )}
                             </div>
                             <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
-                                Sanksi Buyer
+                                Sanksi Buyer &amp; Seller
                             </h1>
                             <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-                                Pantau pelanggaran buyer, berikan sanksi manual
-                                dengan cepat, dan atur ambang peringatan
-                                otomatis sesuai kebijakan toko.
+                                Pantau pelanggaran buyer dan seller, berikan
+                                sanksi manual dengan cepat, dan atur ambang
+                                peringatan otomatis sesuai kebijakan toko.
                             </p>
                         </div>
                     </section>
@@ -389,7 +455,7 @@ export default function AdminSanctions({
                                             <TableHeader>
                                                 <TableRow className="bg-slate-50">
                                                     <TableHead className="px-5">
-                                                        Buyer
+                                                        User
                                                     </TableHead>
                                                     <TableHead className="px-5">
                                                         Sanksi
@@ -422,14 +488,14 @@ export default function AdminSanctions({
                                                                 <div className="font-medium text-slate-900">
                                                                     {
                                                                         sanction
-                                                                            .buyer
+                                                                            .user
                                                                             .name
                                                                     }
                                                                 </div>
                                                                 <div className="text-xs text-slate-500">
                                                                     {
                                                                         sanction
-                                                                            .buyer
+                                                                            .user
                                                                             .email
                                                                     }
                                                                 </div>
@@ -568,10 +634,13 @@ export default function AdminSanctions({
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div className="min-w-0">
                                                         <div className="truncate text-sm font-semibold text-slate-900">
-                                                            {sanction.buyer.name}
+                                                            {sanction.user.name}
                                                         </div>
                                                         <div className="truncate text-xs text-slate-500">
-                                                            {sanction.buyer.email}
+                                                            {
+                                                                sanction.user
+                                                                    .email
+                                                            }
                                                         </div>
                                                     </div>
                                                     <Badge
@@ -712,10 +781,10 @@ export default function AdminSanctions({
                                     Beri Sanksi Manual
                                 </CardTitle>
                                 <CardDescription>
-                                    Blokir checkout, ulasan, atau blokir
-                                    permanen untuk buyer tertentu. Gunakan
-                                    pencarian untuk menemukan buyer dengan
-                                    cepat.
+                                    Pilih peran, lalu blokir checkout, ulasan,
+                                    produk, penjualan, atau blokir permanen.
+                                    Gunakan pencarian untuk menemukan user
+                                    dengan cepat.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="p-6">
@@ -728,65 +797,111 @@ export default function AdminSanctions({
                                         <div className="space-y-4">
                                             <div className="space-y-2">
                                                 <Label
-                                                    htmlFor="buyer-combobox"
+                                                    htmlFor="role"
                                                     className="text-slate-700"
                                                 >
-                                                    Buyer{' '}
+                                                    Peran{' '}
+                                                    <span className="font-normal text-rose-600">
+                                                        *
+                                                    </span>
+                                                </Label>
+                                                <Select
+                                                    name="role"
+                                                    value={role}
+                                                    onValueChange={(v) =>
+                                                        handleRoleChange(
+                                                            v === 'seller'
+                                                                ? 'seller'
+                                                                : 'buyer',
+                                                        )
+                                                    }
+                                                    required
+                                                >
+                                                    <SelectTrigger
+                                                        id="role"
+                                                        className="w-full rounded-[8px] border-slate-200 bg-white"
+                                                    >
+                                                        <SelectValue placeholder="Pilih peran" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="buyer">
+                                                            Buyer
+                                                        </SelectItem>
+                                                        <SelectItem value="seller">
+                                                            Seller
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label
+                                                    htmlFor="user-combobox"
+                                                    className="text-slate-700"
+                                                >
+                                                    {role === 'seller'
+                                                        ? 'Seller'
+                                                        : 'Buyer'}{' '}
                                                     <span className="font-normal text-rose-600">
                                                         *
                                                     </span>
                                                 </Label>
                                                 <Combobox
                                                     value={
-                                                        selectedBuyerId || null
+                                                        selectedUserId || null
                                                     }
                                                     onValueChange={(
                                                         val: string | null,
                                                     ) => {
                                                         const v = val ?? '';
-                                                        setSelectedBuyerId(v);
-                                                        const b = buyers.find(
+                                                        setSelectedUserId(v);
+                                                        const u = userPool.find(
                                                             (x) =>
                                                                 String(x.id) ===
                                                                 v,
                                                         );
-                                                        if (b)
-                                                            setBuyerQuery(
-                                                                `${b.name} (${b.email})`,
+
+                                                        if (u) {
+                                                            setUserQuery(
+                                                                `${u.name} (${u.email})`,
                                                             );
-                                                        else if (!v)
-                                                            setBuyerQuery('');
+                                                        } else if (!v) {
+                                                            setUserQuery('');
+                                                        }
                                                     }}
-                                                    inputValue={buyerQuery}
+                                                    inputValue={userQuery}
                                                     onInputValueChange={(
                                                         v: string,
                                                     ) => {
-                                                        setBuyerQuery(v);
-                                                        if (selectedBuyerId) {
+                                                        setUserQuery(v);
+
+                                                        if (selectedUserId) {
                                                             const sel =
-                                                                buyers.find(
+                                                                userPool.find(
                                                                     (x) =>
                                                                         String(
                                                                             x.id,
                                                                         ) ===
-                                                                        selectedBuyerId,
+                                                                        selectedUserId,
                                                                 );
                                                             const label = sel
                                                                 ? `${sel.name} (${sel.email})`
                                                                 : '';
-                                                            if (v !== label)
-                                                                setSelectedBuyerId(
+
+                                                            if (v !== label) {
+                                                                setSelectedUserId(
                                                                     '',
                                                                 );
+                                                            }
                                                         }
                                                     }}
                                                 >
                                                     <ComboboxInput
-                                                        id="buyer-combobox"
+                                                        id="user-combobox"
                                                         placeholder={
-                                                            buyers.length === 0
-                                                                ? 'Tidak ada buyer'
-                                                                : 'Cari nama atau email buyer…'
+                                                            userPool.length === 0
+                                                                ? `Tidak ada ${role === 'seller' ? 'seller' : 'buyer'}`
+                                                                : `Cari nama atau email ${role}…`
                                                         }
                                                         aria-invalid={Boolean(
                                                             errors.user_id,
@@ -797,29 +912,32 @@ export default function AdminSanctions({
                                                                 : undefined
                                                         }
                                                         disabled={
-                                                            buyers.length === 0
+                                                            userPool.length === 0
                                                         }
                                                         showClear={
                                                             Boolean(
-                                                                selectedBuyerId ||
-                                                                    buyerQuery,
+                                                                selectedUserId ||
+                                                                    userQuery,
                                                             )
                                                         }
                                                     />
                                                     <ComboboxContent>
                                                         <ComboboxList>
-                                                            {filteredBuyers.length ===
+                                                            {filteredUsers.length ===
                                                             0 ? (
                                                                 <div className="px-3 py-6 text-center">
                                                                     <div className="mx-auto flex size-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 ring-1 ring-slate-200">
                                                                         <SearchX className="size-4" />
                                                                     </div>
                                                                     <p className="mt-2 text-sm font-medium text-slate-700">
-                                                                        Buyer
+                                                                        {role ===
+                                                                        'seller'
+                                                                            ? 'Seller'
+                                                                            : 'Buyer'}{' '}
                                                                         tidak
                                                                         ditemukan
                                                                     </p>
-                                                                    {buyerQuery && (
+                                                                    {userQuery && (
                                                                         <p className="mt-1 text-xs text-slate-500">
                                                                             Tidak
                                                                             ada
@@ -827,34 +945,34 @@ export default function AdminSanctions({
                                                                             untuk
                                                                             “
                                                                             {
-                                                                                buyerQuery
+                                                                                userQuery
                                                                             }
                                                                             ”
                                                                         </p>
                                                                     )}
                                                                 </div>
                                                             ) : (
-                                                                filteredBuyers.map(
+                                                                filteredUsers.map(
                                                                     (
-                                                                        buyer,
+                                                                        user,
                                                                     ) => (
                                                                         <ComboboxItem
                                                                             key={
-                                                                                buyer.id
+                                                                                user.id
                                                                             }
                                                                             value={String(
-                                                                                buyer.id,
+                                                                                user.id,
                                                                             )}
                                                                         >
                                                                             <span className="flex min-w-0 flex-col text-left">
                                                                                 <span className="truncate text-sm font-medium text-slate-900">
                                                                                     {
-                                                                                        buyer.name
+                                                                                        user.name
                                                                                     }
                                                                                 </span>
                                                                                 <span className="truncate text-xs text-slate-500">
                                                                                     {
-                                                                                        buyer.email
+                                                                                        user.email
                                                                                     }
                                                                                 </span>
                                                                             </span>
@@ -864,44 +982,46 @@ export default function AdminSanctions({
                                                             )}
                                                         </ComboboxList>
                                                         <ComboboxEmpty className="px-3 py-8 text-center text-sm text-slate-500">
-                                                            Buyer tidak
-                                                            ditemukan.
+                                                            {role === 'seller'
+                                                                ? 'Seller'
+                                                                : 'Buyer'}{' '}
+                                                            tidak ditemukan.
                                                         </ComboboxEmpty>
                                                     </ComboboxContent>
                                                 </Combobox>
                                                 <input
                                                     type="hidden"
                                                     name="user_id"
-                                                    value={selectedBuyerId}
+                                                    value={selectedUserId}
                                                 />
                                                 <InputError
                                                     message={errors.user_id}
                                                 />
                                                 <p className="text-xs leading-5 text-slate-500">
-                                                    {buyers.length} buyer
-                                                    tersedia • ketik untuk
-                                                    menyaring, pilih untuk
-                                                    mengisi. Tombol “Beri
-                                                    Sanksi” aktif setelah buyer
-                                                    dipilih.
+                                                    {userPool.length}{' '}
+                                                    {role} tersedia • ketik
+                                                    untuk menyaring, pilih
+                                                    untuk mengisi. Tombol “Beri
+                                                    Sanksi” aktif setelah{' '}
+                                                    {role} dipilih.
                                                 </p>
-                                                {selectedBuyer && (
+                                                {selectedUser && (
                                                     <div className="flex items-center gap-2 rounded-[8px] border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
                                                         <span className="inline-flex size-6 items-center justify-center rounded-full bg-white text-blue-600 ring-1 ring-blue-200">
-                                                            {selectedBuyer.name
+                                                            {selectedUser.name
                                                                 .charAt(0)
                                                                 .toUpperCase()}
                                                         </span>
                                                         <span className="min-w-0">
                                                             <span className="font-medium">
                                                                 {
-                                                                    selectedBuyer.name
+                                                                    selectedUser.name
                                                                 }
                                                             </span>{' '}
                                                             <span className="text-blue-700/70">
                                                                 (
                                                                 {
-                                                                    selectedBuyer.email
+                                                                    selectedUser.email
                                                                 }
                                                                 )
                                                             </span>{' '}
@@ -921,7 +1041,7 @@ export default function AdminSanctions({
                                                         *
                                                     </span>
                                                 </Label>
-                                                <Select name="type" required>
+                                                <Select name="type" required key={`type-${role}`}>
                                                     <SelectTrigger
                                                         id="type"
                                                         className="w-full rounded-[8px] border-slate-200 bg-white"
@@ -932,19 +1052,49 @@ export default function AdminSanctions({
                                                         <SelectValue placeholder="Pilih jenis sanksi" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        <SelectItem value="checkout_ban">
-                                                            Blokir Checkout —
-                                                            buyer tidak bisa
-                                                            checkout
-                                                        </SelectItem>
-                                                        <SelectItem value="review_ban">
-                                                            Blokir Ulasan — buyer
-                                                            tidak bisa memberi
-                                                            ulasan
-                                                        </SelectItem>
-                                                        <SelectItem value="permanent_ban">
-                                                            Blokir Permanen
-                                                        </SelectItem>
+                                                        {role ===
+                                                        'seller' ? (
+                                                            <>
+                                                                <SelectItem value="listing_ban">
+                                                                    Blokir Produk
+                                                                    — seller
+                                                                    tidak bisa
+                                                                    mengelola
+                                                                    produk
+                                                                </SelectItem>
+                                                                <SelectItem value="selling_suspension">
+                                                                    Suspensi
+                                                                    Penjualan —
+                                                                    produk
+                                                                    disembunyikan
+                                                                    dari katalog
+                                                                </SelectItem>
+                                                                <SelectItem value="permanent_ban">
+                                                                    Blokir
+                                                                    Permanen
+                                                                </SelectItem>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <SelectItem value="checkout_ban">
+                                                                    Blokir
+                                                                    Checkout —
+                                                                    buyer tidak
+                                                                    bisa checkout
+                                                                </SelectItem>
+                                                                <SelectItem value="review_ban">
+                                                                    Blokir Ulasan
+                                                                    — buyer
+                                                                    tidak bisa
+                                                                    memberi
+                                                                    ulasan
+                                                                </SelectItem>
+                                                                <SelectItem value="permanent_ban">
+                                                                    Blokir
+                                                                    Permanen
+                                                                </SelectItem>
+                                                            </>
+                                                        )}
                                                     </SelectContent>
                                                 </Select>
                                                 <InputError
@@ -1010,12 +1160,12 @@ export default function AdminSanctions({
                                                 className="h-11 w-full rounded-[8px] bg-rose-600 px-5 font-semibold text-white shadow-sm transition hover:bg-rose-700 focus-visible:ring-rose-500/20 disabled:opacity-50 sm:w-auto"
                                                 disabled={
                                                     processing ||
-                                                    !selectedBuyerId ||
-                                                    buyers.length === 0
+                                                    !selectedUserId ||
+                                                    userPool.length === 0
                                                 }
                                                 title={
-                                                    !selectedBuyerId
-                                                        ? 'Pilih buyer terlebih dahulu'
+                                                    !selectedUserId
+                                                        ? `Pilih ${role} terlebih dahulu`
                                                         : undefined
                                                 }
                                             >
@@ -1026,9 +1176,9 @@ export default function AdminSanctions({
                                                 )}
                                                 Beri Sanksi
                                             </Button>
-                                            {!selectedBuyerId && (
+                                            {!selectedUserId && (
                                                 <p className="text-xs text-amber-700">
-                                                    Pilih buyer lewat pencarian
+                                                    Pilih {role} lewat pencarian
                                                     di atas untuk mengaktifkan
                                                     tombol.
                                                 </p>
@@ -1206,6 +1356,183 @@ export default function AdminSanctions({
                                                         <Settings2 className="size-4" />
                                                     )}
                                                     Simpan Pengaturan
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </Form>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="gap-0 overflow-hidden rounded-[8px] border border-slate-100 bg-white py-0 shadow-sm">
+                                <CardHeader className="border-b border-slate-100 p-6">
+                                    <CardTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight text-slate-950">
+                                        <span className="flex size-8 items-center justify-center rounded-[8px] bg-slate-900 text-white">
+                                            <Settings2 className="size-4" />
+                                        </span>
+                                        Ambang Peringatan Seller
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Peringatan seller dikirim otomatis saat
+                                        akumulasi poin pelanggaran mencapai
+                                        ambang dalam periode window.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-6">
+                                    <Form
+                                        action="/admin/sanctions/seller-settings"
+                                        method="put"
+                                        disableWhileProcessing
+                                    >
+                                        {({ processing, errors }) => (
+                                            <div className="space-y-4">
+                                                <div className="grid gap-4 sm:grid-cols-3">
+                                                    <div className="space-y-2">
+                                                        <Label
+                                                            htmlFor="seller_window_days"
+                                                            className="text-slate-700"
+                                                        >
+                                                            Window (hari)
+                                                        </Label>
+                                                        <Input
+                                                            id="seller_window_days"
+                                                            name="window_days"
+                                                            type="number"
+                                                            min={1}
+                                                            max={365}
+                                                            defaultValue={
+                                                                seller_settings.window_days
+                                                            }
+                                                            key={`swd-${seller_settings.window_days}`}
+                                                            required
+                                                            className="rounded-[8px] border-slate-200 bg-white"
+                                                            aria-invalid={Boolean(
+                                                                errors.window_days,
+                                                            )}
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                errors.window_days
+                                                            }
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label
+                                                            htmlFor="seller_warning_points"
+                                                            className="text-slate-700"
+                                                        >
+                                                            Poin Warning
+                                                        </Label>
+                                                        <Input
+                                                            id="seller_warning_points"
+                                                            name="warning_points"
+                                                            type="number"
+                                                            min={1}
+                                                            max={100}
+                                                            defaultValue={
+                                                                seller_settings.warning_points
+                                                            }
+                                                            key={`swp-${seller_settings.warning_points}`}
+                                                            required
+                                                            className="rounded-[8px] border-slate-200 bg-white"
+                                                            aria-invalid={Boolean(
+                                                                errors.warning_points,
+                                                            )}
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                errors.warning_points
+                                                            }
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label
+                                                            htmlFor="seller_payment_confirm_sla_hours"
+                                                            className="text-slate-700"
+                                                        >
+                                                            Konfirmasi Bayar (jam)
+                                                        </Label>
+                                                        <Input
+                                                            id="seller_payment_confirm_sla_hours"
+                                                            name="payment_confirm_sla_hours"
+                                                            type="number"
+                                                            min={1}
+                                                            max={720}
+                                                            defaultValue={
+                                                                seller_settings.payment_confirm_sla_hours
+                                                            }
+                                                            key={`spc-${seller_settings.payment_confirm_sla_hours}`}
+                                                            required
+                                                            className="rounded-[8px] border-slate-200 bg-white"
+                                                            aria-invalid={Boolean(
+                                                                errors.payment_confirm_sla_hours,
+                                                            )}
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                errors.payment_confirm_sla_hours
+                                                            }
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="rounded-[8px] border border-slate-200 bg-slate-50 p-3">
+                                                    <div className="text-xs font-medium text-slate-700">
+                                                        Bobot poin pelanggaran
+                                                        seller
+                                                    </div>
+                                                    <div className="mt-2 flex flex-wrap gap-1.5">
+                                                        {seller_violation_types.map(
+                                                            (t) => (
+                                                                <Badge
+                                                                    key={t.code}
+                                                                    className="rounded-[6px] border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700"
+                                                                >
+                                                                    {t.label}{' '}
+                                                                    <span className="ml-1 rounded bg-slate-900 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white">
+                                                                        +
+                                                                        {
+                                                                            t.points
+                                                                        }
+                                                                    </span>
+                                                                </Badge>
+                                                            ),
+                                                        )}
+                                                    </div>
+                                                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                                                        Periode window menghitung
+                                                        akumulasi poin dalam{' '}
+                                                        <span className="font-medium text-slate-700">
+                                                            {
+                                                                seller_settings.window_days
+                                                            }{' '}
+                                                            hari
+                                                        </span>{' '}
+                                                        terakhir. Warning dipicu
+                                                        saat mencapai{' '}
+                                                        <span className="font-medium text-slate-700">
+                                                            {
+                                                                seller_settings.warning_points
+                                                            }{' '}
+                                                            poin
+                                                        </span>
+                                                        . Pengiriman lambat
+                                                        memakai SLA 48 jam dan
+                                                        produk titipan UP Jurusan
+                                                        dikelola petugas piket.
+                                                    </p>
+                                                </div>
+
+                                                <Button
+                                                    type="submit"
+                                                    className="h-11 w-full rounded-[8px] bg-[#0080FF] px-5 font-semibold text-white shadow-sm hover:bg-[#006FE0] focus-visible:ring-[#0080FF]/20 disabled:opacity-50 sm:w-auto"
+                                                    disabled={processing}
+                                                >
+                                                    {processing ? (
+                                                        <Spinner className="text-white" />
+                                                    ) : (
+                                                        <Settings2 className="size-4" />
+                                                    )}
+                                                    Simpan Pengaturan Seller
                                                 </Button>
                                             </div>
                                         )}
@@ -1448,6 +1775,238 @@ export default function AdminSanctions({
                             )}
                         </CardContent>
                     </Card>
+
+                    <Card className="gap-0 overflow-hidden rounded-[8px] border border-slate-100 bg-white py-0 shadow-sm">
+                        <CardHeader className="border-b border-slate-100 p-6">
+                            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <CardTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight text-slate-950">
+                                        <span className="flex size-8 items-center justify-center rounded-[8px] bg-violet-50 text-violet-700 ring-1 ring-violet-200">
+                                            <Clock3 className="size-4" />
+                                        </span>
+                                        Pelanggaran Seller Terbaru
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Catatan pelanggaran yang terekam
+                                        otomatis dari aktivitas seller — keterlambatan
+                                        pengiriman, pembatalan, dan moderasi produk.
+                                    </CardDescription>
+                                </div>
+                                <Badge
+                                    variant="secondary"
+                                    className="w-fit rounded-[6px] bg-slate-50 text-slate-600 ring-1 ring-slate-200"
+                                >
+                                    {seller_violations.from ?? 0}–
+                                    {seller_violations.to ?? 0} dari{' '}
+                                    {seller_violations.total ?? 0}
+                                </Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            {seller_violations.data.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+                                    <div className="flex size-12 items-center justify-center rounded-[14px] bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200">
+                                        <ShieldAlert className="size-6" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h3 className="text-sm font-semibold text-slate-900">
+                                            Belum ada pelanggaran tercatat
+                                        </h3>
+                                        <p className="mx-auto max-w-sm text-sm leading-6 text-slate-500">
+                                            Semua aktivitas seller terpantau
+                                            baik. Pelanggaran baru akan muncul
+                                            di sini secara otomatis.
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="hidden md:block">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow className="bg-slate-50">
+                                                    <TableHead className="px-5">
+                                                        Seller
+                                                    </TableHead>
+                                                    <TableHead className="px-5">
+                                                        Pelanggaran
+                                                    </TableHead>
+                                                    <TableHead className="px-5">
+                                                        Poin
+                                                    </TableHead>
+                                                    <TableHead className="px-5">
+                                                        Waktu
+                                                    </TableHead>
+                                                    <TableHead className="px-5">
+                                                        Pesanan / Produk
+                                                    </TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {seller_violations.data.map(
+                                                    (violation) => (
+                                                        <TableRow
+                                                            key={
+                                                                violation.id
+                                                            }
+                                                        >
+                                                            <TableCell className="px-5">
+                                                                <div className="font-medium text-slate-900">
+                                                                    {
+                                                                        violation
+                                                                            .seller
+                                                                            .name
+                                                                    }
+                                                                </div>
+                                                                <div className="text-xs text-slate-500">
+                                                                    {
+                                                                        violation
+                                                                            .seller
+                                                                            .email
+                                                                    }
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="max-w-md px-5">
+                                                                <div className="text-sm font-medium text-slate-800">
+                                                                    {
+                                                                        violation
+                                                                            .type
+                                                                            .label
+                                                                    }
+                                                                </div>
+                                                                {violation.description && (
+                                                                    <div
+                                                                        className="truncate text-xs leading-5 text-slate-500"
+                                                                        title={
+                                                                            violation.description
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            violation.description
+                                                                        }
+                                                                    </div>
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell className="px-5">
+                                                                <Badge className="rounded-[6px] bg-slate-900 px-2 py-1 text-xs font-bold text-white">
+                                                                    +
+                                                                    {
+                                                                        violation.points
+                                                                    }
+                                                                </Badge>
+                                                            </TableCell>
+                                                            <TableCell className="whitespace-nowrap px-5 text-sm text-slate-600">
+                                                                {formatDate(
+                                                                    violation.occurred_at,
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell className="px-5 text-sm">
+                                                                {violation.order_code ? (
+                                                                    <Badge className="rounded-[6px] bg-slate-50 font-mono text-xs font-medium text-slate-700 ring-1 ring-slate-200">
+                                                                        {
+                                                                            violation.order_code
+                                                                        }
+                                                                    </Badge>
+                                                                ) : violation.product_name ? (
+                                                                    <span className="text-xs text-slate-600">
+                                                                        {
+                                                                            violation.product_name
+                                                                        }
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-slate-400">
+                                                                        —
+                                                                    </span>
+                                                                )}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ),
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+
+                                    <div className="grid gap-3 bg-slate-50 p-4 md:hidden">
+                                        {seller_violations.data.map(
+                                            (violation) => (
+                                                <div
+                                                    key={`svm-${violation.id}`}
+                                                    className="rounded-[12px] border border-slate-200 bg-white p-4 shadow-sm"
+                                                >
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <div className="min-w-0">
+                                                            <div className="truncate text-sm font-semibold text-slate-900">
+                                                                {
+                                                                    violation.seller
+                                                                        .name
+                                                                }
+                                                            </div>
+                                                            <div className="truncate text-xs text-slate-500">
+                                                                {
+                                                                    violation.seller
+                                                                        .email
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                        <Badge className="shrink-0 rounded-[6px] bg-slate-900 px-2 py-1 text-xs font-bold text-white">
+                                                            +
+                                                            {
+                                                                violation.points
+                                                            }
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="mt-3 space-y-1">
+                                                        <div className="text-sm font-medium text-slate-800">
+                                                            {
+                                                                violation.type.label
+                                                            }
+                                                        </div>
+                                                        {violation.description && (
+                                                            <p className="line-clamp-2 text-xs leading-5 text-slate-500">
+                                                                {
+                                                                    violation.description
+                                                                }
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                                                        <span className="inline-flex items-center gap-1.5 rounded-[6px] bg-slate-50 px-2 py-1 text-slate-600 ring-1 ring-slate-200">
+                                                            <Clock3 className="size-3.5" />
+                                                            {formatDate(
+                                                                violation.occurred_at,
+                                                            )}
+                                                        </span>
+                                                        {violation.order_code ? (
+                                                            <span className="inline-flex rounded-[6px] bg-white px-2 py-1 font-mono text-xs font-medium text-slate-700 ring-1 ring-slate-200">
+                                                                {
+                                                                    violation.order_code
+                                                                }
+                                                            </span>
+                                                        ) : violation.product_name ? (
+                                                            <span className="inline-flex rounded-[6px] bg-white px-2 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200">
+                                                                {
+                                                                    violation.product_name
+                                                                }
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-slate-400">
+                                                                Tanpa pesanan
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ),
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                            {seller_violations.data.length > 0 && (
+                                <PaginationBar
+                                    paginator={seller_violations}
+                                />
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
             </main>
         </>
@@ -1457,7 +2016,7 @@ export default function AdminSanctions({
 AdminSanctions.layout = {
     breadcrumbs: [
         {
-            title: 'Sanksi Buyer',
+            title: 'Sanksi Buyer & Seller',
             href: '/admin/sanctions',
         },
     ],

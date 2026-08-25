@@ -16,6 +16,9 @@ class DetectStuckOrdersCommand extends Command
         $marked = OrderLivenessService::detectAndMarkStuck();
         $this->info("Stuck/expired orders marked: {$marked}");
 
+        $violations = OrderLivenessService::recordSellerSlaViolations();
+        $this->info("Seller SLA violations recorded: {$violations}");
+
         return self::SUCCESS;
     }
 }
