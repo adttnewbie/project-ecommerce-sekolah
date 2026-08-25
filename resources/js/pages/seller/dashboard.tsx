@@ -4,10 +4,13 @@ import {
     AlertTriangle,
     ArrowUpRight,
     BadgeDollarSign,
+    BarChart3,
     Boxes,
     ChevronRight,
     Clock3,
+    Inbox,
     Package,
+    Search,
     ShoppingBag,
     ShoppingCart,
     Store,
@@ -15,6 +18,8 @@ import {
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SellerEmptyState } from '@/components/seller/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
     Card,
     CardContent,
@@ -115,19 +120,19 @@ const iconMap: Record<SellerIconKey, LucideIcon> = {
 };
 
 const toneStyles: Record<StatTone, string> = {
-    blue: 'bg-blue-50 text-blue-700',
-    emerald: 'bg-emerald-50 text-emerald-700',
-    amber: 'bg-amber-50 text-amber-700',
-    rose: 'bg-rose-50 text-rose-700',
+    blue: 'border border-[#BCE0FF] bg-[#EFF8FF] text-[#0080FF]',
+    emerald: 'border border-[#BBF7D0] bg-[#ECFDF3] text-[#16A34A]',
+    amber: 'border border-[#FFEDD5] bg-[#FFF7ED] text-[#EA580C]',
+    rose: 'border border-[#FECACA] bg-[#FEF2F2] text-[#DC2626]',
 };
 
 const statusStyles: Record<OrderStatus, string> = {
-    pending: 'bg-blue-50 text-blue-700',
-    in_production: 'bg-violet-50 text-violet-700',
-    ready: 'bg-cyan-50 text-cyan-700',
-    packed: 'bg-amber-50 text-amber-700',
-    sent: 'bg-indigo-50 text-indigo-700',
-    completed: 'bg-emerald-50 text-emerald-700',
+    pending: 'border border-[#BCE0FF] bg-[#EFF8FF] text-[#0080FF]',
+    in_production: 'border border-[#DDD6FE] bg-[#F5F3FF] text-[#7C3AED]',
+    ready: 'border border-[#A5F3FC] bg-[#ECFEFF] text-[#0891B2]',
+    packed: 'border border-[#FFEDD5] bg-[#FFF7ED] text-[#EA580C]',
+    sent: 'border border-[#C7D2FE] bg-[#EEF2FF] text-[#4338CA]',
+    completed: 'border border-[#BBF7D0] bg-[#ECFDF3] text-[#16A34A]',
 };
 
 const statusLabels: Record<OrderStatus, string> = {
@@ -140,7 +145,7 @@ const statusLabels: Record<OrderStatus, string> = {
 };
 
 const salesConfig = {
-    sales: { label: 'Pendapatan seller', color: '#2563eb' },
+    sales: { label: 'Pendapatan seller', color: '#0080FF' },
 } satisfies ChartConfig;
 
 const formatRupiah = (value: number) =>
@@ -158,7 +163,7 @@ function StatCard({
     const Icon = iconMap[stat.icon];
 
     return (
-        <Card className="gap-0 rounded-[8px] border-slate-100 py-0 shadow-sm">
+        <Card className="gap-0 rounded-[14px] border-slate-100 py-0 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-md motion-reduce:transition-none">
             <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-3">
                     <div>
@@ -168,9 +173,10 @@ function StatCard({
                         </p>
                     </div>
                     <span
-                        className={`grid size-10 shrink-0 place-items-center rounded-[8px] ${toneStyles[stat.tone]}`}
+                        className={`grid size-10 shrink-0 place-items-center rounded-[10px] ${toneStyles[stat.tone]}`}
+                        aria-hidden="true"
                     >
-                        <Icon className="size-5" />
+                        <Icon className="size-5" aria-hidden="true" />
                     </span>
                 </div>
                 <p className="mt-2 text-xs text-slate-500">{stat.context}</p>
@@ -199,9 +205,9 @@ export default function SellerDashboard({
         <>
             <Head title="Dashboard Seller" />
             <main className="min-h-[calc(100svh-4rem)] bg-slate-50 p-4 sm:p-6">
-                <div className="space-y-6">
+                <div className="space-y-8">
                     <header>
-                        <Badge className="mb-2 rounded-[6px] bg-emerald-50 text-emerald-700">
+                        <Badge className="mb-2 rounded-[6px] border border-[#BBF7D0] bg-[#ECFDF3] text-[#16A34A]">
                             Pusat Seller
                         </Badge>
                         <h1 className="text-2xl font-semibold text-slate-950">
@@ -228,7 +234,8 @@ export default function SellerDashboard({
                                 <Link
                                     key={item.key}
                                     href={sellerOrdersIndex()}
-                                    className="rounded-[8px] border border-slate-100 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:bg-blue-50/40"
+                                    aria-label={`Lihat pesanan ${item.label}`}
+                                    className="rounded-[14px] border border-slate-100 bg-white p-4 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:border-[#BCE0FF] hover:bg-[#EFF8FF]/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                                 >
                                     <p className="text-sm text-slate-500">
                                         {item.label}
@@ -236,9 +243,9 @@ export default function SellerDashboard({
                                     <p className="mt-2 text-2xl font-semibold text-slate-950 tabular-nums">
                                         {item.value}
                                     </p>
-                                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-blue-700">
+                                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#0080FF]">
                                         Lihat pesanan
-                                        <ChevronRight className="size-3.5" />
+                                        <ChevronRight className="size-3.5" aria-hidden="true" />
                                     </span>
                                 </Link>
                             ))}
@@ -246,7 +253,7 @@ export default function SellerDashboard({
                     </section>
 
                     <section className="grid gap-6 lg:grid-cols-2">
-                        <Card className="gap-0 rounded-[8px] border-slate-100 py-0 shadow-sm">
+                        <Card className="gap-0 rounded-[14px] border-slate-100 py-0 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-md motion-reduce:transition-none">
                             <CardHeader className="p-5 pb-4">
                                 <CardTitle>Tugas Seller</CardTitle>
                                 <CardDescription>
@@ -256,9 +263,13 @@ export default function SellerDashboard({
                             </CardHeader>
                             <CardContent className="space-y-3 p-5 pt-0">
                                 {data.tasks.length === 0 ? (
-                                    <p className="text-sm text-slate-500">
-                                        Tidak ada tugas mendesak saat ini.
-                                    </p>
+                                    <SellerEmptyState
+                                        icon={Package}
+                                        title="Tidak ada tugas mendesak"
+                                        description="Semua pekerjaan operasional sudah beres. Cek lagi nanti atau tambah produk baru."
+                                        actionHref={sellerProductsCreate().url}
+                                        actionLabel="Tambah Produk"
+                                    />
                                 ) : (
                                     data.tasks.map((task) => {
                                         const Icon = iconMap[task.icon];
@@ -266,13 +277,14 @@ export default function SellerDashboard({
                                         return (
                                             <div
                                                 key={task.title}
-                                                className="flex flex-col items-stretch gap-3 rounded-[8px] border border-slate-100 p-3 sm:flex-row sm:items-center"
+                                                className="flex flex-col items-stretch gap-3 rounded-[12px] border border-slate-100 p-3 sm:flex-row sm:items-center transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-[#BCE0FF] hover:bg-[#EFF8FF]/30 motion-reduce:transition-none"
                                             >
                                                 <div className="flex min-w-0 items-start gap-3 sm:flex-1 sm:items-center">
                                                     <span
-                                                        className={`grid size-9 shrink-0 place-items-center rounded-[8px] ${toneStyles[task.tone]}`}
+                                                        className={`grid size-9 shrink-0 place-items-center rounded-[10px] ${toneStyles[task.tone]}`}
+                                                        aria-hidden="true"
                                                     >
-                                                        <Icon className="size-4" />
+                                                        <Icon className="size-4" aria-hidden="true" />
                                                     </span>
                                                     <div className="min-w-0 flex-1">
                                                         <p className="text-sm font-semibold text-slate-950">
@@ -285,9 +297,8 @@ export default function SellerDashboard({
                                                 </div>
                                                 <Button
                                                     asChild
-                                                    size="sm"
                                                     variant="outline"
-                                                    className="w-full sm:w-auto"
+                                                    className="h-11 min-h-11 w-full shrink-0 rounded-[12px] border-slate-200 bg-white px-4 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none sm:w-auto"
                                                 >
                                                     <Link
                                                         href={taskHref(
@@ -304,7 +315,7 @@ export default function SellerDashboard({
                             </CardContent>
                         </Card>
 
-                        <Card className="gap-0 rounded-[8px] border-slate-100 py-0 shadow-sm">
+                        <Card className="gap-0 rounded-[14px] border-slate-100 py-0 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-md motion-reduce:transition-none">
                             <CardHeader className="p-5 pb-4">
                                 <CardTitle>Perhatian Stok</CardTitle>
                                 <CardDescription>
@@ -314,22 +325,34 @@ export default function SellerDashboard({
                             </CardHeader>
                             <CardContent className="space-y-3 p-5 pt-0">
                                 {data.stockAlerts.length === 0 ? (
-                                    <p className="text-sm text-slate-500">
-                                        Stok produk aman.
-                                    </p>
+                                    <SellerEmptyState
+                                        icon={Search}
+                                        title="Stok produk aman"
+                                        description="Tidak ada produk hampir habis. Pantau inventori untuk restock tepat waktu."
+                                        actionHref={sellerInventoryIndex().url}
+                                        actionLabel="Kelola Inventori"
+                                    />
                                 ) : (
                                     data.stockAlerts.map((item) => (
                                         <div
                                             key={item.sku}
                                             className={cn(
-                                                'flex items-center justify-between gap-3 rounded-[8px] border p-3',
+                                                'flex items-center justify-between gap-3 rounded-[12px] border p-3 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
                                                 item.tone === 'danger'
-                                                    ? 'border-rose-100 bg-rose-50/70'
-                                                    : 'border-amber-100 bg-amber-50/70',
+                                                    ? 'border-[#FECACA] bg-[#FEF2F2]/70'
+                                                    : 'border-[#FFEDD5] bg-[#FFF7ED]/70',
                                             )}
                                         >
                                             <div className="flex min-w-0 items-center gap-3">
-                                                <AlertTriangle className="size-4 shrink-0 text-rose-600" />
+                                                <AlertTriangle
+                                                    className={cn(
+                                                        'size-4 shrink-0',
+                                                        item.tone === 'danger'
+                                                            ? 'text-[#DC2626]'
+                                                            : 'text-[#EA580C]',
+                                                    )}
+                                                    aria-hidden="true"
+                                                />
                                                 <div className="min-w-0">
                                                     <p className="truncate text-sm font-semibold">
                                                         {item.product}
@@ -341,11 +364,12 @@ export default function SellerDashboard({
                                             </div>
                                             <Button
                                                 asChild
-                                                size="sm"
                                                 variant="outline"
+                                                className="h-11 min-h-11 shrink-0 rounded-[12px] border-slate-200 bg-white px-4 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                             >
                                                 <Link
                                                     href={sellerInventoryIndex()}
+                                                    aria-label={`Kelola stok ${item.product}`}
                                                 >
                                                     Kelola stok
                                                 </Link>
@@ -357,7 +381,7 @@ export default function SellerDashboard({
                         </Card>
                     </section>
 
-                    <Card className="gap-0 rounded-[8px] border-slate-100 py-0 shadow-sm">
+                    <Card className="gap-0 rounded-[14px] border-slate-100 py-0 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-md motion-reduce:transition-none">
                         <CardHeader className="p-5 pb-0">
                             <CardTitle>Pendapatan 7 Hari Terakhir</CardTitle>
                             <CardDescription>
@@ -367,10 +391,13 @@ export default function SellerDashboard({
                         </CardHeader>
                         <CardContent className="p-5">
                             {!hasSales ? (
-                                <div className="grid h-64 place-items-center text-center text-sm text-slate-500">
-                                    Belum ada pendapatan seller dalam tujuh hari
-                                    terakhir.
-                                </div>
+                                <SellerEmptyState
+                                    icon={BarChart3}
+                                    title="Belum ada pendapatan"
+                                    description="Pendapatan 7 hari terakhir kosong. Transaksi terbayar akan muncul di grafik ini."
+                                    actionHref={sellerOrdersIndex().url}
+                                    actionLabel="Lihat Pesanan"
+                                />
                             ) : (
                                 <ChartContainer
                                     config={salesConfig}
@@ -456,7 +483,7 @@ export default function SellerDashboard({
                     </Card>
 
                     <section className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
-                        <Card className="gap-0 rounded-[8px] border-slate-100 py-0 shadow-sm">
+                        <Card className="gap-0 rounded-[14px] border-slate-100 py-0 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-md motion-reduce:transition-none">
                             <CardHeader className="flex-row items-center justify-between border-b border-slate-100 p-5">
                                 <div>
                                     <CardTitle>Transaksi Terbaru</CardTitle>
@@ -465,10 +492,10 @@ export default function SellerDashboard({
                                         terbaru.
                                     </CardDescription>
                                 </div>
-                                <Button asChild size="sm" variant="ghost">
+                                <Button asChild variant="ghost" className="h-11 min-h-11 rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none">
                                     <Link href={sellerOrdersIndex()}>
                                         Semua transaksi
-                                        <ArrowUpRight className="size-4" />
+                                        <ArrowUpRight className="size-4" aria-hidden="true" />
                                     </Link>
                                 </Button>
                             </CardHeader>
@@ -492,9 +519,15 @@ export default function SellerDashboard({
                                             <TableRow>
                                                 <TableCell
                                                     colSpan={5}
-                                                    className="py-10 text-center text-sm text-slate-500"
+                                                    className="p-0"
                                                 >
-                                                    Belum ada transaksi terbaru.
+                                                    <SellerEmptyState
+                                                        icon={Inbox}
+                                                        title="Belum ada transaksi"
+                                                        description="Transaksi online dan POS terbaru akan tampil di sini."
+                                                        actionHref={sellerOrdersIndex().url}
+                                                        actionLabel="Lihat Pesanan"
+                                                    />
                                                 </TableCell>
                                             </TableRow>
                                         )}
@@ -545,7 +578,9 @@ export default function SellerDashboard({
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell className="pr-5 text-slate-500">
-                                                    {order.time}
+                                                    <time dateTime={order.time} className="tabular-nums">
+                                                        {order.time}
+                                                    </time>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -554,7 +589,7 @@ export default function SellerDashboard({
                             </CardContent>
                         </Card>
 
-                        <Card className="gap-0 rounded-[8px] border-slate-100 py-0 shadow-sm">
+                        <Card className="gap-0 rounded-[14px] border-slate-100 py-0 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-md motion-reduce:transition-none">
                             <CardHeader className="p-5 pb-4">
                                 <CardTitle>Produk Terlaris Online</CardTitle>
                                 <CardDescription>
@@ -563,9 +598,13 @@ export default function SellerDashboard({
                             </CardHeader>
                             <CardContent className="p-5 pt-0">
                                 {data.topProducts.length === 0 ? (
-                                    <p className="text-sm text-slate-500">
-                                        Belum ada penjualan online terbayar.
-                                    </p>
+                                    <SellerEmptyState
+                                        icon={Package}
+                                        title="Belum ada penjualan"
+                                        description="Produk terlaris dari pesanan terbayar akan muncul di sini."
+                                        actionHref={sellerProductsIndex().url}
+                                        actionLabel="Lihat Produk"
+                                    />
                                 ) : (
                                     <ul className="space-y-4">
                                         {data.topProducts.map(

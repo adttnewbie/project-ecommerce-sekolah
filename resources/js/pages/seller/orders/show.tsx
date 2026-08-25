@@ -1,9 +1,11 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
+    AlertCircle,
     ArrowLeft,
     CheckCircle2,
     PackageCheck,
     ShoppingCart,
+    XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +17,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { index as ordersIndex, updateStatus } from '@/routes/seller/orders';
 
@@ -71,20 +74,20 @@ type OrderDetailProps = {
 };
 
 const statusStyles: Record<OrderStatus, string> = {
-    pending: 'bg-blue-50 text-blue-700',
-    in_production: 'bg-violet-50 text-violet-700',
-    ready: 'bg-cyan-50 text-cyan-700',
-    packed: 'bg-amber-50 text-amber-700',
-    sent: 'bg-indigo-50 text-indigo-700',
-    completed: 'bg-emerald-50 text-emerald-700',
-    cancelled: 'bg-rose-50 text-rose-700',
+    pending: 'bg-[#EFF8FF] text-[#0080FF] border border-[#BCE0FF]',
+    in_production: 'bg-violet-50 text-violet-700 border border-violet-100',
+    ready: 'bg-cyan-50 text-cyan-700 border border-cyan-100',
+    packed: 'bg-[#FFF7ED] text-[#EA580C] border border-[#FFEDD5]',
+    sent: 'bg-indigo-50 text-indigo-700 border border-indigo-100',
+    completed: 'bg-[#ECFDF3] text-[#16A34A] border border-[#BBF7D0]',
+    cancelled: 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]',
 };
 
 const paymentStatusStyles: Record<PaymentStatus, string> = {
-    unpaid: 'bg-slate-100 text-slate-700',
-    pending_confirmation: 'bg-amber-50 text-amber-700',
-    paid: 'bg-emerald-50 text-emerald-700',
-    rejected: 'bg-rose-50 text-rose-700',
+    unpaid: 'bg-slate-100 text-slate-700 border border-slate-200',
+    pending_confirmation: 'bg-[#FFF7ED] text-[#EA580C] border border-[#FFEDD5]',
+    paid: 'bg-[#ECFDF3] text-[#16A34A] border border-[#BBF7D0]',
+    rejected: 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]',
 };
 
 const nextStatus = {
@@ -107,7 +110,7 @@ const nextActionFor = (orderItem: OrderDetailProps['orderItem']) => {
         return { code: 'in_production' as const, action: 'Mulai produksi' };
     }
 
-    return nextStatus[orderItem.status.code];
+    return nextStatus[orderItem.status.code as keyof typeof nextStatus] ?? null;
 };
 
 const formatRupiah = (value: number) =>
@@ -118,7 +121,7 @@ const formatRupiah = (value: number) =>
     }).format(value);
 
 export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
-    const { flash } = usePage().props;
+    const { flash } = usePage().props as { flash: { success?: string; error?: string } };
     const [processing, setProcessing] = useState(false);
     const [paymentProcessing, setPaymentProcessing] = useState(false);
     const [paymentError, setPaymentError] = useState<string>();
@@ -150,7 +153,7 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                 preserveScroll: true,
                 onStart: () => setProcessing(true),
                 onFinish: () => setProcessing(false),
-                onError: (errors) => setStatusError(errors.status),
+                onError: (errors) => setStatusError((errors as Record<string, string>).status),
             },
         );
     };
@@ -173,12 +176,17 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                 preserveScroll: true,
                 onStart: () => setPaymentProcessing(true),
                 onFinish: () => setPaymentProcessing(false),
-                onError: (errors) => setPaymentError(errors.payment),
+                onError: (errors) => setPaymentError((errors as Record<string, string>).payment),
             },
         );
     };
 
-    const details = [
+    const formattedTime = new Intl.DateTimeFormat('id-ID', {
+        dateStyle: 'full',
+        timeStyle: 'short',
+    }).format(new Date(orderItem.created_at));
+
+    const details: Array<[string, React.ReactNode]> = [
         ['Nomor transaksi', orderItem.code ?? `#${orderItem.order_id}`],
         ['Pembeli', orderItem.buyer.name],
         ['Produk', orderItem.product_name],
@@ -186,7 +194,7 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
         ['Harga satuan', formatRupiah(orderItem.price)],
         ['Jumlah', String(orderItem.quantity)],
         ...(orderItem.is_pre_order
-            ? [
+            ? ([
                   ['Sistem', 'Pre-Order'],
                   [
                       'Estimasi',
@@ -199,7 +207,7 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                           ? `${orderItem.pre_order_min_quantity} pesanan`
                           : '-',
                   ],
-              ]
+              ] as Array<[string, React.ReactNode]>)
             : []),
         [
             isOffline ? 'Hak seller' : 'Subtotal',
@@ -210,19 +218,18 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
             `${orderItem.payment.status.label} (${orderItem.payment.method.label})`,
         ],
         ...(isOffline
-            ? [
+            ? ([
                   ['Omzet POS', formatRupiah(orderItem.gross_amount ?? 0)],
                   ['Komisi UP', formatRupiah(orderItem.commission_amount ?? 0)],
                   ['Picket', orderItem.picket?.name ?? '-'],
                   ['UP Jurusan', orderItem.up_jurusan?.name ?? '-'],
-              ]
+              ] as Array<[string, React.ReactNode]>)
             : []),
         [
             'Waktu',
-            new Intl.DateTimeFormat('id-ID', {
-                dateStyle: 'full',
-                timeStyle: 'short',
-            }).format(new Date(orderItem.created_at)),
+            <time key="waktu" dateTime={orderItem.created_at}>
+                {formattedTime}
+            </time>,
         ],
     ];
 
@@ -235,8 +242,8 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                 <div className="mx-auto max-w-3xl space-y-6">
                     <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                         <div>
-                            <Badge className="mb-2 rounded-[6px] bg-blue-50 text-blue-700">
-                                <ShoppingCart className="size-3.5" />{' '}
+                            <Badge className="mb-2 rounded-[6px] border border-[#BCE0FF] bg-[#EFF8FF] text-[#0080FF]">
+                                <ShoppingCart className="size-3.5" aria-hidden="true" />{' '}
                                 {isOffline
                                     ? 'Detail transaksi offline'
                                     : 'Detail fulfillment'}
@@ -248,10 +255,10 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                         <Button
                             asChild
                             variant="outline"
-                            className="rounded-[8px]"
+                            className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
                         >
                             <Link href={ordersIndex()}>
-                                <ArrowLeft className="size-4" /> Kembali
+                                <ArrowLeft className="size-4" aria-hidden="true" /> Kembali
                             </Link>
                         </Button>
                     </section>
@@ -263,10 +270,10 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                         <div
                             role="status"
                             className={cn(
-                                'rounded-[8px] border px-4 py-3 text-sm',
+                                'rounded-[14px] border px-4 py-3 text-sm shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
                                 flash.error || statusError || paymentError
-                                    ? 'border-rose-200 bg-rose-50 text-rose-700'
-                                    : 'border-emerald-200 bg-emerald-50 text-emerald-700',
+                                    ? 'border-[#FECACA] bg-[#FEF2F2] text-[#DC2626]'
+                                    : 'border-[#BBF7D0] bg-[#ECFDF3] text-[#16A34A]',
                             )}
                         >
                             {statusError ||
@@ -276,7 +283,7 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                         </div>
                     )}
 
-                    <Card className="gap-0 rounded-[8px] border-slate-100 py-0 shadow-sm">
+                    <Card className="gap-0 rounded-[14px] border-slate-100 py-0 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none">
                         <CardHeader className="flex-row items-center justify-between border-b border-slate-100 p-5">
                             <div>
                                 <CardTitle>{orderItem.product_name}</CardTitle>
@@ -286,7 +293,7 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                             </div>
                             <Badge
                                 className={cn(
-                                    'rounded-[6px]',
+                                    'rounded-[6px] border font-medium',
                                     statusStyles[orderItem.status.code],
                                 )}
                             >
@@ -310,14 +317,14 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                             <div className="mt-6 border-t border-slate-100 pt-5">
                                 {!isOffline &&
                                     !orderItem.managed_by_up_jurusan && (
-                                        <div className="mb-5 flex flex-col gap-3 rounded-[8px] border border-slate-100 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                                        <div className="mb-5 flex flex-col gap-3 rounded-[14px] border border-slate-100 bg-slate-50 p-4 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none sm:flex-row sm:items-center sm:justify-between">
                                             <div>
                                                 <p className="text-sm font-medium text-slate-950">
                                                     Pelunasan tunai
                                                 </p>
                                                 <Badge
                                                     className={cn(
-                                                        'mt-2 rounded-[6px]',
+                                                        'mt-2 rounded-[6px] border font-medium',
                                                         paymentStatusStyles[
                                                             orderItem.payment
                                                                 .status.code
@@ -343,9 +350,14 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                                                             paymentProcessing
                                                         }
                                                         onClick={approvePayment}
-                                                        className="rounded-[8px] border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                                                        className="h-11 rounded-[12px] border-[#BBF7D0] bg-white font-semibold text-[#16A34A] hover:bg-[#ECFDF3] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#16A34A] focus-visible:ring-offset-2"
+                                                        aria-label="Tandai lunas"
                                                     >
-                                                        <CheckCircle2 className="size-4" />
+                                                        {paymentProcessing ? (
+                                                            <Spinner className="size-4" aria-hidden="true" />
+                                                        ) : (
+                                                            <CheckCircle2 className="size-4" aria-hidden="true" />
+                                                        )}
                                                         {paymentProcessing
                                                             ? 'Memproses...'
                                                             : 'Tandai lunas'}
@@ -361,16 +373,29 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                                         setelah komisi UP.
                                     </p>
                                 ) : orderItem.cancelled_at ? (
-                                    <div className="mt-3 rounded-[8px] border border-rose-200 bg-rose-50 p-3">
-                                        <p className="text-sm font-medium text-rose-900">
+                                    <div className="rounded-[14px] border border-[#FECACA] bg-[#FEF2F2] p-4 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none">
+                                        <p className="flex items-center gap-2 text-sm font-semibold text-[#DC2626]">
+                                            <XCircle className="size-4 shrink-0" aria-hidden="true" />
                                             Pesanan telah dibatalkan
                                         </p>
+                                        <time
+                                            dateTime={orderItem.cancelled_at}
+                                            className="mt-1 block text-xs text-[#DC2626]/80"
+                                        >
+                                            {new Intl.DateTimeFormat('id-ID', {
+                                                dateStyle: 'medium',
+                                                timeStyle: 'short',
+                                            }).format(new Date(orderItem.cancelled_at))}
+                                        </time>
                                         {orderItem.cancel_reason && (
-                                            <p className="mt-1 text-sm text-rose-700">
-                                                <span className="font-semibold">
-                                                    Alasan:
-                                                </span>{' '}
-                                                {orderItem.cancel_reason}
+                                            <p className="mt-2 flex gap-2 text-sm text-[#DC2626]">
+                                                <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                                                <span>
+                                                    <span className="font-semibold">
+                                                        Alasan:
+                                                    </span>{' '}
+                                                    {orderItem.cancel_reason}
+                                                </span>
                                             </p>
                                         )}
                                     </div>
@@ -381,12 +406,13 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                                         menerima notifikasi pesanan masuk.
                                     </p>
                                 ) : orderItem.status.code === 'completed' ? (
-                                    <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
-                                        <PackageCheck className="size-4" />{' '}
+                                    <p className="flex items-center gap-2 text-sm font-medium text-[#16A34A]">
+                                        <PackageCheck className="size-4" aria-hidden="true" />{' '}
                                         Fulfillment selesai.
                                     </p>
                                 ) : orderItem.status.code === 'sent' ? (
-                                    <p className="text-sm font-medium text-indigo-700">
+                                    <p className="flex items-center gap-2 text-sm font-medium text-indigo-700">
+                                        <CheckCircle2 className="size-4" aria-hidden="true" />
                                         Pesanan sudah dikirim. Menunggu buyer
                                         mengonfirmasi barang diterima.
                                     </p>
@@ -396,24 +422,27 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                                         type="button"
                                         disabled={processing}
                                         onClick={advanceStatus}
-                                        className="rounded-[8px]"
+                                        className="h-11 rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
                                     >
+                                        {processing && <Spinner className="size-4" aria-hidden="true" />}
                                         {processing
                                             ? 'Memproses...'
                                             : 'Tandai sudah dikirim'}
                                     </Button>
-                                ) : (
+                                ) : nextActionFor(orderItem) ? (
                                     <Button
                                         type="button"
                                         disabled={processing}
                                         onClick={advanceStatus}
-                                        className="rounded-[8px]"
+                                        className="h-11 rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                        aria-label={nextActionFor(orderItem)?.action}
                                     >
+                                        {processing && <Spinner className="size-4" aria-hidden="true" />}
                                         {processing
                                             ? 'Memproses...'
                                             : nextActionFor(orderItem)?.action}
                                     </Button>
-                                )}
+                                ) : null}
                             </div>
                         </CardContent>
                     </Card>

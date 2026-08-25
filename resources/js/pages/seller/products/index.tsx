@@ -1,6 +1,17 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Package, Pencil, Plus, Search, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import {
+    ArrowUpDown,
+    CheckCircle2,
+    Clock3,
+    Package,
+    Pencil,
+    Plus,
+    Search,
+    Trash2,
+    XCircle,
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { SellerEmptyState } from '@/components/seller/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +40,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import {
     Table,
     TableBody,
@@ -84,10 +97,17 @@ type SellerProductsIndexProps = {
 };
 
 const statusStyles: Record<ProductStatus, string> = {
-    draft: 'bg-slate-100 text-slate-700',
-    pending: 'bg-amber-50 text-amber-700',
-    approved: 'bg-emerald-50 text-emerald-700',
-    rejected: 'bg-rose-50 text-rose-700',
+    draft: 'bg-slate-100 text-slate-700 border border-slate-200',
+    pending: 'bg-[#FFF7ED] text-[#EA580C] border border-[#FFEDD5]',
+    approved: 'bg-[#ECFDF3] text-[#16A34A] border border-[#BBF7D0]',
+    rejected: 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]',
+};
+
+const statusIcons: Record<ProductStatus, typeof Clock3> = {
+    draft: Clock3,
+    pending: Clock3,
+    approved: CheckCircle2,
+    rejected: XCircle,
 };
 
 const formatRupiah = (value: number) =>
@@ -97,12 +117,17 @@ const formatRupiah = (value: number) =>
         maximumFractionDigits: 0,
     }).format(value);
 
+type SortKey = 'name' | 'category' | 'price' | 'stock' | 'status';
+type SortOrder = 'asc' | 'desc';
+
 export default function SellerProductsIndex({
     products,
     categories,
     filters,
 }: SellerProductsIndexProps) {
-    const { flash } = usePage().props;
+    const { flash } = usePage().props as {
+        flash: { success?: string; error?: string };
+    };
     const [q, setQ] = useState(filters.q);
     const [status, setStatus] = useState(filters.status || '');
     const [categoryId, setCategoryId] = useState(
@@ -112,9 +137,78 @@ export default function SellerProductsIndex({
     const [selected, setSelected] = useState<SellerProduct | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<string>();
+    const [sortKey, setSortKey] = useState<SortKey | null>(null);
+    const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+    const [isFiltering, setIsFiltering] = useState(false);
+
+    const handleSort = (key: SortKey) => {
+        if (sortKey === key) {
+            setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+        } else {
+            setSortKey(key);
+            setSortOrder('asc');
+        }
+        // UI-only state; keeps query param handling optional.
+        // To sync with backend, uncomment:
+        // router.get(
+        //     sellerProductsIndex(),
+        //     { ...filters, sort: key, order: sortKey === key ? (sortOrder === 'asc' ? 'desc' : 'asc') : 'asc' },
+        //     { preserveState: true, replace: true },
+        // );
+    };
+
+    const sortedData = useMemo(() => {
+        if (!sortKey) {
+return products.data;
+}
+
+        const copy = [...products.data];
+        copy.sort((a, b) => {
+            let aVal: string | number = '';
+            let bVal: string | number = '';
+
+            switch (sortKey) {
+                case 'name':
+                    aVal = a.name.toLowerCase();
+                    bVal = b.name.toLowerCase();
+                    break;
+                case 'category':
+                    aVal = a.category.name.toLowerCase();
+                    bVal = b.category.name.toLowerCase();
+                    break;
+                case 'price':
+                    aVal = a.price;
+                    bVal = b.price;
+                    break;
+                case 'stock':
+                    aVal = a.is_pre_order ? -1 : a.stock;
+                    bVal = b.is_pre_order ? -1 : b.stock;
+                    break;
+                case 'status':
+                    aVal = a.status.label.toLowerCase();
+                    bVal = b.status.label.toLowerCase();
+                    break;
+                default:
+                    break;
+            }
+
+            if (aVal < bVal) {
+return sortOrder === 'asc' ? -1 : 1;
+}
+
+            if (aVal > bVal) {
+return sortOrder === 'asc' ? 1 : -1;
+}
+
+            return 0;
+        });
+
+        return copy;
+    }, [products.data, sortKey, sortOrder]);
 
     const submitFilters = (event: React.FormEvent) => {
         event.preventDefault();
+        setIsFiltering(true);
         router.get(
             sellerProductsIndex(),
             Object.fromEntries(
@@ -125,7 +219,11 @@ export default function SellerProductsIndex({
                     stock: stock === 'all' ? '' : stock,
                 }).filter(([, value]) => value),
             ),
-            { preserveState: true, replace: true },
+            {
+                preserveState: true,
+                replace: true,
+                onFinish: () => setIsFiltering(false),
+            },
         );
     };
 
@@ -134,7 +232,10 @@ export default function SellerProductsIndex({
         setStatus('');
         setCategoryId('');
         setStock('');
-        router.get(sellerProductsIndex());
+        setIsFiltering(true);
+        router.get(sellerProductsIndex().url, undefined, {
+            onFinish: () => setIsFiltering(false),
+        });
     };
 
     const deleteProduct = () => {
@@ -150,9 +251,25 @@ export default function SellerProductsIndex({
             },
             onFinish: () => setDeleting(false),
             onSuccess: () => setSelected(null),
-            onError: (errors) => setDeleteError(errors.product),
+            onError: (errors) =>
+                setDeleteError(
+                    (errors as Record<string, string>).product ??
+                        'Gagal menghapus produk.',
+                ),
         });
     };
+
+    const columns: { key: SortKey | 'actions'; label: string; sortable: boolean }[] =
+        [
+            { key: 'name', label: 'Nama', sortable: true },
+            { key: 'category', label: 'Kategori', sortable: true },
+            { key: 'price', label: 'Harga', sortable: true },
+            { key: 'stock', label: 'Stok', sortable: true },
+            { key: 'status', label: 'Status', sortable: true },
+            { key: 'actions', label: 'Aksi', sortable: false },
+        ];
+
+    const isEmpty = !isFiltering && sortedData.length === 0;
 
     return (
         <>
@@ -161,8 +278,8 @@ export default function SellerProductsIndex({
                 <div className="space-y-6">
                     <section className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                         <div>
-                            <Badge className="mb-2 rounded-[6px] bg-blue-50 text-blue-700">
-                                <Package className="size-3.5" />
+                            <Badge className="mb-2 rounded-[6px] bg-blue-50 text-blue-700 border border-blue-100">
+                                <Package className="size-3.5" aria-hidden="true" />
                                 {products.total} produk
                             </Badge>
                             <h1 className="text-2xl font-semibold text-slate-950">
@@ -174,10 +291,10 @@ export default function SellerProductsIndex({
                         </div>
                         <Button
                             asChild
-                            className="rounded-[8px] bg-blue-600 text-white hover:bg-blue-700"
+                            className="h-11 rounded-[12px] bg-[#0080FF] px-5 font-semibold text-white hover:bg-[#006FE0] active:bg-[#0059B8] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
                         >
                             <Link href={sellerProductsCreate()}>
-                                <Plus className="size-4" /> Tambah Produk
+                                <Plus className="size-4" aria-hidden="true" /> Tambah Produk
                             </Link>
                         </Button>
                     </section>
@@ -186,17 +303,17 @@ export default function SellerProductsIndex({
                         <div
                             role="status"
                             className={cn(
-                                'rounded-[8px] border px-4 py-3 text-sm',
+                                'rounded-[14px] border px-4 py-3 text-sm shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
                                 flash.error
-                                    ? 'border-rose-200 bg-rose-50 text-rose-700'
-                                    : 'border-emerald-200 bg-emerald-50 text-emerald-700',
+                                    ? 'border-[#FECACA] bg-[#FEF2F2] text-[#DC2626]'
+                                    : 'border-[#BBF7D0] bg-[#ECFDF3] text-[#16A34A]',
                             )}
                         >
                             {flash.error || flash.success}
                         </div>
                     )}
 
-                    <Card className="gap-0 rounded-[8px] border-slate-100 py-0 shadow-sm">
+                    <Card className="gap-0 rounded-[14px] border-slate-100 py-0 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-md motion-reduce:transition-none motion-reduce:hover:shadow-sm">
                         <CardHeader className="border-b border-slate-100 p-5">
                             <CardTitle>Filter Produk</CardTitle>
                             <CardDescription>
@@ -210,15 +327,21 @@ export default function SellerProductsIndex({
                             >
                                 <label className="relative">
                                     <span className="sr-only">Cari produk</span>
-                                    <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+                                    <Search
+                                        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
+                                        aria-hidden="true"
+                                    />
                                     <Input
+                                        id="q"
                                         value={q}
                                         onChange={(event) =>
                                             setQ(event.target.value)
                                         }
                                         placeholder="Cari produk"
-                                        className="rounded-[8px] border-slate-200 bg-white pl-9"
+                                        aria-describedby="q-error"
+                                        className="h-11 rounded-[10px] border-slate-200 bg-white pl-9 shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20"
                                     />
+                                    <span id="q-error" className="sr-only" aria-live="polite" />
                                 </label>
                                 <label>
                                     <span className="sr-only">Status</span>
@@ -226,10 +349,13 @@ export default function SellerProductsIndex({
                                         value={status}
                                         onValueChange={setStatus}
                                     >
-                                        <SelectTrigger className="w-full rounded-[8px] border-slate-200 bg-white">
+                                        <SelectTrigger
+                                            aria-label="Filter status"
+                                            className="h-11 w-full rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20"
+                                        >
                                             <SelectValue placeholder="Pilih status" />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-[8px] bg-white text-slate-900 ring-slate-200">
+                                        <SelectContent className="rounded-[14px] bg-white text-slate-900 ring-slate-200 shadow-lg">
                                             <SelectGroup>
                                                 <SelectLabel>
                                                     Status
@@ -259,10 +385,13 @@ export default function SellerProductsIndex({
                                         value={categoryId}
                                         onValueChange={setCategoryId}
                                     >
-                                        <SelectTrigger className="w-full rounded-[8px] border-slate-200 bg-white">
+                                        <SelectTrigger
+                                            aria-label="Filter kategori"
+                                            className="h-11 w-full rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20"
+                                        >
                                             <SelectValue placeholder="Pilih kategori" />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-[8px] bg-white text-slate-900 ring-slate-200">
+                                        <SelectContent className="rounded-[14px] bg-white text-slate-900 ring-slate-200 shadow-lg">
                                             <SelectGroup>
                                                 <SelectLabel>
                                                     Kategori
@@ -292,10 +421,13 @@ export default function SellerProductsIndex({
                                         value={stock}
                                         onValueChange={setStock}
                                     >
-                                        <SelectTrigger className="w-full rounded-[8px] border-slate-200 bg-white">
+                                        <SelectTrigger
+                                            aria-label="Filter kondisi stok"
+                                            className="h-11 w-full rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20"
+                                        >
                                             <SelectValue placeholder="Pilih kondisi stok" />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-[8px] bg-white text-slate-900 ring-slate-200">
+                                        <SelectContent className="rounded-[14px] bg-white text-slate-900 ring-slate-200 shadow-lg">
                                             <SelectGroup>
                                                 <SelectLabel>
                                                     Kondisi stok
@@ -316,15 +448,17 @@ export default function SellerProductsIndex({
                                 <div className="flex gap-2">
                                     <Button
                                         type="submit"
-                                        className="rounded-[8px]"
+                                        disabled={isFiltering}
+                                        className="h-11 rounded-[12px] px-5 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
                                     >
+                                        {isFiltering && <Spinner className="size-4" aria-hidden="true" />}
                                         Terapkan
                                     </Button>
                                     <Button
                                         type="button"
                                         variant="outline"
                                         onClick={resetFilters}
-                                        className="rounded-[8px]"
+                                        className="h-11 rounded-[12px] border-slate-200 bg-white px-5 font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
                                     >
                                         Reset
                                     </Button>
@@ -333,7 +467,7 @@ export default function SellerProductsIndex({
                         </CardContent>
                     </Card>
 
-                    <Card className="gap-0 rounded-[8px] border-slate-100 py-0 shadow-sm">
+                    <Card className="gap-0 overflow-hidden rounded-[14px] border-slate-100 py-0 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-md motion-reduce:transition-none motion-reduce:hover:shadow-sm">
                         <CardHeader className="border-b border-slate-100 p-5">
                             <CardTitle>Katalog Produk</CardTitle>
                             <CardDescription>
@@ -342,48 +476,297 @@ export default function SellerProductsIndex({
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">
-                            <div className="overflow-x-auto">
+                            {/* Desktop table */}
+                            <div className="hidden md:block overflow-x-auto">
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-slate-50 hover:bg-slate-50">
-                                            {[
-                                                'Nama',
-                                                'Kategori',
-                                                'Harga',
-                                                'Stok',
-                                                'Status',
-                                                'Aksi',
-                                            ].map((heading) => (
+                                            {columns.map((col) => (
                                                 <TableHead
-                                                    key={heading}
+                                                    key={col.key}
                                                     className="px-5"
+                                                    aria-sort={
+                                                        sortKey === col.key
+                                                            ? sortOrder === 'asc'
+                                                                ? 'ascending'
+                                                                : 'descending'
+                                                            : undefined
+                                                    }
                                                 >
-                                                    {heading}
+                                                    {col.sortable ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                handleSort(
+                                                                    col.key as SortKey,
+                                                                )
+                                                            }
+                                                            className="inline-flex items-center gap-1.5 font-semibold text-slate-500 hover:text-slate-900 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 rounded-[6px] px-1 -mx-1"
+                                                            aria-label={`Urutkan ${col.label} ${sortKey === col.key ? (sortOrder === 'asc' ? 'menaik' : 'menurun') : ''}`}
+                                                        >
+                                                            {col.label}
+                                                            <ArrowUpDown
+                                                                className={cn(
+                                                                    'size-3.5 shrink-0 transition-colors duration-[180ms]',
+                                                                    sortKey === col.key
+                                                                        ? 'text-[#0080FF]'
+                                                                        : 'text-slate-400',
+                                                                )}
+                                                                aria-hidden="true"
+                                                            />
+                                                        </button>
+                                                    ) : (
+                                                        col.label
+                                                    )}
                                                 </TableHead>
                                             ))}
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {products.data.length === 0 && (
+                                        {isFiltering ? (
+                                            Array.from({ length: 5 }).map((_, idx) => (
+                                                <TableRow key={`skeleton-${idx}`}>
+                                                    <TableCell className="px-5">
+                                                        <div className="space-y-2 py-1">
+                                                            <Skeleton className="h-4 w-40 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
+                                                            <Skeleton className="h-3 w-20 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="px-5">
+                                                        <Skeleton className="h-4 w-24 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
+                                                    </TableCell>
+                                                    <TableCell className="px-5">
+                                                        <Skeleton className="h-4 w-20 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
+                                                    </TableCell>
+                                                    <TableCell className="px-5">
+                                                        <Skeleton className="h-5 w-16 rounded-full motion-reduce:animate-none" aria-hidden="true" />
+                                                    </TableCell>
+                                                    <TableCell className="px-5">
+                                                        <Skeleton className="h-5 w-20 rounded-full motion-reduce:animate-none" aria-hidden="true" />
+                                                    </TableCell>
+                                                    <TableCell className="px-5">
+                                                        <div className="flex justify-end gap-2">
+                                                            <Skeleton className="h-9 w-16 rounded-[12px] motion-reduce:animate-none" aria-hidden="true" />
+                                                            <Skeleton className="h-9 w-16 rounded-[12px] motion-reduce:animate-none" aria-hidden="true" />
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : isEmpty ? (
                                             <TableRow>
                                                 <TableCell
                                                     colSpan={6}
-                                                    className="px-5 py-10 text-center text-slate-500"
+                                                    className="p-0"
                                                 >
-                                                    Tidak ada produk yang sesuai
-                                                    filter.
+                                                    <SellerEmptyState
+                                                        icon={Package}
+                                                        title="Tidak ada produk"
+                                                        description="Belum ada produk yang sesuai filter. Tambah produk baru atau reset filter untuk melihat daftar lengkap."
+                                                        actionHref={
+                                                            sellerProductsCreate().url
+                                                        }
+                                                        actionLabel="Tambah Produk"
+                                                        secondaryActionHref={
+                                                            sellerProductsIndex().url
+                                                        }
+                                                        secondaryActionLabel="Reset"
+                                                    />
                                                 </TableCell>
                                             </TableRow>
+                                        ) : (
+                                            sortedData.map((product) => {
+                                                const StatusIcon =
+                                                    statusIcons[product.status.code];
+
+                                                return (
+                                                    <TableRow
+                                                        key={product.id}
+                                                        className="transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+                                                    >
+                                                        <TableCell className="min-w-56 px-5 font-medium">
+                                                            <div>
+                                                                <p
+                                                                    className="max-w-[20ch] truncate font-semibold text-slate-950"
+                                                                    title={product.name}
+                                                                >
+                                                                    {product.name}
+                                                                </p>
+                                                                {product.is_pre_order && (
+                                                                    <p className="mt-1 text-xs text-[#0080FF]">
+                                                                        PO{' '}
+                                                                        {
+                                                                            product.pre_order_estimate_days
+                                                                        }{' '}
+                                                                        hari
+                                                                    </p>
+                                                                )}
+                                                                {product.is_pre_order &&
+                                                                    product.pre_order_deadline && (
+                                                                        <p className="mt-1 text-xs text-slate-500">
+                                                                            Deadline{' '}
+                                                                            {
+                                                                                product.pre_order_deadline
+                                                                            }
+                                                                        </p>
+                                                                    )}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="px-5 text-slate-600">
+                                                            {product.category.name}
+                                                        </TableCell>
+                                                        <TableCell className="px-5 font-semibold tabular-nums text-slate-900">
+                                                            {formatRupiah(
+                                                                product.price,
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            {product.is_pre_order ? (
+                                                                <Badge className="rounded-full border border-[#BCE0FF] bg-[#EFF8FF] text-[#0080FF] gap-1.5">
+                                                                    <Clock3
+                                                                        className="size-3"
+                                                                        aria-hidden="true"
+                                                                    />
+                                                                    Pre-Order
+                                                                </Badge>
+                                                            ) : (
+                                                                <span className="tabular-nums">
+                                                                    {product.stock}
+                                                                </span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Badge
+                                                                className={cn(
+                                                                    'rounded-full gap-1.5 px-2.5 py-0.5 font-medium',
+                                                                    statusStyles[
+                                                                        product.status
+                                                                            .code
+                                                                    ],
+                                                                )}
+                                                            >
+                                                                <StatusIcon
+                                                                    className="size-3"
+                                                                    aria-hidden="true"
+                                                                />
+                                                                {product.status.label}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <div className="flex justify-end gap-2">
+                                                                <Button
+                                                                    asChild
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="h-11 rounded-[12px] border-slate-200 bg-white px-3 font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                                                    aria-label={`Edit ${product.name}`}
+                                                                >
+                                                                    <Link
+                                                                        href={sellerProductsEdit(
+                                                                            product.id,
+                                                                        )}
+                                                                    >
+                                                                        <Pencil
+                                                                            className="size-3.5"
+                                                                            aria-hidden="true"
+                                                                        />{' '}
+                                                                        Edit
+                                                                    </Link>
+                                                                </Button>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => {
+                                                                        setDeleteError(
+                                                                            undefined,
+                                                                        );
+                                                                        setSelected(
+                                                                            product,
+                                                                        );
+                                                                    }}
+                                                                    className="h-11 rounded-[12px] border-[#FECACA] bg-white px-3 font-semibold text-[#DC2626] hover:bg-[#FEF2F2] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#DC2626] focus-visible:ring-offset-2"
+                                                                    aria-label={`Hapus ${product.name}`}
+                                                                >
+                                                                    <Trash2
+                                                                        className="size-3.5"
+                                                                        aria-hidden="true"
+                                                                    />{' '}
+                                                                    Hapus
+                                                                </Button>
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })
                                         )}
-                                        {products.data.map((product) => (
-                                            <TableRow key={product.id}>
-                                                <TableCell className="min-w-56 px-5 font-medium">
-                                                    <div>
-                                                        <p className="font-semibold text-slate-950">
+                                    </TableBody>
+                                </Table>
+                            </div>
+
+                            {/* Mobile card-list fallback */}
+                            <div className="grid gap-4 p-4 md:hidden">
+                                {isFiltering ? (
+                                    Array.from({ length: 5 }).map((_, idx) => (
+                                        <Card
+                                            key={`mobile-skeleton-${idx}`}
+                                            className="rounded-[14px] border-slate-100 p-4 shadow-sm"
+                                            aria-hidden="true"
+                                        >
+                                            <div className="space-y-3">
+                                                <Skeleton className="h-4 w-3/4 rounded-[6px] motion-reduce:animate-none" />
+                                                <Skeleton className="h-3 w-1/2 rounded-[6px] motion-reduce:animate-none" />
+                                                <div className="flex gap-2">
+                                                    <Skeleton className="h-5 w-16 rounded-full motion-reduce:animate-none" />
+                                                    <Skeleton className="h-5 w-20 rounded-full motion-reduce:animate-none" />
+                                                </div>
+                                                <div className="flex gap-2 pt-1">
+                                                    <Skeleton className="h-11 flex-1 rounded-[12px] motion-reduce:animate-none" />
+                                                    <Skeleton className="h-11 flex-1 rounded-[12px] motion-reduce:animate-none" />
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    ))
+                                ) : isEmpty ? (
+                                    <div className="rounded-[14px] border border-slate-100 bg-white shadow-sm">
+                                        <SellerEmptyState
+                                            icon={Package}
+                                            title="Tidak ada produk"
+                                            description="Belum ada produk yang sesuai filter. Tambah produk baru atau reset filter untuk melihat daftar lengkap."
+                                            actionHref={sellerProductsCreate().url}
+                                            actionLabel="Tambah Produk"
+                                            secondaryActionHref={
+                                                sellerProductsIndex().url
+                                            }
+                                            secondaryActionLabel="Reset"
+                                        />
+                                    </div>
+                                ) : (
+                                    sortedData.map((product) => {
+                                        const StatusIcon =
+                                            statusIcons[product.status.code];
+
+                                        return (
+                                            <Card
+                                                key={`mobile-${product.id}`}
+                                                className="rounded-[14px] border-slate-100 p-4 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-md motion-reduce:transition-none"
+                                            >
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className="min-w-0 flex-1">
+                                                        <p
+                                                            className="truncate text-sm font-semibold text-slate-950"
+                                                            title={product.name}
+                                                        >
                                                             {product.name}
                                                         </p>
+                                                        <p className="mt-1 text-xs text-slate-500">
+                                                            {product.category.name}
+                                                        </p>
                                                         {product.is_pre_order && (
-                                                            <p className="mt-1 text-xs text-blue-700">
+                                                            <p className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-[#0080FF]">
+                                                                <Clock3
+                                                                    className="size-3"
+                                                                    aria-hidden="true"
+                                                                />
                                                                 PO{' '}
                                                                 {
                                                                     product.pre_order_estimate_days
@@ -391,88 +774,87 @@ export default function SellerProductsIndex({
                                                                 hari
                                                             </p>
                                                         )}
-                                                        {product.is_pre_order &&
-                                                            product.pre_order_deadline && (
-                                                                <p className="mt-1 text-xs text-slate-500">
-                                                                    Deadline{' '}
-                                                                    {
-                                                                        product.pre_order_deadline
-                                                                    }
-                                                                </p>
-                                                            )}
                                                     </div>
-                                                </TableCell>
-                                                <TableCell className="px-5 text-slate-600">
-                                                    {product.category.name}
-                                                </TableCell>
-                                                <TableCell className="px-5 font-medium">
-                                                    {formatRupiah(
-                                                        product.price,
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="px-5">
-                                                    {product.is_pre_order ? (
-                                                        <Badge className="rounded-[6px] bg-blue-50 text-blue-700">
-                                                            Pre-Order
-                                                        </Badge>
-                                                    ) : (
-                                                        product.stock
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="px-5">
                                                     <Badge
                                                         className={cn(
-                                                            'rounded-full',
+                                                            'shrink-0 rounded-full gap-1.5 font-medium',
                                                             statusStyles[
-                                                                product.status
-                                                                    .code
+                                                                product.status.code
                                                             ],
                                                         )}
                                                     >
+                                                        <StatusIcon
+                                                            className="size-3"
+                                                            aria-hidden="true"
+                                                        />
                                                         {product.status.label}
                                                     </Badge>
-                                                </TableCell>
-                                                <TableCell className="px-5">
-                                                    <div className="flex justify-end gap-2">
-                                                        <Button
-                                                            asChild
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="rounded-[8px]"
+                                                </div>
+
+                                                <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                                                    <span className="font-semibold tabular-nums text-slate-900">
+                                                        {formatRupiah(product.price)}
+                                                    </span>
+                                                    <span className="text-slate-300" aria-hidden="true">
+                                                        •
+                                                    </span>
+                                                    {product.is_pre_order ? (
+                                                        <Badge className="rounded-full border border-[#BCE0FF] bg-[#EFF8FF] text-[#0080FF] gap-1">
+                                                            <Clock3
+                                                                className="size-3"
+                                                                aria-hidden="true"
+                                                            />
+                                                            Pre-Order
+                                                        </Badge>
+                                                    ) : (
+                                                        <span className="text-sm tabular-nums text-slate-600">
+                                                            Stok {product.stock}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <div className="mt-4 flex gap-2">
+                                                    <Button
+                                                        asChild
+                                                        variant="outline"
+                                                        className="h-11 flex-1 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                                    >
+                                                        <Link
+                                                            href={sellerProductsEdit(
+                                                                product.id,
+                                                            )}
+                                                            aria-label={`Edit ${product.name}`}
                                                         >
-                                                            <Link
-                                                                href={sellerProductsEdit(
-                                                                    product.id,
-                                                                )}
-                                                            >
-                                                                <Pencil className="size-3.5" />{' '}
-                                                                Edit
-                                                            </Link>
-                                                        </Button>
-                                                        <Button
-                                                            type="button"
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                setDeleteError(
-                                                                    undefined,
-                                                                );
-                                                                setSelected(
-                                                                    product,
-                                                                );
-                                                            }}
-                                                            className="rounded-[8px] border-rose-200 text-rose-700 hover:bg-rose-50"
-                                                        >
-                                                            <Trash2 className="size-3.5" />{' '}
-                                                            Hapus
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                                            <Pencil
+                                                                className="size-3.5"
+                                                                aria-hidden="true"
+                                                            />
+                                                            Edit
+                                                        </Link>
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        onClick={() => {
+                                                            setDeleteError(undefined);
+                                                            setSelected(product);
+                                                        }}
+                                                        className="h-11 flex-1 rounded-[12px] border-[#FECACA] bg-white font-semibold text-[#DC2626] hover:bg-[#FEF2F2] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#DC2626] focus-visible:ring-offset-2"
+                                                        aria-label={`Hapus ${product.name}`}
+                                                    >
+                                                        <Trash2
+                                                            className="size-3.5"
+                                                            aria-hidden="true"
+                                                        />
+                                                        Hapus
+                                                    </Button>
+                                                </div>
+                                            </Card>
+                                        );
+                                    })
+                                )}
                             </div>
+
                             {products.last_page > 1 && (
                                 <div className="flex items-center justify-between border-t border-slate-100 p-4">
                                     <span className="text-sm text-slate-500">
@@ -501,7 +883,12 @@ export default function SellerProductsIndex({
                                                             : 'outline'
                                                     }
                                                     size="sm"
-                                                    className="rounded-[8px]"
+                                                    className={cn(
+                                                        'h-11 rounded-[12px] px-4 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2',
+                                                        link.active
+                                                            ? 'bg-[#0080FF] text-white hover:bg-[#006FE0]'
+                                                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
+                                                    )}
                                                     aria-current={
                                                         link.active
                                                             ? 'page'
@@ -531,7 +918,7 @@ export default function SellerProductsIndex({
                 onOpenChange={(open) => !open && !deleting && setSelected(null)}
             >
                 <DialogContent
-                    className="rounded-[12px]"
+                    className="rounded-[18px] border-slate-200 bg-white shadow-lg duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
                     showCloseButton={!deleting}
                 >
                     <DialogHeader>
@@ -543,7 +930,7 @@ export default function SellerProductsIndex({
                         {deleteError && (
                             <p
                                 role="alert"
-                                className="rounded-[8px] border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"
+                                className="rounded-[10px] border border-[#FECACA] bg-[#FEF2F2] px-3 py-2 text-sm text-[#DC2626]"
                             >
                                 {deleteError}
                             </p>
@@ -551,7 +938,11 @@ export default function SellerProductsIndex({
                     </DialogHeader>
                     <DialogFooter>
                         <DialogClose asChild>
-                            <Button variant="outline" disabled={deleting}>
+                            <Button
+                                variant="outline"
+                                disabled={deleting}
+                                className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                            >
                                 Batal
                             </Button>
                         </DialogClose>
@@ -560,7 +951,12 @@ export default function SellerProductsIndex({
                             variant="destructive"
                             disabled={deleting}
                             onClick={deleteProduct}
+                            className="h-11 rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#DC2626] focus-visible:ring-offset-2"
+                            aria-busy={deleting}
                         >
+                            {deleting && (
+                                <Spinner className="size-4" aria-hidden="true" />
+                            )}
                             {deleting ? 'Menghapus...' : 'Hapus'}
                         </Button>
                     </DialogFooter>
