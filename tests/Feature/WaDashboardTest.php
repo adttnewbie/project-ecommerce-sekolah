@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 
 test('admin can view dashboard, buyer is forbidden', function () {
-    Http::fake(['*' => Http::response(['connected' => true], 200)]);
+    Http::fake(['*' => Http::response(['code' => 200, 'success' => true, 'data' => ['Connected' => true, 'LoggedIn' => true]], 200)]);
     $admin = User::factory()->create(['role' => UserRole::Admin]);
     $buyer = User::factory()->create(['role' => UserRole::Buyer]);
     $this->actingAs($admin)->get(route('admin.wa.index'))->assertOk();

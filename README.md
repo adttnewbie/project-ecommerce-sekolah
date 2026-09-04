@@ -108,11 +108,11 @@ php artisan test
 - Pastikan `QUEUE_CONNECTION` sesuai infrastruktur production. Jika memakai `database` atau `redis`, worker harus selalu hidup.
 - Monitor error log Laravel dan web server setelah deploy.
 
-## WhatsApp API (Wuzapi)
+## WhatsApp API (Wuzapi asternic/wuzapi, SQLite, ringan)
 
-1. `cd ../whatsapp-api-wuzapi/wuzapi && cp -n .env.example .env && docker compose up -d`
-2. Isi `.env` EduCart: `WUZAPI_URL=http://localhost:8080 WUZAPI_TOKEN=... WUZAPI_WEBHOOK_TOKEN=...`
-3. Buka `http://localhost:8080/admin`, scan QR nomor resmi sekolah sekali (session persisten di `./data`).
+1. Native tanpa Docker (ringan): install Go, `git clone https://github.com/asternic/wuzapi.git`, `go build -o wuzapi .`, isi `.env` (`WUZAPI_ADMIN_TOKEN`, `WEBHOOK_FORMAT=json`), `./wuzapi`. Alternatif: `cd ../whatsapp-api-wuzapi/wuzapi && docker compose up -d`. Detail: `../whatsapp-api-wuzapi/wuzapi/README.md`.
+2. Provisioning sekali: bikin user `sekolah-official` via `POST /admin/users` (admin token) + webhook ke `http://IP:8000/api/wa/webhook` + events `Message,ReadReceipt`, lalu `POST /session/connect`. Token user itu jadi `WUZAPI_TOKEN` di `.env` EduCart.
+3. Buka `http://localhost:8080/login`, scan QR pakai HP nomor resmi sekali.
 4. Jalankan worker: `php artisan queue:work`
 5. Dashboard: `/admin/wa` (status koneksi, QR, log, retry, kirim manual).
 6. Isi kolom `users.phone` (format `08...`) agar notif buyer/seller terkirim; order tanpa nomor dilewati reminder.

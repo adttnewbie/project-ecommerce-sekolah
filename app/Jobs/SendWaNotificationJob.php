@@ -11,6 +11,11 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
+/**
+ * Satu-satunya pengirim HTTP ke Wuzapi (asternic/wuzapi).
+ * Kontrak: POST {url}/chat/send/text, header Token: <user token>,
+ * body {Phone, Body}. Sukses: {success:true, data:{Id}}.
+ */
 class SendWaNotificationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -28,14 +33,13 @@ class SendWaNotificationJob implements ShouldQueue
             return;
         }
         $message = $log->payload['_message'] ?? '';
-        $url = rtrim((string) config('services.wuzapi.url'), '/').'/api/send/text';
+        $url = rtrim((string) config('services.wuzapi.url'), '/').'/chat/send/text';
         try {
             $res = Http::timeout(10)
                 ->withHeaders(['Token' => (string) config('services.wuzapi.token')])
                 ->post($url, [
-                    'session' => (string) config('services.wuzapi.session'),
-                    'to' => $log->to,
-                    'text' => $message,
+                    'Phone' => $log->to,
+                    'Body' => $message,
                 ]);
         } catch (Throwable $e) {
             $log->update(['status' => 'failed', 'error' => 'wuzapi_unreachable: '.$e->getMessage(), 'attempts' => $log->attempts + 1]);
@@ -46,8 +50,9 @@ class SendWaNotificationJob implements ShouldQueue
 
             return;
         }
-        if ($res->successful()) {
-            $log->update(['status' => 'sent', 'wuzapi_msg_id' => (string) ($res->json('messageId') ?? $res->json('id')), 'attempts' => $log->attempts + 1, 'error' => null]);
+        $msgId = $res->json('data.Id');
+        if ($res->successful() && $res->json('success') !== false && is_string($msgId) && $msgId !== '') {
+            $log->update(['status' => 'sent', 'wuzapi_msg_id' => $msgId, 'attempts' => $log->attempts + 1, 'error' => null]);
 
             return;
         }

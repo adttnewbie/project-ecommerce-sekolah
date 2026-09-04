@@ -19,11 +19,11 @@ class WaController extends Controller
         $connected = false;
         $qr = null;
         try {
-            $st = Http::timeout(5)->withHeaders(['Token' => (string) config('services.wuzapi.token')])->get($base.'/api/session/status');
-            $connected = (bool) ($st->json('connected') ?? $st->json('data.connected') ?? false);
+            $st = Http::timeout(5)->withHeaders(['Token' => (string) config('services.wuzapi.token')])->get($base.'/session/status');
+            $connected = (bool) $st->json('data.Connected') && (bool) $st->json('data.LoggedIn');
             if (! $connected) {
-                $q = Http::timeout(5)->withHeaders(['Token' => (string) config('services.wuzapi.token')])->get($base.'/api/session/qr');
-                $qr = $q->json('qr') ?? $q->json('data.qr');
+                $q = Http::timeout(5)->withHeaders(['Token' => (string) config('services.wuzapi.token')])->get($base.'/session/qr');
+                $qr = $q->json('data.QRCode');
             }
         } catch (\Throwable) {
             $connected = false;
