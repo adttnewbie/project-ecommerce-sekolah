@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'wuzapi' => [
+        'url' => env('WUZAPI_URL', 'http://localhost:8080'),
+        'token' => env('WUZAPI_TOKEN', 'changeme-lokal'),
+        'session' => env('WA_SENDER_SESSION', 'sekolah-official'),
+        'webhook_token' => env('WUZAPI_WEBHOOK_TOKEN', 'changeme-webhook'),
+    ],
+
 ];
