@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'wuzapi' => [
+        'url' => env('WUZAPI_URL', 'http://localhost:8080'),
+        // Token milik USER wuzapi 'sekolah-official' (dibuat via POST /admin/users).
+        'token' => env('WUZAPI_TOKEN', 'changeme-user-token'),
+    ],
+
 ];

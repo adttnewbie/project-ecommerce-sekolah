@@ -40,6 +40,7 @@ use App\Listeners\SanctionIssuedNotify;
 use App\Listeners\SanctionLiftedNotify;
 use App\Listeners\SellerCancelledOrderNotify;
 use App\Listeners\SellerPaymentPaidNotify;
+use App\Listeners\WaOrderCreatedNotify;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -48,6 +49,7 @@ class EventServiceProvider extends ServiceProvider
         PendingOrderCreated::class => [
             CreatePendingOrderNotification::class,
             AdminOrderNotify::class,
+            WaOrderCreatedNotify::class,
         ],
 
         ProductPendingModeration::class => [

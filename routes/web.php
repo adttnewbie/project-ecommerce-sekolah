@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Http\Controllers\Admin\WaController;
 use App\Http\Controllers\AdminCategoryController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminDeliveryFeeSettingsController;
@@ -110,6 +111,9 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
     Route::post('admin/sanctions/{sanction}/lift', [AdminSanctionController::class, 'lift'])->name('admin.sanctions.lift');
     Route::put('admin/sanctions/settings', [AdminSanctionController::class, 'updateSettings'])->name('admin.sanctions.settings');
     Route::put('admin/sanctions/seller-settings', [AdminSanctionController::class, 'updateSellerSettings'])->name('admin.sanctions.seller-settings');
+    Route::get('admin/wa', [WaController::class, 'index'])->name('admin.wa.index');
+    Route::post('admin/wa/{log}/retry', [WaController::class, 'retry'])->name('admin.wa.retry');
+    Route::post('admin/wa/send-manual', [WaController::class, 'sendManual'])->name('admin.wa.send-manual');
 });
 
 Route::middleware(['auth', EnsureUserIsSeller::class])
