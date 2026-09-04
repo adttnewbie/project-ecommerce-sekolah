@@ -107,3 +107,12 @@ php artisan test
 - Jalankan queue worker dengan process manager seperti Supervisor/systemd.
 - Pastikan `QUEUE_CONNECTION` sesuai infrastruktur production. Jika memakai `database` atau `redis`, worker harus selalu hidup.
 - Monitor error log Laravel dan web server setelah deploy.
+
+## WhatsApp API (Wuzapi)
+
+1. `cd ../whatsapp-api-wuzapi/wuzapi && cp -n .env.example .env && docker compose up -d`
+2. Isi `.env` EduCart: `WUZAPI_URL=http://localhost:8080 WUZAPI_TOKEN=... WUZAPI_WEBHOOK_TOKEN=...`
+3. Buka `http://localhost:8080/admin`, scan QR nomor resmi sekolah sekali (session persisten di `./data`).
+4. Jalankan worker: `php artisan queue:work`
+5. Dashboard: `/admin/wa` (status koneksi, QR, log, retry, kirim manual).
+6. Isi kolom `users.phone` (format `08...`) agar notif buyer/seller terkirim; order tanpa nomor dilewati reminder.

@@ -9,4 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('orders:expire-unpaid')->hourly();
+Schedule::command('wa:reminders')->hourly();
 Schedule::command('orders:detect-stuck')->hourly();
