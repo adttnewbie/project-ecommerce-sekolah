@@ -11,7 +11,7 @@ export function AccountHeader({
 }: {
     name: string;
     email: string;
-    phone: string | null;
+    phone?: string | null;
     avatar?: string | null;
     onOpen: () => void;
 }) {
