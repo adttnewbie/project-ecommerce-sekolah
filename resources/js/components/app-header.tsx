@@ -3,7 +3,6 @@ import {
     ChevronDown,
     Heart,
     Home as HomeIcon,
-    Menu,
     PackageCheck,
     Search,
     ShoppingCart,
@@ -21,13 +20,6 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from '@/components/ui/sheet';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
@@ -71,42 +63,6 @@ export function AppHeader() {
     return (
         <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/95 shadow-[0_1px_2px_rgba(15,23,42,0.05)] backdrop-blur supports-[backdrop-filter]:bg-white/90">
             <div className="mx-auto flex h-[72px] w-full max-w-7xl items-center justify-between gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
-                <Sheet>
-                    <SheetTrigger asChild>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="size-11 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 lg:hidden"
-                            aria-label="Buka navigasi"
-                        >
-                            <Menu className="size-5" />
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent
-                        side="left"
-                        className="flex h-full w-64 flex-col border-slate-200 bg-white p-4 text-slate-900"
-                    >
-                        <SheetTitle className="sr-only">
-                            Navigasi buyer
-                        </SheetTitle>
-                        <SheetHeader className="mb-6 p-0 text-left">
-                            <Link href={home()} className="flex items-center">
-                                <AppLogo title="EduCart" subtitle={null} />
-                            </Link>
-                        </SheetHeader>
-                        <nav className="flex flex-col gap-1">
-                            {navItems.map((item) => (
-                                <BuyerNavLink
-                                    key={item.title}
-                                    item={item}
-                                    isActive={isCurrentUrl(item.href)}
-                                />
-                            ))}
-                        </nav>
-                    </SheetContent>
-                </Sheet>
-
                 <div className="flex min-w-0 flex-1 items-center gap-2 lg:flex-none">
                     <Link
                         href={home()}

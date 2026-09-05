@@ -1,6 +1,10 @@
 import { AppContent } from '@/components/app-content';
 import { AppHeader } from '@/components/app-header';
 import { AppShell } from '@/components/app-shell';
+import {
+    BuyerBottomNav,
+    BuyerBottomNavSpacer,
+} from '@/components/buyer-bottom-nav';
 import type { AppLayoutProps } from '@/types';
 
 export default function AppHeaderLayout({ children }: AppLayoutProps) {
@@ -8,6 +12,8 @@ export default function AppHeaderLayout({ children }: AppLayoutProps) {
         <AppShell variant="header">
             <AppHeader />
             <AppContent variant="header">{children}</AppContent>
+            <BuyerBottomNavSpacer />
+            <BuyerBottomNav />
         </AppShell>
     );
 }
