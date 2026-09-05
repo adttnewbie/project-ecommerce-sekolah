@@ -116,7 +116,7 @@ export function AppHeader() {
                                 asChild
                                 variant="ghost"
                                 size="icon"
-                                className="relative size-11 rounded-[12px] text-slate-500 hover:bg-slate-100 hover:text-[#0080FF]"
+                                className="relative hidden size-11 rounded-[12px] text-slate-500 hover:bg-slate-100 hover:text-[#0080FF] lg:inline-flex"
                             >
                                 <Link
                                     href={wishlistIndex()}
@@ -130,7 +130,7 @@ export function AppHeader() {
                                 asChild
                                 variant="ghost"
                                 size="icon"
-                                className="relative size-11 rounded-[12px] text-slate-500 hover:bg-slate-100 hover:text-[#0080FF]"
+                                className="relative hidden size-11 rounded-[12px] text-slate-500 hover:bg-slate-100 hover:text-[#0080FF] lg:inline-flex"
                             >
                                 <Link
                                     href={cartIndex()}
