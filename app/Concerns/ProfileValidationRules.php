@@ -18,6 +18,7 @@ trait ProfileValidationRules
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules($userId),
+            'phone' => ['nullable', 'string', 'max:32', 'regex:/^(\+?62|0)[0-9]{8,14}$/'],
         ];
     }
 

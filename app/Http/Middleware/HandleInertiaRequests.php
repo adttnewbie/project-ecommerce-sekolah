@@ -71,7 +71,7 @@ class HandleInertiaRequests extends Middleware
      * so attributes that are not explicitly requested never reach the client
      * (defense in depth on top of the model's hidden attributes).
      *
-     * @return array{id: int, name: string, email: string, role: string, avatar: null}|null
+     * @return array{id: int, name: string, email: string, phone: string|null, role: string, avatar: null}|null
      */
     private function authenticatedUserPayload(Request $request): ?array
     {
@@ -85,6 +85,7 @@ class HandleInertiaRequests extends Middleware
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
+            'phone' => $user->phone,
             'role' => $user->role->value,
             'avatar' => null,
         ];

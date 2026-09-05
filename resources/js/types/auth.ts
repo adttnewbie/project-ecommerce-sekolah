@@ -2,6 +2,7 @@ export type User = {
     id: number;
     name: string;
     email: string;
+    phone?: string | null;
     role: 'admin' | 'seller' | 'buyer' | 'admin_jurusan' | 'picket_officer';
     avatar?: string;
     two_factor_enabled?: boolean;

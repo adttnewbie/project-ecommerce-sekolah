@@ -28,9 +28,10 @@ test('shared auth payload is narrowed to the allow-list', function () {
         'id' => $user->id,
         'name' => 'Test Buyer',
         'email' => 'buyer@example.com',
+        'phone' => null,
         'role' => 'buyer',
         'avatar' => null,
-    ])->and(array_keys($authUser))->toBe(['id', 'name', 'email', 'role', 'avatar']);
+    ])->and(array_keys($authUser))->toBe(['id', 'name', 'email', 'phone', 'role', 'avatar']);
 });
 
 test('shared auth payload does not leak model attributes', function () {

@@ -131,3 +131,26 @@ test('email verification routes stay removed', function () {
     expect(Route::has('verification.send'))->toBeFalse();
     expect(Route::has('verification.verify'))->toBeFalse();
 });
+
+test('profile update stores phone and shares it with client', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->patch(route('profile.update'), [
+        'name' => $user->name,
+        'email' => $user->email,
+        'phone' => '08123456789',
+    ])->assertSessionHasNoErrors();
+
+    expect($user->fresh()->phone)->toBe('08123456789');
+
+    $this->actingAs($user)->patch(route('profile.update'), [
+        'name' => $user->name,
+        'email' => $user->email,
+        'phone' => 'not-a-number',
+    ])->assertSessionHasErrors('phone');
+
+    $this->actingAs($user)->get(route('profile.edit'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('auth.user.phone', '08123456789'));
+});
