@@ -32,7 +32,6 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import type { PreOrderStatus } from '@/lib/pre-order';
-import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { index as cartIndex } from '@/routes/cart';
 import {
@@ -106,6 +105,40 @@ function preOrderIssue(item: CartItem): string | null {
     }
 
     return null;
+}
+
+/**
+ * Status stok/pre-order dalam bentuk pill badge — sama persis dengan
+ * yang dipakai ProductCard, agar mobile, tabel, dan katalog konsisten.
+ */
+function StockBadge({
+    product,
+    closed,
+}: {
+    product: CartItemProduct;
+    closed: boolean;
+}) {
+    if (product.is_pre_order) {
+        return closed ? (
+            <Badge className="rounded-full bg-rose-50 px-2 py-0 text-[11px] font-medium text-rose-700 ring-1 ring-rose-200">
+                Pre-order ditutup
+            </Badge>
+        ) : (
+            <Badge className="rounded-full bg-[#EFF8FF] px-2 py-0 text-[11px] font-medium text-[#0080FF] ring-1 ring-[#BCE0FF]">
+                Pre-Order {product.pre_order_estimate_days} hari
+            </Badge>
+        );
+    }
+
+    return product.stock <= 0 ? (
+        <Badge className="rounded-full bg-orange-50 px-2 py-0 text-[11px] font-medium text-orange-700 ring-1 ring-orange-200">
+            Stok habis
+        </Badge>
+    ) : (
+        <Badge className="rounded-full bg-emerald-50 px-2 py-0 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-200">
+            Stok {product.stock}
+        </Badge>
+    );
 }
 
 const formatRupiah = (value: number) =>
@@ -238,7 +271,8 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                 Keranjangmu masih kosong
                                             </p>
                                             <p className="mt-1 text-sm leading-6 text-slate-500">
-                                                Yuk, temukan produk yang kamu suka dan tambahkan ke keranjang.
+                                                Yuk, temukan produk yang kamu
+                                                suka dan tambahkan ke keranjang.
                                             </p>
                                             <Button
                                                 asChild
@@ -255,11 +289,6 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                         const src = imageSource(
                                             item.product.image,
                                         );
-                                        const hasStockIssue =
-                                            !item.product.is_pre_order &&
-                                            (item.product.stock <= 0 ||
-                                                item.quantity >
-                                                    item.product.stock);
                                         const poIssue = preOrderIssue(item);
 
                                         return (
@@ -309,35 +338,44 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                             )}
                                                         </div>
                                                         <div className="min-w-0 flex-1">
-                                                            <p className="line-clamp-2 font-bold text-slate-900">
+                                                            <p className="line-clamp-2 text-[13px] leading-5 font-bold text-slate-900">
                                                                 {
                                                                     item.product
                                                                         .name
                                                                 }
                                                             </p>
-                                                            <p className="mt-1 text-sm font-bold text-slate-900 tabular-nums">
+                                                            <p className="mt-1 text-[15px] font-bold text-slate-900 tabular-nums">
                                                                 {formatRupiah(
                                                                     item.product
                                                                         .price,
                                                                 )}
                                                             </p>
-                                                            <p
-                                                                className={cn(
-                                                                    'mt-1 text-xs',
-                                                                    hasStockIssue ||
-                                                                        poIssue
-                                                                        ? 'text-rose-600'
-                                                                        : 'text-slate-500',
-                                                                )}
-                                                            >
-                                                                {item.product
-                                                                    .is_pre_order
-                                                                    ? poIssue?.startsWith(
+                                                            <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                                                <StockBadge
+                                                                    product={
+                                                                        item.product
+                                                                    }
+                                                                    closed={
+                                                                        poIssue?.startsWith(
                                                                             'Batas waktu',
-                                                                        )
-                                                                        ? 'Pre-order ditutup'
-                                                                        : `Pre-Order ${item.product.pre_order_estimate_days} hari`
-                                                                    : `Stok ${item.product.stock}`}
+                                                                        ) ??
+                                                                        false
+                                                                    }
+                                                                />
+                                                            </div>
+                                                            <p className="mt-1 flex items-center gap-1 truncate text-[11px] font-medium text-slate-500">
+                                                                <Store
+                                                                    className="size-3 shrink-0"
+                                                                    aria-hidden
+                                                                />
+                                                                <span className="truncate">
+                                                                    {
+                                                                        item
+                                                                            .product
+                                                                            .seller
+                                                                            .name
+                                                                    }
+                                                                </span>
                                                             </p>
                                                             {poIssue && (
                                                                 <p className="mt-1 rounded-[6px] border border-red-200 bg-[#FEF2F2] px-2 py-1 text-xs leading-4 text-[#DC2626]">
@@ -351,7 +389,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                 <div className="mt-4 flex items-end justify-between gap-3 border-t border-slate-100 pt-3">
                                                     <QuantityStepper
                                                         item={item}
-                                                        buttonClassName="size-11"
+                                                        buttonClassName="size-9"
                                                     />
                                                     <div className="text-right">
                                                         <p className="text-xs text-slate-500">
@@ -374,7 +412,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                 type="submit"
                                                                 variant="outline"
                                                                 size="icon"
-                                                                className="size-11 rounded-[12px] border-red-200 bg-white text-[#DC2626] hover:bg-[#FEF2F2] hover:text-[#DC2626]"
+                                                                className="size-9 rounded-[12px] border-red-200 bg-white text-[#DC2626] hover:bg-[#FEF2F2] hover:text-[#DC2626]"
                                                                 disabled={
                                                                     processing
                                                                 }
@@ -396,7 +434,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                 </div>
 
                                 <div className="hidden overflow-x-auto xl:block">
-                                    <Table className="min-w-[680px] w-full">
+                                    <Table className="w-full min-w-[680px]">
                                         <TableHeader>
                                             <TableRow className="border-slate-100 bg-slate-50 hover:bg-slate-50">
                                                 {[
@@ -427,10 +465,14 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                             <ShoppingCart className="size-5" />
                                                         </div>
                                                         <p className="mt-4 text-base font-bold text-slate-900">
-                                                            Keranjangmu masih kosong
+                                                            Keranjangmu masih
+                                                            kosong
                                                         </p>
                                                         <p className="mt-1 text-sm leading-6 text-slate-500">
-                                                            Yuk, temukan produk yang kamu suka dan tambahkan ke keranjang.
+                                                            Yuk, temukan produk
+                                                            yang kamu suka dan
+                                                            tambahkan ke
+                                                            keranjang.
                                                         </p>
                                                         <Button
                                                             asChild
@@ -448,10 +490,6 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                 const src = imageSource(
                                                     item.product.image,
                                                 );
-                                                const hasStockIssue =
-                                                    item.product.stock <= 0 ||
-                                                    item.quantity >
-                                                        item.product.stock;
                                                 const poIssue =
                                                     preOrderIssue(item);
 
@@ -506,7 +544,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                     )}
                                                                 </div>
                                                                 <div className="min-w-0">
-                                                                    <p className="truncate font-bold text-slate-900">
+                                                                    <p className="line-clamp-2 text-[13px] leading-5 font-bold text-slate-900">
                                                                         {
                                                                             item
                                                                                 .product
@@ -534,36 +572,23 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                                                 </div>
                                                             </Link>
                                                         </TableCell>
-                                                        <TableCell className="px-4 py-4 font-bold text-slate-900 tabular-nums">
+                                                        <TableCell className="px-4 py-4 text-[15px] font-bold text-slate-900 tabular-nums">
                                                             {formatRupiah(
                                                                 item.product
                                                                     .price,
                                                             )}
-                                                            <p className="mt-1 text-xs font-normal text-slate-500">
-                                                                <span
-                                                                    className={
+                                                            <p className="mt-1.5">
+                                                                <StockBadge
+                                                                    product={
+                                                                        item.product
+                                                                    }
+                                                                    closed={
                                                                         poIssue?.startsWith(
                                                                             'Batas waktu',
-                                                                        ) ||
-                                                                        hasStockIssue
-                                                                            ? 'text-[#DC2626]'
-                                                                            : undefined
+                                                                        ) ??
+                                                                        false
                                                                     }
-                                                                >
-                                                                    {item
-                                                                        .product
-                                                                        .is_pre_order
-                                                                        ? poIssue?.startsWith(
-                                                                                'Batas waktu',
-                                                                            )
-                                                                            ? 'Pre-order ditutup'
-                                                                            : `Pre-Order ${item.product.pre_order_estimate_days} hari`
-                                                                        : 'Stok '}
-                                                                </span>
-                                                                {!item.product
-                                                                    .is_pre_order &&
-                                                                    item.product
-                                                                        .stock}
+                                                                />
                                                             </p>
                                                         </TableCell>
                                                         <TableCell className="px-4 py-4">

@@ -5,11 +5,8 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    resolvePreOrderStatus
-
-} from '@/lib/pre-order';
-import type {PreOrderStatus} from '@/lib/pre-order';
+import { resolvePreOrderStatus } from '@/lib/pre-order';
+import type { PreOrderStatus } from '@/lib/pre-order';
 import { cn } from '@/lib/utils';
 import { login } from '@/routes';
 import { store as storeCartItem } from '@/routes/cart/items';
@@ -320,7 +317,7 @@ export function ProductCard({
                                     preOrderStatus === 'closed'
                                         ? 'bg-rose-50 text-rose-700 ring-rose-200'
                                         : preOrderStatus !== 'closing_soon' &&
-                                            'bg-[#EFF8FF] text-[#0080FF] ring-[#BCE0FF]',
+                                              'bg-[#EFF8FF] text-[#0080FF] ring-[#BCE0FF]',
                                 )}
                             >
                                 {isPreOrderClosed
@@ -378,7 +375,7 @@ export function ProductCard({
                     )}
                 </div>
 
-                <CardHeader className="space-y-2 p-3 pb-2 sm:p-4 sm:pb-2">
+                <CardHeader className="space-y-1.5 p-2.5 pb-1.5 sm:p-4 sm:pb-2">
                     <div className="flex flex-wrap gap-1.5">
                         <Badge
                             variant="secondary"
@@ -402,16 +399,16 @@ export function ProductCard({
                         href={catalogShow(product.slug)}
                         className="block rounded-[6px] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 focus-visible:outline-none"
                     >
-                        <CardTitle className="line-clamp-2 text-sm leading-5 font-bold text-slate-900 sm:text-[15px] sm:leading-6">
+                        <CardTitle className="line-clamp-2 text-[13px] leading-5 font-bold text-slate-900 sm:text-sm">
                             {product.name}
                         </CardTitle>
                     </Link>
                 </CardHeader>
 
-                <CardContent className="flex flex-1 flex-col gap-2 p-3 pt-0 sm:p-4 sm:pt-0">
+                <CardContent className="flex flex-1 flex-col gap-1.5 p-2.5 pt-0 sm:gap-2 sm:p-4 sm:pt-0">
                     {/* Rating + Sold */}
                     {(hasRating || hasSold) && (
-                        <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+                        <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
                             {hasRating && (
                                 <span className="inline-flex items-center gap-1">
                                     <Star
@@ -441,7 +438,7 @@ export function ProductCard({
 
                     {/* Price — primary hierarchy */}
                     <div className="space-y-1">
-                        <p className="text-base font-bold tracking-tight text-slate-900 tabular-nums sm:text-lg">
+                        <p className="text-[15px] font-bold tracking-tight text-slate-900 tabular-nums sm:text-base">
                             {formatRupiah(product.price)}
                         </p>
                         {showOriginal && (
@@ -459,7 +456,7 @@ export function ProductCard({
                     </div>
 
                     {/* Footer — compact to avoid horizontal overflow */}
-                    <div className="mt-auto flex items-center justify-between gap-1.5 border-t border-slate-100 pt-3">
+                    <div className="mt-auto flex items-center justify-between gap-1.5 border-t border-slate-100 pt-2.5">
                         <p className="flex min-w-0 flex-1 items-center gap-1 truncate text-[11px] font-medium text-slate-500">
                             <Store className="size-3 shrink-0" aria-hidden />
                             <span className="truncate">
@@ -475,8 +472,8 @@ export function ProductCard({
                                 disabled={notPurchasable || cartLoading}
                                 onClick={handleAddToCart}
                                 className={cn(
-                                    'h-9 shrink-0 rounded-[10px] border-slate-200 bg-white px-2 text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-slate-50 sm:h-11 sm:rounded-[12px] sm:px-3',
-                                    'after:absolute after:-inset-1 after:content-[""] relative',
+                                    'h-9 shrink-0 rounded-[10px] border-slate-200 bg-white px-2 text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-slate-50',
+                                    'relative after:absolute after:-inset-1 after:content-[""]',
                                     notPurchasable && 'opacity-50',
                                 )}
                                 aria-label={
@@ -511,7 +508,7 @@ export function ProductCard({
                                 size="sm"
                                 disabled={notPurchasable}
                                 onClick={handleBuyNow}
-                                className="h-9 shrink-0 rounded-[10px] bg-[#0080FF] px-2.5 text-xs font-semibold text-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-[#006FE0] active:bg-[#0059B8] sm:h-11 sm:rounded-[12px] sm:px-3 xl:px-4 after:absolute after:-inset-1 after:content-[''] relative"
+                                className="relative h-9 shrink-0 rounded-[10px] bg-[#0080FF] px-2.5 text-xs font-semibold text-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] after:absolute after:-inset-1 after:content-[''] hover:bg-[#006FE0] active:bg-[#0059B8]"
                                 aria-label={
                                     isOutOfStock
                                         ? 'Stok habis'
@@ -521,9 +518,7 @@ export function ProductCard({
                                 }
                                 title="Beli Sekarang — primary"
                             >
-                                <span className="sm:hidden">Beli</span>
-                                <span className="hidden sm:inline xl:hidden">Beli</span>
-                                <span className="hidden xl:inline">Beli Sekarang</span>
+                                <span>Beli</span>
                             </Button>
                         </div>
                     </div>
