@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('profile page is displayed', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['role' => UserRole::Seller]);
 
     $response = $this
         ->actingAs($user)
