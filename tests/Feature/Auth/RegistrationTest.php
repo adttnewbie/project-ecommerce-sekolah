@@ -27,6 +27,7 @@ test('new students can register with a class', function () {
     $response = $this->post(route('register.store'), [
         'name' => 'Test User',
         'email' => 'test@example.com',
+        'phone' => '08123456789',
         'position_id' => $studentPosition->id,
         'class_id' => $schoolClass->id,
         'password' => 'password',
@@ -53,6 +54,7 @@ test('students must choose a class when registering', function () {
     $response = $this->post(route('register.store'), [
         'name' => 'Test User',
         'email' => 'test@example.com',
+        'phone' => '08123456789',
         'position_id' => $studentPosition->id,
         'password' => 'password',
         'password_confirmation' => 'password',
@@ -70,6 +72,7 @@ test('teachers can register without a class', function () {
     $response = $this->post(route('register.store'), [
         'name' => 'Test User',
         'email' => 'test@example.com',
+        'phone' => '08123456789',
         'position_id' => $teacherPosition->id,
         'password' => 'password',
         'password_confirmation' => 'password',
@@ -87,6 +90,64 @@ test('teachers can register without a class', function () {
         ->assertSessionHas('status', 'Registrasi berhasil. Silakan masuk menggunakan akun yang baru dibuat.');
 });
 
+test('phone number is required when registering', function () {
+    $this->seed(SchoolReferenceSeeder::class);
+
+    $teacherPosition = Position::query()->where('code', Position::TEACHER)->firstOrFail();
+
+    $response = $this->post(route('register.store'), [
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'position_id' => $teacherPosition->id,
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $response->assertInvalid(['phone']);
+    $this->assertGuest();
+});
+
+test('invalid phone numbers are rejected when registering', function () {
+    $this->seed(SchoolReferenceSeeder::class);
+
+    $teacherPosition = Position::query()->where('code', Position::TEACHER)->firstOrFail();
+
+    $response = $this->post(route('register.store'), [
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'phone' => 'not-a-number',
+        'position_id' => $teacherPosition->id,
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $response->assertInvalid(['phone']);
+    $this->assertGuest();
+});
+
+test('phone number is stored when registering', function () {
+    $this->seed(SchoolReferenceSeeder::class);
+
+    $teacherPosition = Position::query()->where('code', Position::TEACHER)->firstOrFail();
+
+    $response = $this->post(route('register.store'), [
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'phone' => '08123456789',
+        'position_id' => $teacherPosition->id,
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $this->assertDatabaseHas('users', [
+        'email' => 'test@example.com',
+        'phone' => '08123456789',
+    ]);
+    $response
+        ->assertRedirect(route('login'))
+        ->assertSessionHas('status', 'Registrasi berhasil. Silakan masuk menggunakan akun yang baru dibuat.');
+});
+
 test('users cannot become sellers directly from registration', function () {
     $this->seed(SchoolReferenceSeeder::class);
 
@@ -95,6 +156,7 @@ test('users cannot become sellers directly from registration', function () {
     $response = $this->post(route('register.store'), [
         'name' => 'Seller User',
         'email' => 'seller@example.com',
+        'phone' => '08123456789',
         'account_type' => 'seller',
         'position_id' => $teacherPosition->id,
         'password' => 'password',

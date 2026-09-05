@@ -14,9 +14,7 @@ import { AccountHeader } from '@/components/account/account-header';
 import type { AccountSummary } from '@/components/account/account-menu-config';
 import { MenuGroup } from '@/components/account/menu-group';
 import { OrderStatusStrip } from '@/components/account/order-status-strip';
-import { SellerCta } from '@/components/account/seller-cta';
 import { ShopShortcuts } from '@/components/account/shop-shortcuts';
-import DeleteUser from '@/components/delete-user';
 import { logout } from '@/routes';
 import { edit as securityEdit } from '@/routes/security';
 import type { Auth } from '@/types';
@@ -124,7 +122,6 @@ export default function AccountIndex({
                         },
                     ]}
                 />
-                <SellerCta />
                 <MenuGroup
                     title="Lainnya"
                     items={[
@@ -145,7 +142,6 @@ export default function AccountIndex({
                         },
                     ]}
                 />
-                <DeleteUser />
             </div>
         </>
     );

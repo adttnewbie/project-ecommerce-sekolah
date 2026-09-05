@@ -37,6 +37,8 @@ class CreateNewUser implements CreatesNewUsers
         RateLimiter::hit($throttleKey);
         $validator = Validator::make($input, [
             ...$this->profileRules(),
+            // Phone stays nullable on profile updates, but registration requires it.
+            'phone' => ['required', 'string', 'max:32', 'regex:/^(\+?62|0)[0-9]{8,14}$/'],
             'position_id' => ['required', 'integer', Rule::exists('positions', 'id')],
             'class_id' => ['nullable', 'integer', Rule::exists('classes', 'id')],
             'password' => $this->passwordRules(),
@@ -63,6 +65,7 @@ class CreateNewUser implements CreatesNewUsers
         $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
+            'phone' => $input['phone'],
             'role' => UserRole::Buyer,
             'password' => $input['password'],
             'position_id' => $positionId,

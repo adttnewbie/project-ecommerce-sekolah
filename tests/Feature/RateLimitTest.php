@@ -21,6 +21,7 @@ function registrationPayload(int $index): array
     return [
         'name' => "Registrant {$index}",
         'email' => "registrant{$index}@example.com",
+        'phone' => '08123456789',
         'position_id' => $studentPosition->id,
         'class_id' => $schoolClass->id,
         'password' => 'password',

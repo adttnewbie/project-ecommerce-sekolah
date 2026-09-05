@@ -31,7 +31,7 @@ export function MenuGroup({
             {items.map((item) => {
                 const Icon = item.icon;
                 const cls =
-                    'flex items-center gap-3 rounded-[12px] px-3 py-3 transition focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:outline-none ' +
+                    'flex w-full items-center gap-3 rounded-[12px] px-3 py-3 text-left transition focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:outline-none ' +
                     (item.disabled
                         ? 'cursor-not-allowed opacity-50'
                         : 'hover:bg-slate-50');

@@ -6,6 +6,7 @@ import {
     KeyRound,
     Lock,
     Mail,
+    Phone,
     School,
     User,
 } from 'lucide-react';
@@ -178,6 +179,34 @@ export default function Register({ passwordRules, positions, classes }: Props) {
 
                             <div className={fieldClassName}>
                                 <Label
+                                    htmlFor="phone"
+                                    className={labelClassName}
+                                >
+                                    Nomor WhatsApp
+                                </Label>
+                                <div className="relative">
+                                    <Phone className={iconClassName} />
+                                    <Input
+                                        id="phone"
+                                        type="tel"
+                                        required
+                                        tabIndex={3}
+                                        autoComplete="tel"
+                                        inputMode="tel"
+                                        name="phone"
+                                        placeholder="08xxxxxxxxxx"
+                                        className={inputClassName}
+                                        aria-invalid={Boolean(errors.phone)}
+                                    />
+                                </div>
+                                <InputError
+                                    message={errors.phone}
+                                    className={errorClassName}
+                                />
+                            </div>
+
+                            <div className={fieldClassName}>
+                                <Label
                                     htmlFor="position_id"
                                     className={labelClassName}
                                 >
@@ -196,7 +225,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                         <SelectTrigger
                                             id="position_id"
                                             className={selectTriggerClassName}
-                                            tabIndex={3}
+                                            tabIndex={4}
                                             aria-invalid={Boolean(
                                                 errors.position_id,
                                             )}
@@ -205,11 +234,23 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                         </SelectTrigger>
                                         <SelectContent
                                             style={selectPortalTheme}
+                                            position="popper"
+                                            sideOffset={4}
+                                            align="start"
                                         >
                                             <SelectGroup>
                                                 <SelectLabel>
                                                     Jabatan
                                                 </SelectLabel>
+                                                {positions.length === 0 && (
+                                                    <SelectItem
+                                                        value="__empty"
+                                                        disabled
+                                                    >
+                                                        Data jabatan tidak
+                                                        tersedia
+                                                    </SelectItem>
+                                                )}
                                                 {positions.map((position) => (
                                                     <SelectItem
                                                         key={position.id}
@@ -255,12 +296,15 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                                     className={
                                                         selectTriggerClassName
                                                     }
-                                                    tabIndex={4}
+                                                    tabIndex={5}
                                                 >
                                                     <SelectValue placeholder="Pilih kelas" />
                                                 </SelectTrigger>
                                                 <SelectContent
                                                     style={selectPortalTheme}
+                                                    position="popper"
+                                                    sideOffset={4}
+                                                    align="start"
                                                 >
                                                     <SelectGroup>
                                                         <SelectLabel>
@@ -307,7 +351,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                                     className={
                                                         selectTriggerClassName
                                                     }
-                                                    tabIndex={5}
+                                                    tabIndex={6}
                                                     aria-invalid={Boolean(
                                                         errors.class_id,
                                                     )}
@@ -322,6 +366,9 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                                 </SelectTrigger>
                                                 <SelectContent
                                                     style={selectPortalTheme}
+                                                    position="popper"
+                                                    sideOffset={4}
+                                                    align="start"
                                                 >
                                                     <SelectGroup>
                                                         <SelectLabel>
@@ -374,7 +421,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                     <PasswordInput
                                         id="password"
                                         required
-                                        tabIndex={isStudent ? 6 : 4}
+                                        tabIndex={isStudent ? 7 : 5}
                                         autoComplete="new-password"
                                         name="password"
                                         placeholder="Minimal 8 karakter"
@@ -401,7 +448,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                     <PasswordInput
                                         id="password_confirmation"
                                         required
-                                        tabIndex={isStudent ? 7 : 5}
+                                        tabIndex={isStudent ? 8 : 6}
                                         autoComplete="new-password"
                                         name="password_confirmation"
                                         placeholder="Ulangi kata sandi"
@@ -421,7 +468,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                             <Button
                                 type="submit"
                                 className="mt-2 h-11 w-full text-base font-semibold shadow-sm transition-colors active:scale-[0.98]"
-                                tabIndex={isStudent ? 8 : 6}
+                                tabIndex={isStudent ? 9 : 7}
                                 data-test="register-user-button"
                             >
                                 {processing && <Spinner />}
@@ -437,7 +484,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                             Sudah punya akun?{' '}
                             <Link
                                 href={login()}
-                                tabIndex={isStudent ? 9 : 7}
+                                tabIndex={isStudent ? 10 : 8}
                                 className="font-semibold text-blue-700 transition-colors hover:text-blue-800"
                             >
                                 Masuk di sini
