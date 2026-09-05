@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
-import { ChevronRight  } from 'lucide-react';
-import type {LucideIcon} from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import type { NavItem } from '@/types';
 
 export type MenuRow = {

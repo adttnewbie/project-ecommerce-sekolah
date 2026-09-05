@@ -1,8 +1,8 @@
 import { Link } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 import { index as ordersIndex } from '@/routes/orders';
-import { ACCOUNT_MENU  } from './account-menu-config';
-import type {AccountSummary} from './account-menu-config';
+import { ACCOUNT_MENU } from './account-menu-config';
+import type { AccountSummary } from './account-menu-config';
 
 export function OrderStatusStrip({ summary }: { summary: AccountSummary }) {
     const items = ACCOUNT_MENU.orderStrip(summary);

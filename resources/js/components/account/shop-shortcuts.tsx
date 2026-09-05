@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { Heart, PackageCheck, ShoppingCart } from 'lucide-react';
-import { ACCOUNT_MENU  } from './account-menu-config';
-import type {AccountSummary} from './account-menu-config';
+import { ACCOUNT_MENU } from './account-menu-config';
+import type { AccountSummary } from './account-menu-config';
 
 const ICONS = {
     orders: PackageCheck,
