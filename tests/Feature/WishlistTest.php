@@ -94,3 +94,23 @@ test('catalog payload exposes wishlist state review summary sold count and disco
             ->where('products.data.0.sold_count', 3)
             ->etc());
 });
+
+test('buyer can view their wishlist page with wishlisted products only', function () {
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $wanted = Product::factory()->approved()->create(['name' => 'Produk Idaman']);
+    $other = Product::factory()->approved()->create(['name' => 'Produk Lain']);
+    Wishlist::query()->create(['user_id' => $buyer->id, 'product_id' => $wanted->id]);
+
+    $this->actingAs($buyer)
+        ->get(route('wishlist.index'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('wishlist/index')
+            ->where('products.data.0.id', $wanted->id)
+            ->where('products.data.0.is_wishlisted', true)
+            ->has('products.data', 1));
+});
+
+test('guests are redirected to login from wishlist page', function () {
+    $this->get(route('wishlist.index'))->assertRedirect(route('login'));
+});

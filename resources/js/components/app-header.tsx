@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     ChevronDown,
+    Heart,
     Home as HomeIcon,
     Menu,
     PackageCheck,
@@ -34,6 +35,7 @@ import { cn } from '@/lib/utils';
 import { home, login, register } from '@/routes';
 import { index as cartIndex } from '@/routes/cart';
 import { index as ordersIndex } from '@/routes/orders';
+import { index as wishlistIndex } from '@/routes/wishlist';
 import type { NavItem } from '@/types';
 
 const userMenuClassName =
@@ -160,7 +162,25 @@ export function AppHeader() {
                                 size="icon"
                                 className="relative size-11 rounded-[12px] text-slate-500 hover:bg-slate-100 hover:text-[#0080FF]"
                             >
-                                <Link href={cartIndex()} aria-label="Keranjang" title="Keranjang">
+                                <Link
+                                    href={wishlistIndex()}
+                                    aria-label="Wishlist"
+                                    title="Wishlist"
+                                >
+                                    <Heart className="size-5" />
+                                </Link>
+                            </Button>
+                            <Button
+                                asChild
+                                variant="ghost"
+                                size="icon"
+                                className="relative size-11 rounded-[12px] text-slate-500 hover:bg-slate-100 hover:text-[#0080FF]"
+                            >
+                                <Link
+                                    href={cartIndex()}
+                                    aria-label="Keranjang"
+                                    title="Keranjang"
+                                >
                                     <ShoppingCart className="size-5" />
                                     {Boolean(buyerHeader?.cartItemsCount) && (
                                         <span className="absolute -top-1 -right-1 min-w-5 rounded-full bg-[#0080FF] px-1.5 text-center text-[11px] leading-5 font-semibold text-white ring-2 ring-white">

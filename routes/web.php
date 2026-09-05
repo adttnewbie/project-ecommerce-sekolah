@@ -65,6 +65,7 @@ Route::middleware(['auth', EnsureUserIsBuyer::class])->group(function () {
     Route::post('cart/items/{product:slug}', [CartController::class, 'store'])->name('cart.items.store');
     Route::put('cart/items/{cartItem}', [CartController::class, 'update'])->name('cart.items.update');
     Route::delete('cart/items/{cartItem}', [CartController::class, 'destroy'])->name('cart.items.destroy');
+    Route::get('wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
     Route::post('wishlist/{product:slug}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 
     Route::get('checkout/confirm', [CheckoutController::class, 'confirm'])->name('checkout.confirm')->middleware('buyer.not-banned:checkout');
