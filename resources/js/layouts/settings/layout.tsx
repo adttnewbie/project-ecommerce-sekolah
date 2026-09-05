@@ -42,11 +42,25 @@ const roleLabels: Record<string, string> = {
 };
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
+    const { component } = usePage();
     const { isCurrentOrParentUrl } = useCurrentUrl();
     const { auth } = usePage().props;
     const getInitials = useInitials();
-    const roleLabel = auth.user?.role ? (roleLabels[auth.user.role] ?? auth.user.role) : null;
+    const roleLabel = auth.user?.role
+        ? (roleLabels[auth.user.role] ?? auth.user.role)
+        : null;
     const isBuyer = auth.user?.role === 'buyer';
+
+    // Profil buyer adalah halaman mandiri (komponen BuyerProfile) —
+    // chrome pengaturan (judul + kartu user + tab menu) dilewati.
+    if (component === 'settings/profile' && isBuyer) {
+        return (
+            <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-6 sm:px-6">
+                {children}
+            </div>
+        );
+    }
+
     const navItems: NavItem[] =
         auth.user?.role === 'seller'
             ? [
@@ -77,7 +91,10 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                         <span className="text-xs font-medium text-slate-600">
                             {roleLabel ?? 'Akun'}
                         </span>
-                        <span className="size-1 rounded-full bg-slate-300" aria-hidden />
+                        <span
+                            className="size-1 rounded-full bg-slate-300"
+                            aria-hidden
+                        />
                         <span className="max-w-36 truncate text-xs font-semibold text-slate-900">
                             {auth.user.name}
                         </span>
@@ -88,7 +105,9 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
             <div
                 className={cn(
                     'flex flex-col gap-6',
-                    isBuyer ? 'lg:flex-row lg:gap-8' : 'lg:flex-row lg:space-x-12',
+                    isBuyer
+                        ? 'lg:flex-row lg:gap-8'
+                        : 'lg:flex-row lg:space-x-12',
                 )}
             >
                 <aside className="w-full max-w-xl lg:w-48 lg:shrink-0">
@@ -96,13 +115,16 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                         {auth.user && (
                             <div className="flex items-center gap-3 rounded-[14px] border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
                                 <Avatar className="size-10 shrink-0 rounded-full border border-slate-200">
-                                    <AvatarImage src={auth.user.avatar} alt={auth.user.name} />
+                                    <AvatarImage
+                                        src={auth.user.avatar}
+                                        alt={auth.user.name}
+                                    />
                                     <AvatarFallback className="rounded-full bg-[#EFF8FF] text-sm font-semibold text-[#0080FF]">
                                         {getInitials(auth.user.name)}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-semibold leading-none text-slate-900">
+                                    <p className="truncate text-sm leading-none font-semibold text-slate-900">
                                         {auth.user.name}
                                     </p>
                                     <p className="mt-1 truncate text-xs leading-none text-slate-500">
@@ -128,7 +150,9 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 Menu
                             </p>
                             {navItems.map((item, index) => {
-                                const isActive = isCurrentOrParentUrl(item.href);
+                                const isActive = isCurrentOrParentUrl(
+                                    item.href,
+                                );
                                 const Icon = item.icon;
                                 // "Dashboard Seller" also ends shopping mode so
                                 // the session flag never outlives the intent.
@@ -146,7 +170,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                         className={cn(
                                             'h-11 w-full justify-start gap-2 rounded-xl px-3 text-sm font-medium transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
                                             isActive
-                                                ? 'bg-[#EFF8FF] text-[#0080FF] hover:bg-[#EFF8FF] hover:text-[#0080FF] shadow-[inset_0_0_0_1px_rgba(0,128,255,0.12)]'
+                                                ? 'bg-[#EFF8FF] text-[#0080FF] shadow-[inset_0_0_0_1px_rgba(0,128,255,0.12)] hover:bg-[#EFF8FF] hover:text-[#0080FF]'
                                                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
                                         )}
                                     >
@@ -184,9 +208,12 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                         </nav>
 
                         <div className="hidden rounded-xl border border-blue-100 bg-[#EFF8FF] p-3 lg:block">
-                            <p className="text-xs font-semibold text-[#0A3F76]">Tips keamanan</p>
+                            <p className="text-xs font-semibold text-[#0A3F76]">
+                                Tips keamanan
+                            </p>
                             <p className="mt-1 text-xs leading-5 text-slate-600">
-                                Gunakan password kuat dan aktifkan verifikasi 2 langkah untuk melindungi akunmu.
+                                Gunakan password kuat dan aktifkan verifikasi 2
+                                langkah untuk melindungi akunmu.
                             </p>
                         </div>
                     </div>
@@ -195,9 +222,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                 <Separator className="my-6 lg:hidden" />
 
                 <div className="flex-1 md:max-w-2xl">
-                    <section className="max-w-xl space-y-8">
-                        {children}
-                    </section>
+                    <section className="max-w-xl space-y-8">{children}</section>
                 </div>
             </div>
         </div>
