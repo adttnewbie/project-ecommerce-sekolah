@@ -88,7 +88,7 @@ class BuyerOrderController extends Controller
 
             OrderItem::query()
                 ->whereIn('id', $sentItems->pluck('id'))
-                ->update(['status' => OrderItemStatus::Completed]);
+                ->update(['status' => OrderItemStatus::Completed, 'status_changed_at' => now()]);
 
             OrderStatusSync::sync($current->fresh(['items']));
         });

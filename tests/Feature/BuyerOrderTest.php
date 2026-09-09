@@ -177,3 +177,27 @@ test('non buyer users cannot access buyer orders', function (UserRole $role) {
     UserRole::Admin,
     UserRole::PicketOfficer,
 ]);
+
+test('buyer complete touches item status changed timestamp', function () {
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $product = Product::factory()->for($seller, 'seller')->approved()->create();
+    $order = Order::factory()->for($buyer)->create([
+        'status' => OrderStatus::Open,
+    ]);
+    $old = now()->subDay();
+    $orderItem = OrderItem::factory()->for($order)->for($product)->create([
+        'status' => OrderItemStatus::Sent,
+        'payment_status' => PaymentStatus::Paid,
+        'status_changed_at' => $old,
+    ]);
+
+    $this->actingAs($buyer)
+        ->from(route('orders.show', $order))
+        ->post(route('orders.complete', $order))
+        ->assertRedirect(route('orders.show', $order))
+        ->assertSessionHas('success');
+
+    expect($orderItem->fresh()->status)->toBe(OrderItemStatus::Completed)
+        ->and($orderItem->fresh()->status_changed_at->greaterThan($old))->toBeTrue();
+});
