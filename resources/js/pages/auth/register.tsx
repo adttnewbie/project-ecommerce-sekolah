@@ -1,16 +1,20 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import {
+    ArrowLeft,
     ArrowRight,
     BriefcaseBusiness,
+    Check,
     GraduationCap,
     KeyRound,
     Lock,
     Mail,
     Phone,
     School,
+    ShieldCheck,
     User,
+    UserRound,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
@@ -27,6 +31,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
 
@@ -73,23 +78,53 @@ const selectTriggerClassName =
     'h-11 w-full rounded-[8px] border-slate-200 bg-white pl-10 pr-4 text-base text-slate-900 shadow-none data-[placeholder]:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 data-[size=default]:h-11 md:text-base';
 const errorClassName = 'pt-1 text-xs';
 
+const steps = [
+    { id: 'diri', label: 'Data diri', icon: UserRound },
+    { id: 'sekolah', label: 'Status sekolah', icon: GraduationCap },
+    { id: 'keamanan', label: 'Kata sandi', icon: ShieldCheck },
+] as const;
+
+const stepErrorFields: Record<number, string[]> = {
+    0: ['name', 'email', 'phone'],
+    1: ['position_id', 'class_id'],
+    2: ['password', 'password_confirmation'],
+};
+
 export default function Register({ passwordRules, positions, classes }: Props) {
+    const [step, setStep] = useState(0);
+    const [direction, setDirection] = useState(1);
+
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
     const [positionId, setPositionId] = useState('');
     const [gradeLevel, setGradeLevel] = useState('');
     const [classId, setClassId] = useState('');
+    const [password, setPassword] = useState('');
+    const [passwordConfirmation, setPasswordConfirmation] = useState('');
+    const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
+
     const selectedPosition = positions.find(
         (position) => String(position.id) === positionId,
     );
     const isStudent = selectedPosition?.code === 'student';
-    const gradeLevels = Array.from(
-        new Set(classes.map((schoolClass) => schoolClass.grade_level)),
-    ).sort((firstGrade, secondGrade) => firstGrade - secondGrade);
+    const gradeLevels = useMemo(
+        () =>
+            Array.from(
+                new Set(classes.map((schoolClass) => schoolClass.grade_level)),
+            ).sort((a, b) => a - b),
+        [classes],
+    );
     const filteredClasses = classes.filter(
         (schoolClass) => String(schoolClass.grade_level) === gradeLevel,
+    );
+    const selectedClass = classes.find(
+        (schoolClass) => String(schoolClass.id) === classId,
     );
 
     const handlePositionChange = (value: string) => {
         setPositionId(value);
+        setLocalErrors((prev) => ({ ...prev, position_id: '' }));
 
         const nextPosition = positions.find(
             (position) => String(position.id) === value,
@@ -104,10 +139,80 @@ export default function Register({ passwordRules, positions, classes }: Props) {
     const handleGradeLevelChange = (value: string) => {
         setGradeLevel(value);
         setClassId('');
+        setLocalErrors((prev) => ({ ...prev, class_id: '' }));
     };
 
-    const gradeLabel = (value: number) => {
-        return matchGrade(value);
+    function validateStep(nextStep: number) {
+        const found: Record<string, string> = {};
+
+        if (nextStep === 0) {
+            if (name.trim().length < 3) {
+                found.name = 'Isi nama lengkap, minimal 3 karakter.';
+            }
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+                found.email = 'Isi email yang valid, contoh nama@email.com.';
+            }
+
+            if (!/^(\+?62|0)[0-9]{8,14}$/.test(phone.trim())) {
+                found.phone =
+                    'Isi nomor WhatsApp yang valid, contoh 081234567890.';
+            }
+        }
+
+        if (nextStep === 1) {
+            if (!positionId) {
+                found.position_id = 'Pilih jabatan kamu di sekolah.';
+            }
+
+            if (selectedPosition?.code === 'student') {
+                if (!gradeLevel) {
+                    found.class_id = 'Pilih kelas dulu, baru pilih jurusan.';
+                } else if (!classId) {
+                    found.class_id = 'Pilih jurusan kelas kamu.';
+                }
+            }
+        }
+
+        if (nextStep === 2) {
+            if (password.length < 8) {
+                found.password = 'Kata sandi minimal 8 karakter.';
+            }
+
+            if (passwordConfirmation !== password || !passwordConfirmation) {
+                found.password_confirmation =
+                    'Konfirmasi belum sama dengan kata sandi.';
+            }
+        }
+
+        return found;
+    }
+
+    const goTo = (nextStep: number) => {
+        setDirection(nextStep > step ? 1 : -1);
+        setStep(nextStep);
+        requestAnimationFrame(() => {
+            const firstField = document.querySelector<HTMLElement>(
+                `[data-step-panel="${nextStep}"] input, [data-step-panel="${nextStep}"] button[role="combobox"]`,
+            );
+            firstField?.focus({ preventScroll: true });
+        });
+    };
+
+    const handleNext = () => {
+        const found = validateStep(step);
+        setLocalErrors(found);
+
+        if (Object.values(found).some(Boolean)) {
+return;
+}
+
+        goTo(Math.min(step + 1, steps.length - 1));
+    };
+
+    const handleBack = () => {
+        setLocalErrors({});
+        goTo(Math.max(step - 1, 0));
     };
 
     return (
@@ -117,252 +222,304 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                 {...store.form()}
                 resetOnSuccess={['password', 'password_confirmation']}
                 disableWhileProcessing
-                className="flex flex-col gap-4"
+                className="flex flex-col gap-5"
             >
-                {({ processing, errors }) => (
-                    <>
-                        <div className="flex flex-col gap-4">
-                            <div className={fieldClassName}>
-                                <Label
-                                    htmlFor="name"
-                                    className={labelClassName}
-                                >
-                                    Nama Lengkap
-                                </Label>
-                                <div className="relative">
-                                    <User className={iconClassName} />
-                                    <Input
-                                        id="name"
-                                        type="text"
-                                        required
-                                        autoFocus
-                                        tabIndex={1}
-                                        autoComplete="name"
-                                        name="name"
-                                        placeholder="Masukkan nama lengkap"
-                                        className={inputClassName}
-                                        aria-invalid={Boolean(errors.name)}
-                                    />
-                                </div>
-                                <InputError
-                                    message={errors.name}
-                                    className={errorClassName}
-                                />
-                            </div>
+                {({ processing, errors }) => {
+                    const mergedErrors: Record<string, string | undefined> = {
+                        name: localErrors.name || errors.name,
+                        email: localErrors.email || errors.email,
+                        phone: localErrors.phone || errors.phone,
+                        position_id:
+                            localErrors.position_id || errors.position_id,
+                        class_id: localErrors.class_id || errors.class_id,
+                        password: localErrors.password || errors.password,
+                        password_confirmation:
+                            localErrors.password_confirmation ||
+                            errors.password_confirmation,
+                    };
 
-                            <div className={fieldClassName}>
-                                <Label
-                                    htmlFor="email"
-                                    className={labelClassName}
-                                >
-                                    Email
-                                </Label>
-                                <div className="relative">
-                                    <Mail className={iconClassName} />
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        required
-                                        tabIndex={2}
-                                        autoComplete="email"
-                                        name="email"
-                                        placeholder="contoh@email.com"
-                                        className={inputClassName}
-                                        aria-invalid={Boolean(errors.email)}
-                                    />
-                                </div>
-                                <InputError
-                                    message={errors.email}
-                                    className={errorClassName}
-                                />
-                            </div>
+                    return (
+                        <>
+                            <StepJumpOnServerError
+                                errors={errors}
+                                onJump={goTo}
+                            />
 
-                            <div className={fieldClassName}>
-                                <Label
-                                    htmlFor="phone"
-                                    className={labelClassName}
+                            {/* Penunjuk langkah */}
+                            <div>
+                                <ol
+                                    className="flex items-start"
+                                    aria-label="Langkah pendaftaran"
                                 >
-                                    Nomor WhatsApp
-                                </Label>
-                                <div className="relative">
-                                    <Phone className={iconClassName} />
-                                    <Input
-                                        id="phone"
-                                        type="tel"
-                                        required
-                                        tabIndex={3}
-                                        autoComplete="tel"
-                                        inputMode="tel"
-                                        name="phone"
-                                        placeholder="08xxxxxxxxxx"
-                                        className={inputClassName}
-                                        aria-invalid={Boolean(errors.phone)}
-                                    />
-                                </div>
-                                <InputError
-                                    message={errors.phone}
-                                    className={errorClassName}
-                                />
-                            </div>
+                                    {steps.map((item, index) => {
+                                        const done = index < step;
+                                        const active = index === step;
+                                        const Icon = item.icon;
 
-                            <div className={fieldClassName}>
-                                <Label
-                                    htmlFor="position_id"
-                                    className={labelClassName}
-                                >
-                                    Jabatan
-                                </Label>
-                                <div className="relative">
-                                    <BriefcaseBusiness
-                                        className={iconClassName}
-                                    />
-                                    <Select
-                                        name="position_id"
-                                        value={positionId}
-                                        onValueChange={handlePositionChange}
-                                        required
-                                    >
-                                        <SelectTrigger
-                                            id="position_id"
-                                            className={selectTriggerClassName}
-                                            tabIndex={4}
-                                            aria-invalid={Boolean(
-                                                errors.position_id,
-                                            )}
-                                        >
-                                            <SelectValue placeholder="Pilih jabatan" />
-                                        </SelectTrigger>
-                                        <SelectContent
-                                            style={selectPortalTheme}
-                                            position="popper"
-                                            sideOffset={4}
-                                            align="start"
-                                        >
-                                            <SelectGroup>
-                                                <SelectLabel>
-                                                    Jabatan
-                                                </SelectLabel>
-                                                {positions.length === 0 && (
-                                                    <SelectItem
-                                                        value="__empty"
-                                                        disabled
-                                                    >
-                                                        Data jabatan tidak
-                                                        tersedia
-                                                    </SelectItem>
+                                        return (
+                                            <li
+                                                key={item.id}
+                                                className={cn(
+                                                    'flex flex-1 flex-col gap-1.5',
+                                                    index > 0 && '-ml-1',
                                                 )}
-                                                {positions.map((position) => (
-                                                    <SelectItem
-                                                        key={position.id}
-                                                        value={String(
-                                                            position.id,
+                                            >
+                                                <div className="flex items-center gap-1.5">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (index < step) {
+goTo(index);
+}
+                                                        }}
+                                                        disabled={
+                                                            index >= step ||
+                                                            processing
+                                                        }
+                                                        aria-current={
+                                                            active
+                                                                ? 'step'
+                                                                : undefined
+                                                        }
+                                                        aria-label={`${item.label}${
+                                                            done
+                                                                ? ', selesai, klik untuk kembali'
+                                                                : active
+                                                                  ? ', langkah saat ini'
+                                                                  : ''
+                                                        }`}
+                                                        className={cn(
+                                                            'flex size-7 shrink-0 items-center justify-center rounded-full border text-sm font-semibold transition-colors',
+                                                            done &&
+                                                                'border-[#0080FF] bg-[#0080FF] text-white',
+                                                            active &&
+                                                                'border-[#0080FF] bg-[#EFF8FF] text-[#0059B8] ring-2 ring-blue-500/20',
+                                                            !done &&
+                                                                !active &&
+                                                                'border-slate-200 bg-white text-slate-400',
+                                                            done &&
+                                                                'cursor-pointer hover:bg-[#0068D1]',
+                                                            index >= step &&
+                                                                'cursor-default',
                                                         )}
                                                     >
-                                                        {position.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <InputError
-                                    message={errors.position_id}
-                                    className={errorClassName}
-                                />
+                                                        {done ? (
+                                                            <Check className="size-4" />
+                                                        ) : (
+                                                            <Icon className="size-4" />
+                                                        )}
+                                                    </button>
+                                                    {index <
+                                                        steps.length - 1 && (
+                                                        <span
+                                                            aria-hidden
+                                                            className={cn(
+                                                                'h-0.5 flex-1 rounded-full',
+                                                                index < step
+                                                                    ? 'bg-[#0080FF]'
+                                                                    : 'bg-slate-200',
+                                                            )}
+                                                        />
+                                                    )}
+                                                </div>
+                                                <span
+                                                    className={cn(
+                                                        'text-[11px] leading-tight',
+                                                        active
+                                                            ? 'font-semibold text-[#0F172A]'
+                                                            : done
+                                                              ? 'font-medium text-[#0059B8]'
+                                                              : 'text-slate-400',
+                                                    )}
+                                                >
+                                                    {item.label}
+                                                </span>
+                                            </li>
+                                        );
+                                    })}
+                                </ol>
+                                <p
+                                    className="mt-3 text-sm leading-6 text-[#475569]"
+                                    aria-live="polite"
+                                >
+                                    {step === 0 &&
+                                        'Kenalan dulu. Data ini dipakai untuk menghubungimu soal pesanan.'}
+                                    {step === 1 &&
+                                        'Pilih statusmu di sekolah supaya toko yang tampil sesuai.'}
+                                    {step === 2 &&
+                                        'Terakhir, kunci akunmu dengan kata sandi yang aman.'}
+                                </p>
                             </div>
 
-                            {isStudent && (
-                                <>
+                            <div
+                                key={`${step}-${direction}`}
+                                data-step-panel={step}
+                                className="flex flex-col gap-4 motion-safe:animate-[register-step-in_240ms_ease-out]"
+                            >
+                                {/* Langkah 1 — tetap di DOM saat pindah langkah supaya nilainya ikut terkirim */}
+                                <div
+                                    className={cn(
+                                        'flex-col gap-4',
+                                        step === 0 ? 'flex' : 'hidden',
+                                    )}
+                                    aria-hidden={step !== 0}
+                                >
                                     <div className={fieldClassName}>
                                         <Label
-                                            htmlFor="grade_level"
+                                            htmlFor="name"
                                             className={labelClassName}
                                         >
-                                            Kelas
+                                            Nama Lengkap
                                         </Label>
                                         <div className="relative">
-                                            <GraduationCap
-                                                className={iconClassName}
-                                            />
-                                            <Select
-                                                value={gradeLevel}
-                                                onValueChange={
-                                                    handleGradeLevelChange
-                                                }
+                                            <User className={iconClassName} />
+                                            <Input
+                                                id="name"
+                                                type="text"
                                                 required
-                                            >
-                                                <SelectTrigger
-                                                    id="grade_level"
-                                                    className={
-                                                        selectTriggerClassName
-                                                    }
-                                                    tabIndex={5}
-                                                >
-                                                    <SelectValue placeholder="Pilih kelas" />
-                                                </SelectTrigger>
-                                                <SelectContent
-                                                    style={selectPortalTheme}
-                                                    position="popper"
-                                                    sideOffset={4}
-                                                    align="start"
-                                                >
-                                                    <SelectGroup>
-                                                        <SelectLabel>
-                                                            Kelas
-                                                        </SelectLabel>
-                                                        {gradeLevels.map(
-                                                            (level) => (
-                                                                <SelectItem
-                                                                    key={level}
-                                                                    value={String(
-                                                                        level,
-                                                                    )}
-                                                                >
-                                                                    {gradeLabel(
-                                                                        level,
-                                                                    )}
-                                                                </SelectItem>
-                                                            ),
-                                                        )}
-                                                    </SelectGroup>
-                                                </SelectContent>
-                                            </Select>
+                                                autoFocus
+                                                tabIndex={1}
+                                                autoComplete="name"
+                                                name="name"
+                                                value={name}
+                                                onChange={(event) => {
+                                                    setName(event.target.value);
+                                                    setLocalErrors((prev) => ({
+                                                        ...prev,
+                                                        name: '',
+                                                    }));
+                                                }}
+                                                placeholder="Masukkan nama lengkap"
+                                                className={inputClassName}
+                                                aria-invalid={Boolean(
+                                                    mergedErrors.name,
+                                                )}
+                                            />
                                         </div>
+                                        <InputError
+                                            message={mergedErrors.name}
+                                            className={errorClassName}
+                                        />
                                     </div>
 
                                     <div className={fieldClassName}>
                                         <Label
-                                            htmlFor="class_id"
+                                            htmlFor="email"
                                             className={labelClassName}
                                         >
-                                            Jurusan
+                                            Email
                                         </Label>
                                         <div className="relative">
-                                            <School className={iconClassName} />
+                                            <Mail className={iconClassName} />
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                required
+                                                tabIndex={2}
+                                                autoComplete="email"
+                                                name="email"
+                                                value={email}
+                                                onChange={(event) => {
+                                                    setEmail(
+                                                        event.target.value,
+                                                    );
+                                                    setLocalErrors((prev) => ({
+                                                        ...prev,
+                                                        email: '',
+                                                    }));
+                                                }}
+                                                placeholder="contoh@email.com"
+                                                className={inputClassName}
+                                                aria-invalid={Boolean(
+                                                    mergedErrors.email,
+                                                )}
+                                            />
+                                        </div>
+                                        <InputError
+                                            message={mergedErrors.email}
+                                            className={errorClassName}
+                                        />
+                                    </div>
+
+                                    <div className={fieldClassName}>
+                                        <Label
+                                            htmlFor="phone"
+                                            className={labelClassName}
+                                        >
+                                            Nomor WhatsApp
+                                        </Label>
+                                        <div className="relative">
+                                            <Phone className={iconClassName} />
+                                            <Input
+                                                id="phone"
+                                                type="tel"
+                                                required
+                                                tabIndex={3}
+                                                autoComplete="tel"
+                                                inputMode="tel"
+                                                name="phone"
+                                                value={phone}
+                                                onChange={(event) => {
+                                                    setPhone(
+                                                        event.target.value,
+                                                    );
+                                                    setLocalErrors((prev) => ({
+                                                        ...prev,
+                                                        phone: '',
+                                                    }));
+                                                }}
+                                                placeholder="08xxxxxxxxxx"
+                                                className={inputClassName}
+                                                aria-invalid={Boolean(
+                                                    mergedErrors.phone,
+                                                )}
+                                            />
+                                        </div>
+                                        <InputError
+                                            message={mergedErrors.phone}
+                                            className={errorClassName}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Langkah 2 */}
+                                <div
+                                    className={cn(
+                                        'flex-col gap-4',
+                                        step === 1 ? 'flex' : 'hidden',
+                                    )}
+                                    aria-hidden={step !== 1}
+                                >
+                                    <div className={fieldClassName}>
+                                        <Label
+                                            htmlFor="position_id"
+                                            className={labelClassName}
+                                        >
+                                            Jabatan
+                                        </Label>
+                                        <div className="relative">
+                                            <BriefcaseBusiness
+                                                className={iconClassName}
+                                            />
                                             <Select
-                                                name="class_id"
-                                                value={classId}
-                                                onValueChange={setClassId}
-                                                disabled={!gradeLevel}
+                                                name="position_id"
+                                                value={positionId}
+                                                onValueChange={
+                                                    handlePositionChange
+                                                }
                                                 required
                                             >
                                                 <SelectTrigger
-                                                    id="class_id"
+                                                    id="position_id"
                                                     className={
                                                         selectTriggerClassName
                                                     }
-                                                    tabIndex={6}
+                                                    tabIndex={4}
                                                     aria-invalid={Boolean(
-                                                        errors.class_id,
+                                                        mergedErrors.position_id,
                                                     )}
                                                 >
-                                                    <SelectValue
-                                                        placeholder={
-                                                            gradeLevel
-                                                                ? 'Pilih jurusan'
-                                                                : 'Pilih kelas dulu'
-                                                        }
-                                                    />
+                                                    <SelectValue placeholder="Pilih jabatan" />
                                                 </SelectTrigger>
                                                 <SelectContent
                                                     style={selectPortalTheme}
@@ -372,27 +529,30 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                                 >
                                                     <SelectGroup>
                                                         <SelectLabel>
-                                                            Jurusan{' '}
-                                                            {gradeLevel
-                                                                ? gradeLabel(
-                                                                      Number(
-                                                                          gradeLevel,
-                                                                      ),
-                                                                  )
-                                                                : ''}
+                                                            Jabatan
                                                         </SelectLabel>
-                                                        {filteredClasses.map(
-                                                            (schoolClass) => (
+                                                        {positions.length ===
+                                                            0 && (
+                                                            <SelectItem
+                                                                value="__empty"
+                                                                disabled
+                                                            >
+                                                                Data jabatan
+                                                                tidak tersedia
+                                                            </SelectItem>
+                                                        )}
+                                                        {positions.map(
+                                                            (position) => (
                                                                 <SelectItem
                                                                     key={
-                                                                        schoolClass.id
+                                                                        position.id
                                                                     }
                                                                     value={String(
-                                                                        schoolClass.id,
+                                                                        position.id,
                                                                     )}
                                                                 >
                                                                     {
-                                                                        schoolClass.major_code
+                                                                        position.name
                                                                     }
                                                                 </SelectItem>
                                                             ),
@@ -402,99 +562,387 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                             </Select>
                                         </div>
                                         <InputError
-                                            message={errors.class_id}
+                                            message={
+                                                mergedErrors.position_id ||
+                                                mergedErrors.class_id
+                                            }
                                             className={errorClassName}
                                         />
                                     </div>
-                                </>
-                            )}
 
-                            <div className={fieldClassName}>
-                                <Label
-                                    htmlFor="password"
-                                    className={labelClassName}
-                                >
-                                    Kata Sandi
-                                </Label>
-                                <div className="relative">
-                                    <Lock className={iconClassName} />
-                                    <PasswordInput
-                                        id="password"
-                                        required
-                                        tabIndex={isStudent ? 7 : 5}
-                                        autoComplete="new-password"
-                                        name="password"
-                                        placeholder="Minimal 8 karakter"
-                                        passwordrules={passwordRules}
-                                        className={inputClassName}
-                                        aria-invalid={Boolean(errors.password)}
-                                    />
+                                    {isStudent && (
+                                        <>
+                                            <div className={fieldClassName}>
+                                                <Label
+                                                    htmlFor="grade_level"
+                                                    className={labelClassName}
+                                                >
+                                                    Kelas
+                                                </Label>
+                                                <div className="relative">
+                                                    <GraduationCap
+                                                        className={iconClassName}
+                                                    />
+                                                    <Select
+                                                        value={gradeLevel}
+                                                        onValueChange={
+                                                            handleGradeLevelChange
+                                                        }
+                                                        required
+                                                    >
+                                                        <SelectTrigger
+                                                            id="grade_level"
+                                                            className={
+                                                                selectTriggerClassName
+                                                            }
+                                                            tabIndex={5}
+                                                        >
+                                                            <SelectValue placeholder="Pilih kelas" />
+                                                        </SelectTrigger>
+                                                        <SelectContent
+                                                            style={
+                                                                selectPortalTheme
+                                                            }
+                                                            position="popper"
+                                                            sideOffset={4}
+                                                            align="start"
+                                                        >
+                                                            <SelectGroup>
+                                                                <SelectLabel>
+                                                                    Kelas
+                                                                </SelectLabel>
+                                                                {gradeLevels.map(
+                                                                    (
+                                                                        level,
+                                                                    ) => (
+                                                                        <SelectItem
+                                                                            key={
+                                                                                level
+                                                                            }
+                                                                            value={String(
+                                                                                level,
+                                                                            )}
+                                                                        >
+                                                                            {matchGrade(
+                                                                                level,
+                                                                            )}
+                                                                        </SelectItem>
+                                                                    ),
+                                                                )}
+                                                            </SelectGroup>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+
+                                            <div className={fieldClassName}>
+                                                <Label
+                                                    htmlFor="class_id"
+                                                    className={labelClassName}
+                                                >
+                                                    Jurusan
+                                                </Label>
+                                                <div className="relative">
+                                                    <School
+                                                        className={iconClassName}
+                                                    />
+                                                    <Select
+                                                        name="class_id"
+                                                        value={classId}
+                                                        onValueChange={(
+                                                            value,
+                                                        ) => {
+                                                            setClassId(value);
+                                                            setLocalErrors(
+                                                                (prev) => ({
+                                                                    ...prev,
+                                                                    class_id:
+                                                                        '',
+                                                                }),
+                                                            );
+                                                        }}
+                                                        disabled={!gradeLevel}
+                                                        required
+                                                    >
+                                                        <SelectTrigger
+                                                            id="class_id"
+                                                            className={
+                                                                selectTriggerClassName
+                                                            }
+                                                            tabIndex={6}
+                                                            aria-invalid={Boolean(
+                                                                mergedErrors.class_id,
+                                                            )}
+                                                        >
+                                                            <SelectValue
+                                                                placeholder={
+                                                                    gradeLevel
+                                                                        ? 'Pilih jurusan'
+                                                                        : 'Pilih kelas dulu'
+                                                                }
+                                                            />
+                                                        </SelectTrigger>
+                                                        <SelectContent
+                                                            style={
+                                                                selectPortalTheme
+                                                            }
+                                                            position="popper"
+                                                            sideOffset={4}
+                                                            align="start"
+                                                        >
+                                                            <SelectGroup>
+                                                                <SelectLabel>
+                                                                    Jurusan{' '}
+                                                                    {gradeLevel
+                                                                        ? matchGrade(
+                                                                              Number(
+                                                                                  gradeLevel,
+                                                                              ),
+                                                                          )
+                                                                        : ''}
+                                                                </SelectLabel>
+                                                                {filteredClasses.map(
+                                                                    (
+                                                                        schoolClass,
+                                                                    ) => (
+                                                                        <SelectItem
+                                                                            key={
+                                                                                schoolClass.id
+                                                                            }
+                                                                            value={String(
+                                                                                schoolClass.id,
+                                                                            )}
+                                                                        >
+                                                                            {
+                                                                                schoolClass.major_code
+                                                                            }
+                                                                        </SelectItem>
+                                                                    ),
+                                                                )}
+                                                            </SelectGroup>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {!isStudent && positionId && (
+                                        <p className="rounded-[8px] border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm leading-6 text-[#475569]">
+                                            Akun {selectedPosition?.name} tidak
+                                            perlu memilih kelas dan jurusan.
+                                        </p>
+                                    )}
                                 </div>
-                                <InputError
-                                    message={errors.password}
-                                    className={errorClassName}
-                                />
+
+                                {/* Langkah 3 */}
+                                <div
+                                    className={cn(
+                                        'flex-col gap-4',
+                                        step === 2 ? 'flex' : 'hidden',
+                                    )}
+                                    aria-hidden={step !== 2}
+                                >
+                                    {(name.trim() || email.trim()) && (
+                                        <div className="rounded-[8px] border border-[#BCE0FF] bg-[#EFF8FF] px-3 py-2.5 text-sm leading-6 text-[#0F172A]">
+                                            Mendaftar sebagai{' '}
+                                            <span className="font-semibold">
+                                                {name.trim() || email.trim()}
+                                            </span>
+                                            {selectedPosition && (
+                                                <>
+                                                    {' · '}
+                                                    {selectedPosition.name}
+                                                    {selectedClass &&
+                                                        ` ${selectedClass.major_code}`}
+                                                </>
+                                            )}
+                                            .
+                                        </div>
+                                    )}
+
+                                    <div className={fieldClassName}>
+                                        <Label
+                                            htmlFor="password"
+                                            className={labelClassName}
+                                        >
+                                            Kata Sandi
+                                        </Label>
+                                        <div className="relative">
+                                            <Lock className={iconClassName} />
+                                            <PasswordInput
+                                                id="password"
+                                                required
+                                                tabIndex={7}
+                                                autoComplete="new-password"
+                                                name="password"
+                                                value={password}
+                                                onChange={(event) => {
+                                                    setPassword(
+                                                        event.target.value,
+                                                    );
+                                                    setLocalErrors((prev) => ({
+                                                        ...prev,
+                                                        password: '',
+                                                        password_confirmation:
+                                                            '',
+                                                    }));
+                                                }}
+                                                placeholder="Minimal 8 karakter"
+                                                passwordrules={passwordRules}
+                                                className={inputClassName}
+                                                aria-invalid={Boolean(
+                                                    mergedErrors.password,
+                                                )}
+                                            />
+                                        </div>
+                                        <InputError
+                                            message={mergedErrors.password}
+                                            className={errorClassName}
+                                        />
+                                    </div>
+
+                                    <div className={fieldClassName}>
+                                        <Label
+                                            htmlFor="password_confirmation"
+                                            className={labelClassName}
+                                        >
+                                            Konfirmasi Kata Sandi
+                                        </Label>
+                                        <div className="relative">
+                                            <KeyRound
+                                                className={iconClassName}
+                                            />
+                                            <PasswordInput
+                                                id="password_confirmation"
+                                                required
+                                                tabIndex={8}
+                                                autoComplete="new-password"
+                                                name="password_confirmation"
+                                                value={passwordConfirmation}
+                                                onChange={(event) => {
+                                                    setPasswordConfirmation(
+                                                        event.target.value,
+                                                    );
+                                                    setLocalErrors((prev) => ({
+                                                        ...prev,
+                                                        password_confirmation:
+                                                            '',
+                                                    }));
+                                                }}
+                                                placeholder="Ulangi kata sandi"
+                                                passwordrules={passwordRules}
+                                                className={inputClassName}
+                                                aria-invalid={Boolean(
+                                                    mergedErrors.password_confirmation,
+                                                )}
+                                            />
+                                        </div>
+                                        <InputError
+                                            message={
+                                                mergedErrors.password_confirmation
+                                            }
+                                            className={errorClassName}
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className={fieldClassName}>
-                                <Label
-                                    htmlFor="password_confirmation"
-                                    className={labelClassName}
-                                >
-                                    Konfirmasi Kata Sandi
-                                </Label>
-                                <div className="relative">
-                                    <KeyRound className={iconClassName} />
-                                    <PasswordInput
-                                        id="password_confirmation"
-                                        required
-                                        tabIndex={isStudent ? 8 : 6}
-                                        autoComplete="new-password"
-                                        name="password_confirmation"
-                                        placeholder="Ulangi kata sandi"
-                                        passwordrules={passwordRules}
-                                        className={inputClassName}
-                                        aria-invalid={Boolean(
-                                            errors.password_confirmation,
-                                        )}
-                                    />
+                            {/* Navigasi langkah */}
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center gap-2">
+                                    {step > 0 && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={handleBack}
+                                            disabled={processing}
+                                            className="h-11 shrink-0 border-slate-200 bg-white text-[#334155] hover:bg-slate-50"
+                                            tabIndex={9}
+                                        >
+                                            <ArrowLeft className="size-4" />
+                                            Kembali
+                                        </Button>
+                                    )}
+                                    {step < steps.length - 1 ? (
+                                        <Button
+                                            type="button"
+                                            onClick={handleNext}
+                                            disabled={processing}
+                                            className="h-11 flex-1 text-base font-semibold shadow-sm transition-colors active:scale-[0.98]"
+                                            tabIndex={10}
+                                        >
+                                            Lanjut
+                                            <ArrowRight className="size-4" />
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                            className="h-11 flex-1 text-base font-semibold shadow-sm transition-colors active:scale-[0.98]"
+                                            tabIndex={10}
+                                            data-test="register-user-button"
+                                        >
+                                            {processing && <Spinner />}
+                                            Buat akun
+                                            <ArrowRight className="size-4" />
+                                        </Button>
+                                    )}
                                 </div>
-                                <InputError
-                                    message={errors.password_confirmation}
-                                    className={errorClassName}
-                                />
+                                <p className="text-center text-xs text-slate-400">
+                                    Langkah {step + 1} dari {steps.length}
+                                </p>
                             </div>
 
-                            <Button
-                                type="submit"
-                                className="mt-2 h-11 w-full text-base font-semibold shadow-sm transition-colors active:scale-[0.98]"
-                                tabIndex={isStudent ? 9 : 7}
-                                data-test="register-user-button"
-                            >
-                                {processing && <Spinner />}
-                                Daftar Sekarang
-                                <ArrowRight
-                                    className="size-4"
-                                    data-icon="inline-end"
-                                />
-                            </Button>
-                        </div>
-
-                        <div className="mt-2 text-center text-sm leading-6 text-[#475569]">
-                            Sudah punya akun?{' '}
-                            <Link
-                                href={login()}
-                                tabIndex={isStudent ? 10 : 8}
-                                className="font-semibold text-blue-700 transition-colors hover:text-blue-800"
-                            >
-                                Masuk di sini
-                            </Link>
-                        </div>
-                    </>
-                )}
+                            <div className="text-center text-sm leading-6 text-[#475569]">
+                                Sudah punya akun?{' '}
+                                <Link
+                                    href={login()}
+                                    tabIndex={11}
+                                    className="font-semibold text-blue-700 transition-colors hover:text-blue-800"
+                                >
+                                    Masuk di sini
+                                </Link>
+                            </div>
+                        </>
+                    );
+                }}
             </Form>
+
+            <style>{`@keyframes register-step-in { from { opacity: 0; transform: translateX(${direction >= 0 ? '12px' : '-12px'}); } to { opacity: 1; transform: none; } }`}</style>
         </>
     );
+}
+
+function StepJumpOnServerError({
+    errors,
+    onJump,
+}: {
+    errors: Record<string, string | undefined>;
+    onJump: (step: number) => void;
+}) {
+    const keys = Object.keys(errors).filter((key) => errors[key]);
+    const signature = keys.sort().join('|');
+
+    useEffect(() => {
+        if (!signature) {
+return;
+}
+
+        for (let index = 0; index < steps.length; index += 1) {
+            if (
+                stepErrorFields[index].some((field) =>
+                    keys.includes(field),
+                )
+            ) {
+                onJump(index);
+                break;
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [signature]);
+
+    return null;
 }
 
 Register.layout = {
