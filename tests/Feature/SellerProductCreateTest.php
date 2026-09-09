@@ -8,6 +8,8 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\UpJurusan;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('seller can visit the create product page', function () {
@@ -347,4 +349,28 @@ test('seller can update and clear the discount original price', function () {
         ->assertRedirect(route('seller.products.index'));
 
     expect($product->fresh()->original_price)->toBe(35000);
+});
+
+test('seller create stores the uploaded image and references it', function () {
+    Storage::fake('public');
+
+    $seller = User::factory()->create(['role' => UserRole::Seller]);
+    $category = Category::factory()->create();
+
+    $this->actingAs($seller)
+        ->from(route('seller.products.create'))
+        ->post(route('seller.products.store'), [
+            'name' => 'Pulpen Gel Merah',
+            'category_id' => $category->id,
+            'description' => 'Pulpen gel merah untuk catatan harian siswa.',
+            'price' => 5000,
+            'stock' => 12,
+            'image' => UploadedFile::fake()->image('produk.jpg'),
+        ])
+        ->assertRedirect(route('seller.products.index'));
+
+    $product = Product::query()->where('seller_id', $seller->id)->firstOrFail();
+
+    expect($product->image)->not->toBeNull();
+    Storage::disk('public')->assertExists($product->image);
 });

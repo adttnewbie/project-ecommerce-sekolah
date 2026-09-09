@@ -123,11 +123,13 @@ class SellerProductController extends Controller
         /** @var User $seller */
         $seller = $request->user();
         $imagePath = null;
+        $newImagePath = null;
         $image = $request->file('image');
 
         if ($image instanceof UploadedFile) {
             $storedImage = $image->store('products', 'public');
             $imagePath = $storedImage === false ? null : $storedImage;
+            $newImagePath = $imagePath;
         }
 
         $salesMethod = ProductSalesMethod::from(
@@ -140,59 +142,69 @@ class SellerProductController extends Controller
             ? ProductStatus::Pending
             : ProductStatus::from($request->input('status', ProductStatus::Pending->value));
 
-        DB::transaction(function () use ($request, $seller, $imagePath, $salesMethod, $fulfillmentType, $requestedStatus) {
-            $product = Product::query()->create([
-                'seller_id' => $seller->id,
-                'category_id' => $request->integer('category_id'),
-                'name' => $request->string('name')->toString(),
-                'slug' => $this->uniqueSlug($request->string('name')->toString()),
-                'description' => $request->string('description')->toString(),
-                'price' => $request->integer('price'),
-                'original_price' => $request->filled('original_price')
-                    ? $request->integer('original_price')
-                    : null,
-                'stock' => $salesMethod === ProductSalesMethod::UpJurusan ? 0 : $request->integer('stock'),
-                'sales_method' => $salesMethod,
-                'fulfillment_type' => $fulfillmentType,
-                'pre_order_estimate_days' => $fulfillmentType === ProductFulfillmentType::PreOrder
-                    ? $request->integer('pre_order_estimate_days')
-                    : null,
-                'pre_order_deadline' => $fulfillmentType === ProductFulfillmentType::PreOrder
-                    ? $request->date('pre_order_deadline')?->toDateString()
-                    : null,
-                'pre_order_min_quantity' => $fulfillmentType === ProductFulfillmentType::PreOrder
-                    ? $request->integer('pre_order_min_quantity') ?: null
-                    : null,
-                'pre_order_note' => $fulfillmentType === ProductFulfillmentType::PreOrder
-                    ? $request->string('pre_order_note')->trim()->toString() ?: null
-                    : null,
-                'status' => $requestedStatus,
-                'image' => $imagePath,
-            ]);
-
-            if (
-                $salesMethod === ProductSalesMethod::UpJurusan
-                && $fulfillmentType === ProductFulfillmentType::ReadyStock
-                && $requestedStatus === ProductStatus::Pending
-            ) {
-                UpJurusanConsignment::query()->create([
+        try {
+            DB::transaction(function () use ($request, $seller, $imagePath, $salesMethod, $fulfillmentType, $requestedStatus) {
+                $product = Product::query()->create([
                     'seller_id' => $seller->id,
-                    'product_id' => $product->id,
-                    'up_jurusan_id' => $request->integer('up_jurusan_id'),
-                    'requested_quantity' => $request->integer('requested_quantity'),
-                    'status' => UpJurusanConsignmentStatus::PendingApproval,
+                    'category_id' => $request->integer('category_id'),
+                    'name' => $request->string('name')->toString(),
+                    'slug' => $this->uniqueSlug($request->string('name')->toString()),
+                    'description' => $request->string('description')->toString(),
+                    'price' => $request->integer('price'),
+                    'original_price' => $request->filled('original_price')
+                        ? $request->integer('original_price')
+                        : null,
+                    'stock' => $salesMethod === ProductSalesMethod::UpJurusan ? 0 : $request->integer('stock'),
+                    'sales_method' => $salesMethod,
+                    'fulfillment_type' => $fulfillmentType,
+                    'pre_order_estimate_days' => $fulfillmentType === ProductFulfillmentType::PreOrder
+                        ? $request->integer('pre_order_estimate_days')
+                        : null,
+                    'pre_order_deadline' => $fulfillmentType === ProductFulfillmentType::PreOrder
+                        ? $request->date('pre_order_deadline')?->toDateString()
+                        : null,
+                    'pre_order_min_quantity' => $fulfillmentType === ProductFulfillmentType::PreOrder
+                        ? $request->integer('pre_order_min_quantity') ?: null
+                        : null,
+                    'pre_order_note' => $fulfillmentType === ProductFulfillmentType::PreOrder
+                        ? $request->string('pre_order_note')->trim()->toString() ?: null
+                        : null,
+                    'status' => $requestedStatus,
+                    'image' => $imagePath,
                 ]);
+
+                if (
+                    $salesMethod === ProductSalesMethod::UpJurusan
+                    && $fulfillmentType === ProductFulfillmentType::ReadyStock
+                    && $requestedStatus === ProductStatus::Pending
+                ) {
+                    UpJurusanConsignment::query()->create([
+                        'seller_id' => $seller->id,
+                        'product_id' => $product->id,
+                        'up_jurusan_id' => $request->integer('up_jurusan_id'),
+                        'requested_quantity' => $request->integer('requested_quantity'),
+                        'status' => UpJurusanConsignmentStatus::PendingApproval,
+                    ]);
+                }
+
+                if ($salesMethod === ProductSalesMethod::UpJurusan && $fulfillmentType === ProductFulfillmentType::ReadyStock && $requestedStatus === ProductStatus::Pending) {
+                    ProductPendingModeration::dispatch(
+                        productId: $product->id,
+                        productName: $request->string('name')->toString(),
+                        sellerId: $seller->id,
+                        sellerName: $seller->name
+                    );
+                }
+            });
+        } catch (\Throwable $exception) {
+            // The file was stored before the transaction; remove it so a
+            // failed insert does not leave an orphaned upload behind.
+            if ($newImagePath !== null) {
+                Storage::disk('public')->delete($newImagePath);
             }
 
-            if ($salesMethod === ProductSalesMethod::UpJurusan && $fulfillmentType === ProductFulfillmentType::ReadyStock && $requestedStatus === ProductStatus::Pending) {
-                ProductPendingModeration::dispatch(
-                    productId: $product->id,
-                    productName: $request->string('name')->toString(),
-                    sellerId: $seller->id,
-                    sellerName: $seller->name
-                );
-            }
-        });
+            throw $exception;
+        }
 
         return to_route('seller.products.index');
     }
@@ -235,42 +247,55 @@ class SellerProductController extends Controller
         $this->authorizeOwner($request, $product);
         $oldImagePath = $product->image;
         $imagePath = $product->image;
+        $newImagePath = null;
         $image = $request->file('image');
 
         if ($image instanceof UploadedFile) {
             $storedImage = $image->store('products', 'public');
-            $imagePath = $storedImage === false ? $imagePath : $storedImage;
+            if ($storedImage !== false) {
+                $imagePath = $storedImage;
+                $newImagePath = $storedImage;
+            }
         }
 
         $requestedStatus = ProductStatus::from(
             $request->input('status', $product->status->value),
         );
 
-        $product->update([
-            'category_id' => $request->integer('category_id'),
-            'name' => $request->string('name')->toString(),
-            'slug' => $this->uniqueSlug($request->string('name')->toString(), $product),
-            'description' => $request->string('description')->toString(),
-            'price' => $request->integer('price'),
-            'original_price' => $request->filled('original_price')
-                ? $request->integer('original_price')
-                : null,
-            'fulfillment_type' => ProductFulfillmentType::from($request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value)),
-            'pre_order_estimate_days' => $request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value) === ProductFulfillmentType::PreOrder->value
-                ? $request->integer('pre_order_estimate_days')
-                : null,
-            'pre_order_deadline' => $request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value) === ProductFulfillmentType::PreOrder->value
-                ? $request->date('pre_order_deadline')?->toDateString()
-                : null,
-            'pre_order_min_quantity' => $request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value) === ProductFulfillmentType::PreOrder->value
-                ? $request->integer('pre_order_min_quantity') ?: null
-                : null,
-            'pre_order_note' => $request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value) === ProductFulfillmentType::PreOrder->value
-                ? $request->string('pre_order_note')->trim()->toString() ?: null
-                : null,
-            'status' => $this->nextStatusAfterSellerUpdate($product, $requestedStatus),
-            'image' => $imagePath,
-        ]);
+        try {
+            $product->update([
+                'category_id' => $request->integer('category_id'),
+                'name' => $request->string('name')->toString(),
+                'slug' => $this->uniqueSlug($request->string('name')->toString(), $product),
+                'description' => $request->string('description')->toString(),
+                'price' => $request->integer('price'),
+                'original_price' => $request->filled('original_price')
+                    ? $request->integer('original_price')
+                    : null,
+                'fulfillment_type' => ProductFulfillmentType::from($request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value)),
+                'pre_order_estimate_days' => $request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value) === ProductFulfillmentType::PreOrder->value
+                    ? $request->integer('pre_order_estimate_days')
+                    : null,
+                'pre_order_deadline' => $request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value) === ProductFulfillmentType::PreOrder->value
+                    ? $request->date('pre_order_deadline')?->toDateString()
+                    : null,
+                'pre_order_min_quantity' => $request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value) === ProductFulfillmentType::PreOrder->value
+                    ? $request->integer('pre_order_min_quantity') ?: null
+                    : null,
+                'pre_order_note' => $request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value) === ProductFulfillmentType::PreOrder->value
+                    ? $request->string('pre_order_note')->trim()->toString() ?: null
+                    : null,
+                'status' => $this->nextStatusAfterSellerUpdate($product, $requestedStatus),
+                'image' => $imagePath,
+            ]);
+        } catch (\Throwable $exception) {
+            // A newly stored replacement must not outlive a failed update.
+            if ($newImagePath !== null) {
+                Storage::disk('public')->delete($newImagePath);
+            }
+
+            throw $exception;
+        }
 
         if ($oldImagePath && $imagePath !== $oldImagePath) {
             Storage::disk('public')->delete($oldImagePath);
