@@ -124,16 +124,23 @@ class CartController extends Controller
     {
         /** @var User $user */
         $user = $request->user();
-
-        abort_unless($cartItem->user_id === $user->id, 404);
-
-        $cartItem->load('product');
         $quantity = $this->validatedQuantity($request);
 
-        $this->ensureQuantityDoesNotExceedStock($quantity, $cartItem->product);
-        PreOrderRules::assertPurchasable($cartItem->product, $quantity);
+        DB::transaction(function () use ($user, $cartItem, $quantity): void {
+            $current = CartItem::query()
+                ->whereKey($cartItem->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $cartItem->update(['quantity' => $quantity]);
+            abort_unless($current->user_id === $user->id, 404);
+
+            $current->load('product');
+
+            $this->ensureQuantityDoesNotExceedStock($quantity, $current->product);
+            PreOrderRules::assertPurchasable($current->product, $quantity);
+
+            $current->update(['quantity' => $quantity]);
+        });
 
         return to_route('cart.index');
     }
