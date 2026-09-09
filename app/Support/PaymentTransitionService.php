@@ -56,7 +56,7 @@ class PaymentTransitionService
             );
 
             OrderPaymentSync::sync($current->order);
-            OrderStatusSync::sync($current->order);
+            OrderSettlementService::sync($current->order);
 
             $current->order->refresh();
 
@@ -110,7 +110,7 @@ class PaymentTransitionService
             );
 
             OrderPaymentSync::sync($current->order);
-            OrderStatusSync::sync($current->order);
+            OrderSettlementService::sync($current->order);
 
             OrderItemCancellation::cancelItem(
                 $current->fresh(),

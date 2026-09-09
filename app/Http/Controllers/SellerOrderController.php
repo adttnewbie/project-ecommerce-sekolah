@@ -12,7 +12,7 @@ use App\Models\UpJurusanStockMovement;
 use App\Models\User;
 use App\Support\OrderItemCancellation;
 use App\Support\OrderItemFulfillment;
-use App\Support\OrderStatusSync;
+use App\Support\OrderSettlementService;
 use App\Support\PaymentTransitionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -241,7 +241,7 @@ class SellerOrderController extends Controller
             OrderItemFulfillment::assertCanAdvance($current, $newStatus);
 
             $current->update(['status' => $newStatus]);
-            OrderStatusSync::sync($current->order);
+            OrderSettlementService::sync($current->order);
 
             OrderItemStatusChanged::dispatch(
                 orderItemId: $current->id,

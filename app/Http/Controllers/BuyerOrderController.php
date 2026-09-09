@@ -12,7 +12,6 @@ use App\Support\BuyerSanctionService;
 use App\Support\OrderItemCancellation;
 use App\Support\OrderItemFulfillment;
 use App\Support\OrderSettlementService;
-use App\Support\OrderStatusSync;
 use App\Traits\OwnerPayloadHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -90,7 +89,7 @@ class BuyerOrderController extends Controller
                 ->whereIn('id', $sentItems->pluck('id'))
                 ->update(['status' => OrderItemStatus::Completed, 'status_changed_at' => now()]);
 
-            OrderStatusSync::sync($current->fresh(['items']));
+            OrderSettlementService::sync($current->fresh(['items']));
         });
 
         return to_route('orders.show', $order)

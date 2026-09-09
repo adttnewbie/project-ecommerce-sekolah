@@ -567,7 +567,7 @@ class OrderLivenessService
                 description: 'Pesanan diselesaikan paksa oleh admin karena pembeli tidak mengonfirmasi penerimaan',
             );
 
-            OrderStatusSync::sync($current->fresh(['items']));
+            OrderSettlementService::sync($current->fresh(['items']));
 
             $current->refresh();
             $current->update([

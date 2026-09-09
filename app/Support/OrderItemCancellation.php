@@ -185,7 +185,7 @@ class OrderItemCancellation
         }
 
         OrderPaymentSync::sync($current->order);
-        OrderStatusSync::sync($current->order->fresh(['items']));
+        OrderSettlementService::sync($current->order->fresh(['items']));
 
         OrderItemCancelled::dispatch(
             orderItemId: $current->id,

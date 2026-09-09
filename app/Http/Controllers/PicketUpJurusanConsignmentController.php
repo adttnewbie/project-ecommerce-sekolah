@@ -19,7 +19,7 @@ use App\Support\ConsignmentTransitionService;
 use App\Support\MoneyCalculationService;
 use App\Support\OrderItemCancellation;
 use App\Support\OrderItemFulfillment;
-use App\Support\OrderStatusSync;
+use App\Support\OrderSettlementService;
 use App\Support\PaymentTransitionService;
 use App\Support\ReportAggregationService;
 use App\Support\TransactionCode;
@@ -478,7 +478,7 @@ class PicketUpJurusanConsignmentController extends Controller
                 : $current->product->upJurusan->name;
 
             $current->update(['status' => $newStatus]);
-            OrderStatusSync::sync($current->order);
+            OrderSettlementService::sync($current->order);
 
             OrderItemStatusChanged::dispatch(
                 orderItemId: $current->id,
