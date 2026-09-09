@@ -108,15 +108,13 @@ class BuyerOrderController extends Controller
             'cancel_reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $hadInProduction = $order->items()
-            ->where('status', OrderItemStatus::InProduction->value)
-            ->exists();
-
-        OrderItemCancellation::cancelOrder(
+        $result = OrderItemCancellation::cancelOrder(
             $order,
             $buyer,
             $validated['cancel_reason'] ?? 'Dibatalkan oleh pembeli',
         );
+
+        $hadInProduction = $result['had_in_production'];
 
         BuyerSanctionService::recordViolation(
             (int) $buyer->id,

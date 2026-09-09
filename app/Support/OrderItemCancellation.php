@@ -33,14 +33,18 @@ class OrderItemCancellation
         });
     }
 
+    /**
+     * @return array{had_in_production: bool} Classification snapshot read from
+     * the locked items, so callers never classify from pre-transaction state.
+     */
     public static function cancelOrder(
         Order $order,
         User $actor,
         ?string $reason = null,
         bool $force = false,
         bool $clearOrderFlags = false,
-    ): void {
-        DB::transaction(function () use ($order, $actor, $reason, $force, $clearOrderFlags) {
+    ): array {
+        return DB::transaction(function () use ($order, $actor, $reason, $force, $clearOrderFlags) {
             /** @var Order $current */
             $current = Order::query()
                 ->with([
@@ -53,6 +57,9 @@ class OrderItemCancellation
                 ])
                 ->lockForUpdate()
                 ->findOrFail($order->id);
+
+            $hadInProduction = $current->items
+                ->contains(fn (OrderItem $item) => $item->status === OrderItemStatus::InProduction);
 
             $cancellableIds = $current->items
                 ->filter(fn (OrderItem $item) => self::prohibitedCancellationReason($item, $actor, $force) === null)
@@ -91,6 +98,8 @@ class OrderItemCancellation
                     'stuck_reasons' => null,
                 ]);
             }
+
+            return ['had_in_production' => $hadInProduction];
         });
     }
 
