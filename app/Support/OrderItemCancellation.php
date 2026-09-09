@@ -35,7 +35,7 @@ class OrderItemCancellation
 
     /**
      * @return array{had_in_production: bool} Classification snapshot read from
-     * the locked items, so callers never classify from pre-transaction state.
+     *                                        the locked items, so callers never classify from pre-transaction state.
      */
     public static function cancelOrder(
         Order $order,
