@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowUpDown, Package, Plus, Search } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import type { SubmitEvent } from 'react';
+import { useMemo, useState } from 'react';
 import { SellerEmptyState } from '@/components/seller/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -96,7 +97,7 @@ export default function SellerConsignments({ consignments }: Props) {
         }
     };
 
-    const submitFilters = (event: React.FormEvent) => {
+    const submitFilters = (event: SubmitEvent) => {
         event.preventDefault();
         setIsFiltering(true);
         router.get(
@@ -188,20 +189,15 @@ return sortOrder === 'asc' ? 1 : -1;
         return data;
     }, [consignments, q, statusFilter, sortKey, sortOrder]);
 
-    useEffect(() => {
-        const totalPages = Math.max(1, Math.ceil(filteredAndSorted.length / perPage));
-
-        if (currentPage > totalPages) {
-            setCurrentPage(totalPages);
-        }
-    }, [filteredAndSorted.length, currentPage]);
-
     const totalPages = Math.max(1, Math.ceil(filteredAndSorted.length / perPage));
+    // Clamp halaman saat ini tanpa effect agar tidak memicu cascading renders.
+    const safeCurrentPage = Math.min(currentPage, totalPages);
+
     const paginatedData = useMemo(() => {
-        const start = (currentPage - 1) * perPage;
+        const start = (safeCurrentPage - 1) * perPage;
 
         return filteredAndSorted.slice(start, start + perPage);
-    }, [filteredAndSorted, currentPage]);
+    }, [filteredAndSorted, safeCurrentPage]);
 
     const isEmpty = !isFiltering && filteredAndSorted.length === 0;
     const showPagination = totalPages > 1;
@@ -524,13 +520,13 @@ return sortOrder === 'asc' ? 1 : -1;
                             {showPagination ? (
                                 <div className="flex items-center justify-between border-t border-slate-100 p-4">
                                     <span className="text-sm text-slate-500">
-                                        Halaman {currentPage} dari {totalPages} • {filteredAndSorted.length} titipan
+                                        Halaman {safeCurrentPage} dari {totalPages} • {filteredAndSorted.length} titipan
                                     </span>
                                     <div className="flex gap-2">
                                         <Button
                                             type="button"
                                             variant="outline"
-                                            disabled={currentPage <= 1}
+                                            disabled={safeCurrentPage <= 1}
                                             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                                             className="h-11 rounded-[12px] border-slate-200 bg-white px-4 font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 disabled:opacity-50"
                                         >
@@ -539,7 +535,7 @@ return sortOrder === 'asc' ? 1 : -1;
                                         <Button
                                             type="button"
                                             variant="outline"
-                                            disabled={currentPage >= totalPages}
+                                            disabled={safeCurrentPage >= totalPages}
                                             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                                             className="h-11 rounded-[12px] border-slate-200 bg-white px-4 font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 disabled:opacity-50"
                                         >

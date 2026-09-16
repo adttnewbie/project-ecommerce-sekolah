@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
 test('seller can delete their own product without order history', function () {
+    Storage::fake('r2');
     Storage::fake('public');
 
     $seller = User::factory()->create(['role' => UserRole::Seller]);
@@ -20,7 +21,7 @@ test('seller can delete their own product without order history', function () {
             'image' => 'products/test-file.txt',
         ]);
 
-    Storage::disk('public')->put('products/test-file.txt', 'fake content');
+    Storage::disk('r2')->put('products/test-file.txt', 'fake content');
 
     $this->actingAs($seller);
 
@@ -30,7 +31,7 @@ test('seller can delete their own product without order history', function () {
     $response->assertSessionHas('success', 'Produk berhasil dihapus.');
 
     $this->assertDatabaseMissing('products', ['id' => $product->id]);
-    Storage::disk('public')->assertMissing('products/test-file.txt');
+    Storage::disk('r2')->assertMissing('products/test-file.txt');
 });
 
 test('seller cannot delete another sellers product', function () {

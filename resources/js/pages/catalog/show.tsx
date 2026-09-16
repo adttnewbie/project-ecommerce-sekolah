@@ -1,7 +1,6 @@
 import type { PageProps as SharedPageProps } from '@inertiajs/core';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
-    ArrowLeft,
     Clock3,
     Package,
     ShoppingCart,
@@ -23,6 +22,7 @@ import {
     
 } from '@/lib/pre-order';
 import type {PreOrderStatus} from '@/lib/pre-order';
+import { productImageUrl } from '@/lib/product-image';
 import { cn } from '@/lib/utils';
 import { home, login } from '@/routes';
 import { store as storeCartItem } from '@/routes/cart/items';
@@ -118,9 +118,7 @@ const imageSource = (image: string | null) => {
         return null;
     }
 
-    return image.startsWith('http') || image.startsWith('/')
-        ? image
-        : `/storage/${image}`;
+    return productImageUrl(image);
 };
 
 const formatDate = (value: string | null) =>

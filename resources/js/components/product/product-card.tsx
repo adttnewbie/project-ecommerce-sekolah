@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { resolvePreOrderStatus } from '@/lib/pre-order';
 import type { PreOrderStatus } from '@/lib/pre-order';
+import { productImageUrl } from '@/lib/product-image';
 import { cn } from '@/lib/utils';
 import { login } from '@/routes';
 import { store as storeCartItem } from '@/routes/cart/items';
@@ -87,9 +88,7 @@ const imageSource = (image: string | null) => {
         return null;
     }
 
-    return image.startsWith('http') || image.startsWith('/')
-        ? image
-        : `/storage/${image}`;
+    return productImageUrl(image);
 };
 
 export function ProductCard({

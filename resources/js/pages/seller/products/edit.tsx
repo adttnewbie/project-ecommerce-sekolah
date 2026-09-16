@@ -39,6 +39,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { productImageUrl } from '@/lib/product-image';
 import { cn } from '@/lib/utils';
 import {
     edit as sellerProductsEdit,
@@ -628,7 +629,7 @@ export default function SellerProductEdit({
                                             {product.image ? (
                                                 <div className="overflow-hidden rounded-[10px] border border-slate-200 bg-slate-50">
                                                     <img
-                                                        src={`/storage/${product.image}`}
+                                                        src={productImageUrl(product.image) ?? ''}
                                                         alt={`Gambar produk ${product.name}`}
                                                         className="h-48 w-full object-cover object-center"
                                                         loading="lazy"

@@ -127,7 +127,7 @@ class SellerProductController extends Controller
         $image = $request->file('image');
 
         if ($image instanceof UploadedFile) {
-            $storedImage = $image->store('products', 'public');
+            $storedImage = $image->store('products', 'r2');
             $imagePath = $storedImage === false ? null : $storedImage;
             $newImagePath = $imagePath;
         }
@@ -200,7 +200,7 @@ class SellerProductController extends Controller
             // The file was stored before the transaction; remove it so a
             // failed insert does not leave an orphaned upload behind.
             if ($newImagePath !== null) {
-                Storage::disk('public')->delete($newImagePath);
+                Storage::disk('r2')->delete($newImagePath);
             }
 
             throw $exception;
@@ -251,7 +251,7 @@ class SellerProductController extends Controller
         $image = $request->file('image');
 
         if ($image instanceof UploadedFile) {
-            $storedImage = $image->store('products', 'public');
+            $storedImage = $image->store('products', 'r2');
             if ($storedImage !== false) {
                 $imagePath = $storedImage;
                 $newImagePath = $storedImage;
@@ -291,14 +291,14 @@ class SellerProductController extends Controller
         } catch (\Throwable $exception) {
             // A newly stored replacement must not outlive a failed update.
             if ($newImagePath !== null) {
-                Storage::disk('public')->delete($newImagePath);
+                Storage::disk('r2')->delete($newImagePath);
             }
 
             throw $exception;
         }
 
         if ($oldImagePath && $imagePath !== $oldImagePath) {
-            Storage::disk('public')->delete($oldImagePath);
+            $this->deleteProductImage($oldImagePath);
         }
 
         return to_route('seller.products.index');
@@ -330,7 +330,7 @@ class SellerProductController extends Controller
         }
 
         if ($product->image) {
-            Storage::disk('public')->delete($product->image);
+            $this->deleteProductImage($product->image);
         }
 
         $product->delete();
@@ -378,6 +378,16 @@ class SellerProductController extends Controller
         $seller = $request->user();
 
         abort_unless($product->seller_id === $seller->id, 403);
+    }
+
+    /**
+     * Hapus gambar dari disk R2; gambar lama yang masih di disk lokal
+     * ikut dibersihkan. Menghapus file yang tidak ada adalah no-op.
+     */
+    private function deleteProductImage(string $path): void
+    {
+        Storage::disk('r2')->delete($path);
+        Storage::disk('public')->delete($path);
     }
 
     private function uniqueSlug(string $name, ?Product $ignoredProduct = null): string

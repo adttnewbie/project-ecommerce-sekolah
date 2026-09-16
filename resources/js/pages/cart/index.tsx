@@ -32,6 +32,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import type { PreOrderStatus } from '@/lib/pre-order';
+import { productImageUrl } from '@/lib/product-image';
 import { home } from '@/routes';
 import { index as cartIndex } from '@/routes/cart';
 import {
@@ -153,9 +154,7 @@ const imageSource = (image: string | null) => {
         return null;
     }
 
-    return image.startsWith('http') || image.startsWith('/')
-        ? image
-        : `/storage/${image}`;
+    return productImageUrl(image);
 };
 
 export default function CartIndex({ items, summary }: CartIndexProps) {

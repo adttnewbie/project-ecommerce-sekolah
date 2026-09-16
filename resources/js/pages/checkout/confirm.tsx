@@ -29,6 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import type { PreOrderStatus } from '@/lib/pre-order';
+import { productImageUrl } from '@/lib/product-image';
 import { cn } from '@/lib/utils';
 import { checkout, home } from '@/routes';
 import { index as cartIndex } from '@/routes/cart';
@@ -101,9 +102,7 @@ const imageSource = (image: string | null) => {
         return null;
     }
 
-    return image.startsWith('http') || image.startsWith('/')
-        ? image
-        : `/storage/${image}`;
+    return productImageUrl(image);
 };
 
 export default function CheckoutConfirm({ items, summary }: Props) {
@@ -148,7 +147,6 @@ export default function CheckoutConfirm({ items, summary }: Props) {
             }
 
             event.preventDefault();
-            event.returnValue = '';
         };
 
         window.addEventListener('beforeunload', warnBeforeLeave);

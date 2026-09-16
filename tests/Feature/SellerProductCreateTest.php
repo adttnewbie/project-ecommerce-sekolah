@@ -352,7 +352,7 @@ test('seller can update and clear the discount original price', function () {
 });
 
 test('seller create stores the uploaded image and references it', function () {
-    Storage::fake('public');
+    Storage::fake('r2');
 
     $seller = User::factory()->create(['role' => UserRole::Seller]);
     $category = Category::factory()->create();
@@ -372,5 +372,5 @@ test('seller create stores the uploaded image and references it', function () {
     $product = Product::query()->where('seller_id', $seller->id)->firstOrFail();
 
     expect($product->image)->not->toBeNull();
-    Storage::disk('public')->assertExists($product->image);
+    Storage::disk('r2')->assertExists($product->image);
 });
