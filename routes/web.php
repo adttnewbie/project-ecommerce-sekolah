@@ -23,6 +23,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PicketUpJurusanConsignmentController;
+use App\Http\Controllers\ProductImageController;
 use App\Http\Controllers\SellerApplicationController;
 use App\Http\Controllers\SellerConsignmentController;
 use App\Http\Controllers\SellerDashboardController;
@@ -40,6 +41,12 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', BuyerCatalogController::class)->name('home');
+
+// Gambar produk: redirect ke presigned URL R2 (bucket privat) dengan
+// fallback ke disk lokal untuk file lama sebelum migrasi R2.
+Route::get('product-images/{path}', [ProductImageController::class, 'show'])
+    ->where('path', '.*')
+    ->name('product-images.show');
 
 Route::get('catalog', BuyerCatalogController::class)->name('catalog.index');
 Route::get('catalog/{product:slug}', BuyerProductDetailController::class)->name('catalog.show');

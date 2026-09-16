@@ -255,6 +255,7 @@ test('seller can update product pre-order settings', function () {
 });
 
 test('seller product update deletes the old image when replacing it', function () {
+    Storage::fake('r2');
     Storage::fake('public');
 
     $seller = User::factory()->create(['role' => UserRole::Seller]);
@@ -265,7 +266,7 @@ test('seller product update deletes the old image when replacing it', function (
         ->create([
             'image' => 'products/old-image.jpg',
         ]);
-    Storage::disk('public')->put('products/old-image.jpg', 'old image');
+    Storage::disk('r2')->put('products/old-image.jpg', 'old image');
 
     $this->actingAs($seller)
         ->from(route('seller.products.edit', $product))
@@ -278,10 +279,10 @@ test('seller product update deletes the old image when replacing it', function (
         ])
         ->assertRedirect(route('seller.products.index'));
 
-    Storage::disk('public')->assertMissing('products/old-image.jpg');
+    Storage::disk('r2')->assertMissing('products/old-image.jpg');
 
     $product->refresh();
 
     expect($product->image)->not->toBe('products/old-image.jpg');
-    Storage::disk('public')->assertExists($product->image);
+    Storage::disk('r2')->assertExists($product->image);
 });
