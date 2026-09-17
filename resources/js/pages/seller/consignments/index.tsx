@@ -175,12 +175,12 @@ export default function SellerConsignments({ consignments }: Props) {
                 }
 
                 if (aVal < bVal) {
-return sortOrder === 'asc' ? -1 : 1;
-}
+                    return sortOrder === 'asc' ? -1 : 1;
+                }
 
                 if (aVal > bVal) {
-return sortOrder === 'asc' ? 1 : -1;
-}
+                    return sortOrder === 'asc' ? 1 : -1;
+                }
 
                 return 0;
             });
@@ -189,7 +189,10 @@ return sortOrder === 'asc' ? 1 : -1;
         return data;
     }, [consignments, q, statusFilter, sortKey, sortOrder]);
 
-    const totalPages = Math.max(1, Math.ceil(filteredAndSorted.length / perPage));
+    const totalPages = Math.max(
+        1,
+        Math.ceil(filteredAndSorted.length / perPage),
+    );
     // Clamp halaman saat ini tanpa effect agar tidak memicu cascading renders.
     const safeCurrentPage = Math.min(currentPage, totalPages);
 
@@ -210,7 +213,10 @@ return sortOrder === 'asc' ? 1 : -1;
                     <section className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                         <div>
                             <Badge className="mb-2 rounded-[6px] border border-[#BCE0FF] bg-[#EFF8FF] text-[#0080FF]">
-                                <Package className="size-3.5" aria-hidden="true" />
+                                <Package
+                                    className="size-3.5"
+                                    aria-hidden="true"
+                                />
                                 {consignments.length} titipan
                             </Badge>
                             <h1 className="text-2xl font-semibold text-slate-950">
@@ -223,17 +229,17 @@ return sortOrder === 'asc' ? 1 : -1;
                         </div>
                         <Button
                             asChild
-                            className="h-11 rounded-[12px] bg-[#0080FF] px-5 font-semibold text-white hover:bg-[#006FE0] active:bg-[#0059B8] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                            className="h-11 rounded-[12px] bg-[#0080FF] px-5 font-semibold text-white transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[#006FE0] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 active:bg-[#0059B8] motion-reduce:transition-none"
                         >
                             <Link href={sellerProductsCreate()}>
-                                <Plus className="size-4" aria-hidden="true" /> Tambah Produk
-                                Titipan
+                                <Plus className="size-4" aria-hidden="true" />{' '}
+                                Tambah Produk Titipan
                             </Link>
                         </Button>
                     </section>
 
                     <Card className="gap-0 overflow-hidden rounded-[14px] border-slate-100 py-0 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-md motion-reduce:transition-none motion-reduce:hover:shadow-sm">
-                        <CardHeader className="border-b border-slate-100 p-5 space-y-4">
+                        <CardHeader className="space-y-4 border-b border-slate-100 p-5">
                             <div>
                                 <CardTitle>Daftar Titipan</CardTitle>
                                 <CardDescription>
@@ -247,33 +253,66 @@ return sortOrder === 'asc' ? 1 : -1;
                                 className="grid gap-3 md:grid-cols-[1fr_12rem_auto]"
                             >
                                 <label className="relative">
-                                    <span className="sr-only">Cari titipan</span>
-                                    <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                                    <span className="sr-only">
+                                        Cari titipan
+                                    </span>
+                                    <Search
+                                        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
+                                        aria-hidden="true"
+                                    />
                                     <Input
                                         value={q}
-                                        onChange={(event) => setQ(event.target.value)}
+                                        onChange={(event) =>
+                                            setQ(event.target.value)
+                                        }
                                         placeholder="Cari produk atau UP Jurusan"
                                         aria-describedby="consignment-q-error"
-                                        className="h-11 rounded-[10px] border-slate-200 bg-white pl-9 shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20"
+                                        className="h-11 rounded-[10px] border-slate-200 bg-white pl-9 shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 motion-reduce:transition-none"
                                     />
-                                    <span id="consignment-q-error" className="sr-only" aria-live="polite" />
+                                    <span
+                                        id="consignment-q-error"
+                                        className="sr-only"
+                                        aria-live="polite"
+                                    />
                                 </label>
                                 <label>
                                     <span className="sr-only">Status</span>
-                                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                        <SelectTrigger aria-label="Filter status titipan" className="h-11 w-full rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20">
+                                    <Select
+                                        value={statusFilter}
+                                        onValueChange={setStatusFilter}
+                                    >
+                                        <SelectTrigger
+                                            aria-label="Filter status titipan"
+                                            className="h-11 w-full rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 motion-reduce:transition-none"
+                                        >
                                             <SelectValue placeholder="Pilih status" />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-[14px] bg-white text-slate-900 ring-slate-200 shadow-lg">
+                                        <SelectContent className="rounded-[14px] bg-white text-slate-900 shadow-lg ring-slate-200">
                                             <SelectGroup>
-                                                <SelectLabel>Status</SelectLabel>
-                                                <SelectItem value="all">Semua status</SelectItem>
-                                                <SelectItem value="pending_approval">Menunggu persetujuan</SelectItem>
-                                                <SelectItem value="approved">Disetujui</SelectItem>
-                                                <SelectItem value="received">Diterima</SelectItem>
-                                                <SelectItem value="completed">Selesai</SelectItem>
-                                                <SelectItem value="rejected">Ditolak</SelectItem>
-                                                <SelectItem value="cancelled">Dibatalkan</SelectItem>
+                                                <SelectLabel>
+                                                    Status
+                                                </SelectLabel>
+                                                <SelectItem value="all">
+                                                    Semua status
+                                                </SelectItem>
+                                                <SelectItem value="pending_approval">
+                                                    Menunggu persetujuan
+                                                </SelectItem>
+                                                <SelectItem value="approved">
+                                                    Disetujui
+                                                </SelectItem>
+                                                <SelectItem value="received">
+                                                    Diterima
+                                                </SelectItem>
+                                                <SelectItem value="completed">
+                                                    Selesai
+                                                </SelectItem>
+                                                <SelectItem value="rejected">
+                                                    Ditolak
+                                                </SelectItem>
+                                                <SelectItem value="cancelled">
+                                                    Dibatalkan
+                                                </SelectItem>
                                             </SelectGroup>
                                         </SelectContent>
                                     </Select>
@@ -282,16 +321,21 @@ return sortOrder === 'asc' ? 1 : -1;
                                     <Button
                                         type="submit"
                                         disabled={isFiltering}
-                                        className="h-11 rounded-[12px] px-5 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                        className="h-11 rounded-[12px] px-5 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                     >
-                                        {isFiltering && <Spinner className="size-4" aria-hidden="true" />}
+                                        {isFiltering && (
+                                            <Spinner
+                                                className="size-4"
+                                                aria-hidden="true"
+                                            />
+                                        )}
                                         Terapkan
                                     </Button>
                                     <Button
                                         type="button"
                                         variant="outline"
                                         onClick={resetFilters}
-                                        className="h-11 rounded-[12px] border-slate-200 bg-white px-5 font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                        className="h-11 rounded-[12px] border-slate-200 bg-white px-5 font-semibold text-slate-700 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                     >
                                         Reset
                                     </Button>
@@ -304,103 +348,234 @@ return sortOrder === 'asc' ? 1 : -1;
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-slate-50 hover:bg-slate-50">
-                                            <TableHead className="px-5" aria-sort={sortKey === 'product' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}>
+                                            <TableHead
+                                                className="px-5"
+                                                aria-sort={
+                                                    sortKey === 'product'
+                                                        ? sortOrder === 'asc'
+                                                            ? 'ascending'
+                                                            : 'descending'
+                                                        : undefined
+                                                }
+                                            >
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('product')}
-                                                    className="inline-flex items-center gap-1.5 font-semibold text-slate-500 hover:text-slate-900 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 rounded-[6px] px-1 -mx-1"
+                                                    onClick={() =>
+                                                        handleSort('product')
+                                                    }
+                                                    className="-mx-1 inline-flex items-center gap-1.5 rounded-[6px] px-1 font-semibold text-slate-500 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 focus-visible:outline-none motion-reduce:transition-none"
                                                     aria-label={`Urutkan Produk ${sortKey === 'product' ? (sortOrder === 'asc' ? 'menaik' : 'menurun') : ''}`}
                                                 >
                                                     Produk
-                                                    <ArrowUpDown className={cn('size-3.5 shrink-0 transition-colors duration-[180ms]', sortKey === 'product' ? 'text-[#0080FF]' : 'text-slate-400')} aria-hidden="true" />
+                                                    <ArrowUpDown
+                                                        className={cn(
+                                                            'size-3.5 shrink-0 transition-colors duration-[180ms]',
+                                                            sortKey ===
+                                                                'product'
+                                                                ? 'text-[#0080FF]'
+                                                                : 'text-slate-400',
+                                                        )}
+                                                        aria-hidden="true"
+                                                    />
                                                 </button>
                                             </TableHead>
-                                            <TableHead className="px-5" aria-sort={sortKey === 'up_jurusan' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}>
+                                            <TableHead
+                                                className="px-5"
+                                                aria-sort={
+                                                    sortKey === 'up_jurusan'
+                                                        ? sortOrder === 'asc'
+                                                            ? 'ascending'
+                                                            : 'descending'
+                                                        : undefined
+                                                }
+                                            >
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('up_jurusan')}
-                                                    className="inline-flex items-center gap-1.5 font-semibold text-slate-500 hover:text-slate-900 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 rounded-[6px] px-1 -mx-1"
+                                                    onClick={() =>
+                                                        handleSort('up_jurusan')
+                                                    }
+                                                    className="-mx-1 inline-flex items-center gap-1.5 rounded-[6px] px-1 font-semibold text-slate-500 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 focus-visible:outline-none motion-reduce:transition-none"
                                                     aria-label={`Urutkan UP Jurusan ${sortKey === 'up_jurusan' ? (sortOrder === 'asc' ? 'menaik' : 'menurun') : ''}`}
                                                 >
                                                     UP Jurusan
-                                                    <ArrowUpDown className={cn('size-3.5 shrink-0 transition-colors duration-[180ms]', sortKey === 'up_jurusan' ? 'text-[#0080FF]' : 'text-slate-400')} aria-hidden="true" />
+                                                    <ArrowUpDown
+                                                        className={cn(
+                                                            'size-3.5 shrink-0 transition-colors duration-[180ms]',
+                                                            sortKey ===
+                                                                'up_jurusan'
+                                                                ? 'text-[#0080FF]'
+                                                                : 'text-slate-400',
+                                                        )}
+                                                        aria-hidden="true"
+                                                    />
                                                 </button>
                                             </TableHead>
-                                            <TableHead className="px-5">Request</TableHead>
-                                            <TableHead className="px-5">Diterima</TableHead>
-                                            <TableHead className="px-5">Terjual</TableHead>
-                                            <TableHead className="px-5">Komisi</TableHead>
-                                            <TableHead className="px-5" aria-sort={sortKey === 'unpaid_amount' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}>
+                                            <TableHead className="px-5">
+                                                Request
+                                            </TableHead>
+                                            <TableHead className="px-5">
+                                                Diterima
+                                            </TableHead>
+                                            <TableHead className="px-5">
+                                                Terjual
+                                            </TableHead>
+                                            <TableHead className="px-5">
+                                                Komisi
+                                            </TableHead>
+                                            <TableHead
+                                                className="px-5"
+                                                aria-sort={
+                                                    sortKey === 'unpaid_amount'
+                                                        ? sortOrder === 'asc'
+                                                            ? 'ascending'
+                                                            : 'descending'
+                                                        : undefined
+                                                }
+                                            >
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('unpaid_amount')}
-                                                    className="inline-flex items-center gap-1.5 font-semibold text-slate-500 hover:text-slate-900 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 rounded-[6px] px-1 -mx-1"
+                                                    onClick={() =>
+                                                        handleSort(
+                                                            'unpaid_amount',
+                                                        )
+                                                    }
+                                                    className="-mx-1 inline-flex items-center gap-1.5 rounded-[6px] px-1 font-semibold text-slate-500 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 focus-visible:outline-none motion-reduce:transition-none"
                                                     aria-label={`Urutkan Saldo Belum Dibayar ${sortKey === 'unpaid_amount' ? (sortOrder === 'asc' ? 'menaik' : 'menurun') : ''}`}
                                                 >
                                                     Saldo Belum Dibayar
-                                                    <ArrowUpDown className={cn('size-3.5 shrink-0 transition-colors duration-[180ms]', sortKey === 'unpaid_amount' ? 'text-[#0080FF]' : 'text-slate-400')} aria-hidden="true" />
+                                                    <ArrowUpDown
+                                                        className={cn(
+                                                            'size-3.5 shrink-0 transition-colors duration-[180ms]',
+                                                            sortKey ===
+                                                                'unpaid_amount'
+                                                                ? 'text-[#0080FF]'
+                                                                : 'text-slate-400',
+                                                        )}
+                                                        aria-hidden="true"
+                                                    />
                                                 </button>
                                             </TableHead>
-                                            <TableHead className="px-5" aria-sort={sortKey === 'status' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}>
+                                            <TableHead
+                                                className="px-5"
+                                                aria-sort={
+                                                    sortKey === 'status'
+                                                        ? sortOrder === 'asc'
+                                                            ? 'ascending'
+                                                            : 'descending'
+                                                        : undefined
+                                                }
+                                            >
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleSort('status')}
-                                                    className="inline-flex items-center gap-1.5 font-semibold text-slate-500 hover:text-slate-900 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 rounded-[6px] px-1 -mx-1"
+                                                    onClick={() =>
+                                                        handleSort('status')
+                                                    }
+                                                    className="-mx-1 inline-flex items-center gap-1.5 rounded-[6px] px-1 font-semibold text-slate-500 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 focus-visible:outline-none motion-reduce:transition-none"
                                                     aria-label={`Urutkan Status ${sortKey === 'status' ? (sortOrder === 'asc' ? 'menaik' : 'menurun') : ''}`}
                                                 >
                                                     Status
-                                                    <ArrowUpDown className={cn('size-3.5 shrink-0 transition-colors duration-[180ms]', sortKey === 'status' ? 'text-[#0080FF]' : 'text-slate-400')} aria-hidden="true" />
+                                                    <ArrowUpDown
+                                                        className={cn(
+                                                            'size-3.5 shrink-0 transition-colors duration-[180ms]',
+                                                            sortKey === 'status'
+                                                                ? 'text-[#0080FF]'
+                                                                : 'text-slate-400',
+                                                        )}
+                                                        aria-hidden="true"
+                                                    />
                                                 </button>
                                             </TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {isFiltering ? (
-                                            Array.from({ length: 5 }).map((_, idx) => (
-                                                <TableRow key={`skeleton-${idx}`}>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-4 w-32 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-4 w-28 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-4 w-12 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-4 w-12 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-4 w-12 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-4 w-10 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-4 w-24 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-5 w-20 rounded-full motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
+                                            Array.from({ length: 5 }).map(
+                                                (_, idx) => (
+                                                    <TableRow
+                                                        key={`skeleton-${idx}`}
+                                                    >
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-4 w-32 rounded-[6px] motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-4 w-28 rounded-[6px] motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-4 w-12 rounded-[6px] motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-4 w-12 rounded-[6px] motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-4 w-12 rounded-[6px] motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-4 w-10 rounded-[6px] motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-4 w-24 rounded-[6px] motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-5 w-20 rounded-full motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ),
+                                            )
                                         ) : isEmpty ? (
                                             <TableRow>
-                                                <TableCell colSpan={8} className="p-0">
+                                                <TableCell
+                                                    colSpan={8}
+                                                    className="p-0"
+                                                >
                                                     <SellerEmptyState
                                                         icon={Package}
                                                         title="Belum ada titipan"
                                                         description="Belum ada produk titipan. Tambah produk titipan untuk mulai menjual lewat UP Jurusan."
-                                                        actionHref={sellerProductsCreate().url}
+                                                        actionHref={
+                                                            sellerProductsCreate()
+                                                                .url
+                                                        }
                                                         actionLabel="Tambah Produk Titipan"
                                                     />
                                                 </TableCell>
                                             </TableRow>
                                         ) : (
                                             paginatedData.map((item) => (
-                                                <TableRow key={item.id} className="transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none">
+                                                <TableRow
+                                                    key={item.id}
+                                                    className="transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+                                                >
                                                     <TableCell className="min-w-56 px-5 font-medium text-slate-950">
-                                                        <p className="max-w-[20ch] truncate font-semibold" title={item.product_name}>
+                                                        <p
+                                                            className="max-w-[20ch] truncate font-semibold"
+                                                            title={
+                                                                item.product_name
+                                                            }
+                                                        >
                                                             {item.product_name}
                                                         </p>
                                                     </TableCell>
@@ -408,7 +583,9 @@ return sortOrder === 'asc' ? 1 : -1;
                                                         {item.up_jurusan_name}
                                                     </TableCell>
                                                     <TableCell className="px-5 tabular-nums">
-                                                        {item.requested_quantity}
+                                                        {
+                                                            item.requested_quantity
+                                                        }
                                                     </TableCell>
                                                     <TableCell className="px-5 tabular-nums">
                                                         {item.received_quantity}
@@ -429,8 +606,10 @@ return sortOrder === 'asc' ? 1 : -1;
                                                             className={cn(
                                                                 'rounded-full px-2.5 py-0.5 font-medium',
                                                                 statusStyles[
-                                                                    item.status.code
-                                                                ] ?? 'bg-slate-100 text-slate-700 border border-slate-200',
+                                                                    item.status
+                                                                        .code
+                                                                ] ??
+                                                                    'border border-slate-200 bg-slate-100 text-slate-700',
                                                             )}
                                                         >
                                                             {item.status.label}
@@ -447,7 +626,11 @@ return sortOrder === 'asc' ? 1 : -1;
                             <div className="grid gap-4 p-4 md:hidden">
                                 {isFiltering ? (
                                     Array.from({ length: 5 }).map((_, idx) => (
-                                        <Card key={`mobile-skeleton-${idx}`} className="rounded-[14px] border-slate-100 p-4 shadow-sm" aria-hidden="true">
+                                        <Card
+                                            key={`mobile-skeleton-${idx}`}
+                                            className="rounded-[14px] border-slate-100 p-4 shadow-sm"
+                                            aria-hidden="true"
+                                        >
                                             <div className="space-y-3">
                                                 <Skeleton className="h-4 w-3/4 rounded-[6px] motion-reduce:animate-none" />
                                                 <Skeleton className="h-3 w-1/2 rounded-[6px] motion-reduce:animate-none" />
@@ -470,7 +653,9 @@ return sortOrder === 'asc' ? 1 : -1;
                                             icon={Package}
                                             title="Belum ada titipan"
                                             description="Belum ada produk titipan. Tambah produk titipan untuk mulai menjual lewat UP Jurusan."
-                                            actionHref={sellerProductsCreate().url}
+                                            actionHref={
+                                                sellerProductsCreate().url
+                                            }
                                             actionLabel="Tambah Produk Titipan"
                                         />
                                     </div>
@@ -482,34 +667,72 @@ return sortOrder === 'asc' ? 1 : -1;
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="truncate text-sm font-semibold text-slate-950" title={item.product_name}>
+                                                    <p
+                                                        className="truncate text-sm font-semibold text-slate-950"
+                                                        title={
+                                                            item.product_name
+                                                        }
+                                                    >
                                                         {item.product_name}
                                                     </p>
-                                                    <p className="mt-1 text-xs text-slate-500">{item.up_jurusan_name}</p>
+                                                    <p className="mt-1 text-xs text-slate-500">
+                                                        {item.up_jurusan_name}
+                                                    </p>
                                                 </div>
-                                                <Badge className={cn('shrink-0 rounded-full font-medium', statusStyles[item.status.code] ?? 'bg-slate-100 text-slate-700 border border-slate-200')}>
+                                                <Badge
+                                                    className={cn(
+                                                        'shrink-0 rounded-full font-medium',
+                                                        statusStyles[
+                                                            item.status.code
+                                                        ] ??
+                                                            'border border-slate-200 bg-slate-100 text-slate-700',
+                                                    )}
+                                                >
                                                     {item.status.label}
                                                 </Badge>
                                             </div>
                                             <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                                                 <div className="rounded-[10px] border border-slate-100 bg-slate-50 px-2 py-2">
-                                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Request</p>
-                                                    <p className="mt-1 text-sm font-semibold tabular-nums text-slate-900">{item.requested_quantity}</p>
+                                                    <p className="text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
+                                                        Request
+                                                    </p>
+                                                    <p className="mt-1 text-sm font-semibold text-slate-900 tabular-nums">
+                                                        {
+                                                            item.requested_quantity
+                                                        }
+                                                    </p>
                                                 </div>
                                                 <div className="rounded-[10px] border border-slate-100 bg-slate-50 px-2 py-2">
-                                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Diterima</p>
-                                                    <p className="mt-1 text-sm font-semibold tabular-nums text-slate-900">{item.received_quantity}</p>
+                                                    <p className="text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
+                                                        Diterima
+                                                    </p>
+                                                    <p className="mt-1 text-sm font-semibold text-slate-900 tabular-nums">
+                                                        {item.received_quantity}
+                                                    </p>
                                                 </div>
                                                 <div className="rounded-[10px] border border-slate-100 bg-slate-50 px-2 py-2">
-                                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Terjual</p>
-                                                    <p className="mt-1 text-sm font-semibold tabular-nums text-slate-900">{item.sold_quantity}</p>
+                                                    <p className="text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
+                                                        Terjual
+                                                    </p>
+                                                    <p className="mt-1 text-sm font-semibold text-slate-900 tabular-nums">
+                                                        {item.sold_quantity}
+                                                    </p>
                                                 </div>
                                             </div>
                                             <div className="mt-3 flex items-center justify-between gap-2">
                                                 <div>
-                                                    <p className="text-xs text-slate-500">Saldo belum dibayar</p>
-                                                    <p className="text-sm font-semibold tabular-nums text-slate-900">{formatRupiah(item.unpaid_amount)}</p>
-                                                    <p className="text-xs tabular-nums text-slate-500">{item.commission_rate}% komisi</p>
+                                                    <p className="text-xs text-slate-500">
+                                                        Saldo belum dibayar
+                                                    </p>
+                                                    <p className="text-sm font-semibold text-slate-900 tabular-nums">
+                                                        {formatRupiah(
+                                                            item.unpaid_amount,
+                                                        )}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500 tabular-nums">
+                                                        {item.commission_rate}%
+                                                        komisi
+                                                    </p>
                                                 </div>
                                             </div>
                                         </Card>
@@ -520,39 +743,51 @@ return sortOrder === 'asc' ? 1 : -1;
                             {showPagination ? (
                                 <div className="flex items-center justify-between border-t border-slate-100 p-4">
                                     <span className="text-sm text-slate-500">
-                                        Halaman {safeCurrentPage} dari {totalPages} • {filteredAndSorted.length} titipan
+                                        Halaman {safeCurrentPage} dari{' '}
+                                        {totalPages} •{' '}
+                                        {filteredAndSorted.length} titipan
                                     </span>
                                     <div className="flex gap-2">
                                         <Button
                                             type="button"
                                             variant="outline"
                                             disabled={safeCurrentPage <= 1}
-                                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                                            className="h-11 rounded-[12px] border-slate-200 bg-white px-4 font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 disabled:opacity-50"
+                                            onClick={() =>
+                                                setCurrentPage((p) =>
+                                                    Math.max(1, p - 1),
+                                                )
+                                            }
+                                            className="h-11 rounded-[12px] border-slate-200 bg-white px-4 font-semibold text-slate-700 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 disabled:opacity-50 motion-reduce:transition-none"
                                         >
                                             Sebelumnya
                                         </Button>
                                         <Button
                                             type="button"
                                             variant="outline"
-                                            disabled={safeCurrentPage >= totalPages}
-                                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                                            className="h-11 rounded-[12px] border-slate-200 bg-white px-4 font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 disabled:opacity-50"
+                                            disabled={
+                                                safeCurrentPage >= totalPages
+                                            }
+                                            onClick={() =>
+                                                setCurrentPage((p) =>
+                                                    Math.min(totalPages, p + 1),
+                                                )
+                                            }
+                                            className="h-11 rounded-[12px] border-slate-200 bg-white px-4 font-semibold text-slate-700 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 disabled:opacity-50 motion-reduce:transition-none"
                                         >
                                             Berikutnya
                                         </Button>
                                     </div>
                                 </div>
-                            ) : (
-                                !isEmpty && !isFiltering ? (
-                                    <div className="flex items-center justify-between border-t border-slate-100 p-4">
-                                        <span className="text-sm text-slate-500">
-                                            {filteredAndSorted.length} titipan
-                                        </span>
-                                        <span className="text-xs text-slate-400">Halaman 1 dari 1</span>
-                                    </div>
-                                ) : null
-                            )}
+                            ) : !isEmpty && !isFiltering ? (
+                                <div className="flex items-center justify-between border-t border-slate-100 p-4">
+                                    <span className="text-sm text-slate-500">
+                                        {filteredAndSorted.length} titipan
+                                    </span>
+                                    <span className="text-xs text-slate-400">
+                                        Halaman 1 dari 1
+                                    </span>
+                                </div>
+                            ) : null}
                         </CardContent>
                     </Card>
                 </div>

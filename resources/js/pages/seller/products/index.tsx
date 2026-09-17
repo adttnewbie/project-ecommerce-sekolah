@@ -159,8 +159,8 @@ export default function SellerProductsIndex({
 
     const sortedData = useMemo(() => {
         if (!sortKey) {
-return products.data;
-}
+            return products.data;
+        }
 
         const copy = [...products.data];
         copy.sort((a, b) => {
@@ -193,12 +193,12 @@ return products.data;
             }
 
             if (aVal < bVal) {
-return sortOrder === 'asc' ? -1 : 1;
-}
+                return sortOrder === 'asc' ? -1 : 1;
+            }
 
             if (aVal > bVal) {
-return sortOrder === 'asc' ? 1 : -1;
-}
+                return sortOrder === 'asc' ? 1 : -1;
+            }
 
             return 0;
         });
@@ -259,15 +259,18 @@ return sortOrder === 'asc' ? 1 : -1;
         });
     };
 
-    const columns: { key: SortKey | 'actions'; label: string; sortable: boolean }[] =
-        [
-            { key: 'name', label: 'Nama', sortable: true },
-            { key: 'category', label: 'Kategori', sortable: true },
-            { key: 'price', label: 'Harga', sortable: true },
-            { key: 'stock', label: 'Stok', sortable: true },
-            { key: 'status', label: 'Status', sortable: true },
-            { key: 'actions', label: 'Aksi', sortable: false },
-        ];
+    const columns: {
+        key: SortKey | 'actions';
+        label: string;
+        sortable: boolean;
+    }[] = [
+        { key: 'name', label: 'Nama', sortable: true },
+        { key: 'category', label: 'Kategori', sortable: true },
+        { key: 'price', label: 'Harga', sortable: true },
+        { key: 'stock', label: 'Stok', sortable: true },
+        { key: 'status', label: 'Status', sortable: true },
+        { key: 'actions', label: 'Aksi', sortable: false },
+    ];
 
     const isEmpty = !isFiltering && sortedData.length === 0;
 
@@ -278,8 +281,11 @@ return sortOrder === 'asc' ? 1 : -1;
                 <div className="space-y-6">
                     <section className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                         <div>
-                            <Badge className="mb-2 rounded-[6px] bg-blue-50 text-blue-700 border border-blue-100">
-                                <Package className="size-3.5" aria-hidden="true" />
+                            <Badge className="mb-2 rounded-[6px] border border-blue-100 bg-blue-50 text-blue-700">
+                                <Package
+                                    className="size-3.5"
+                                    aria-hidden="true"
+                                />
                                 {products.total} produk
                             </Badge>
                             <h1 className="text-2xl font-semibold text-slate-950">
@@ -291,10 +297,11 @@ return sortOrder === 'asc' ? 1 : -1;
                         </div>
                         <Button
                             asChild
-                            className="h-11 rounded-[12px] bg-[#0080FF] px-5 font-semibold text-white hover:bg-[#006FE0] active:bg-[#0059B8] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                            className="h-11 rounded-[12px] bg-[#0080FF] px-5 font-semibold text-white transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[#006FE0] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 active:bg-[#0059B8] motion-reduce:transition-none"
                         >
                             <Link href={sellerProductsCreate()}>
-                                <Plus className="size-4" aria-hidden="true" /> Tambah Produk
+                                <Plus className="size-4" aria-hidden="true" />{' '}
+                                Tambah Produk
                             </Link>
                         </Button>
                     </section>
@@ -339,9 +346,13 @@ return sortOrder === 'asc' ? 1 : -1;
                                         }
                                         placeholder="Cari produk"
                                         aria-describedby="q-error"
-                                        className="h-11 rounded-[10px] border-slate-200 bg-white pl-9 shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20"
+                                        className="h-11 rounded-[10px] border-slate-200 bg-white pl-9 shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 motion-reduce:transition-none"
                                     />
-                                    <span id="q-error" className="sr-only" aria-live="polite" />
+                                    <span
+                                        id="q-error"
+                                        className="sr-only"
+                                        aria-live="polite"
+                                    />
                                 </label>
                                 <label>
                                     <span className="sr-only">Status</span>
@@ -351,11 +362,11 @@ return sortOrder === 'asc' ? 1 : -1;
                                     >
                                         <SelectTrigger
                                             aria-label="Filter status"
-                                            className="h-11 w-full rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20"
+                                            className="h-11 w-full rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 motion-reduce:transition-none"
                                         >
                                             <SelectValue placeholder="Pilih status" />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-[14px] bg-white text-slate-900 ring-slate-200 shadow-lg">
+                                        <SelectContent className="rounded-[14px] bg-white text-slate-900 shadow-lg ring-slate-200">
                                             <SelectGroup>
                                                 <SelectLabel>
                                                     Status
@@ -387,11 +398,11 @@ return sortOrder === 'asc' ? 1 : -1;
                                     >
                                         <SelectTrigger
                                             aria-label="Filter kategori"
-                                            className="h-11 w-full rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20"
+                                            className="h-11 w-full rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 motion-reduce:transition-none"
                                         >
                                             <SelectValue placeholder="Pilih kategori" />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-[14px] bg-white text-slate-900 ring-slate-200 shadow-lg">
+                                        <SelectContent className="rounded-[14px] bg-white text-slate-900 shadow-lg ring-slate-200">
                                             <SelectGroup>
                                                 <SelectLabel>
                                                     Kategori
@@ -423,11 +434,11 @@ return sortOrder === 'asc' ? 1 : -1;
                                     >
                                         <SelectTrigger
                                             aria-label="Filter kondisi stok"
-                                            className="h-11 w-full rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20"
+                                            className="h-11 w-full rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 motion-reduce:transition-none"
                                         >
                                             <SelectValue placeholder="Pilih kondisi stok" />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-[14px] bg-white text-slate-900 ring-slate-200 shadow-lg">
+                                        <SelectContent className="rounded-[14px] bg-white text-slate-900 shadow-lg ring-slate-200">
                                             <SelectGroup>
                                                 <SelectLabel>
                                                     Kondisi stok
@@ -449,16 +460,21 @@ return sortOrder === 'asc' ? 1 : -1;
                                     <Button
                                         type="submit"
                                         disabled={isFiltering}
-                                        className="h-11 rounded-[12px] px-5 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                        className="h-11 rounded-[12px] px-5 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                     >
-                                        {isFiltering && <Spinner className="size-4" aria-hidden="true" />}
+                                        {isFiltering && (
+                                            <Spinner
+                                                className="size-4"
+                                                aria-hidden="true"
+                                            />
+                                        )}
                                         Terapkan
                                     </Button>
                                     <Button
                                         type="button"
                                         variant="outline"
                                         onClick={resetFilters}
-                                        className="h-11 rounded-[12px] border-slate-200 bg-white px-5 font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                        className="h-11 rounded-[12px] border-slate-200 bg-white px-5 font-semibold text-slate-700 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                     >
                                         Reset
                                     </Button>
@@ -477,7 +493,7 @@ return sortOrder === 'asc' ? 1 : -1;
                         </CardHeader>
                         <CardContent className="p-0">
                             {/* Desktop table */}
-                            <div className="hidden md:block overflow-x-auto">
+                            <div className="hidden overflow-x-auto md:block">
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-slate-50 hover:bg-slate-50">
@@ -487,7 +503,8 @@ return sortOrder === 'asc' ? 1 : -1;
                                                     className="px-5"
                                                     aria-sort={
                                                         sortKey === col.key
-                                                            ? sortOrder === 'asc'
+                                                            ? sortOrder ===
+                                                              'asc'
                                                                 ? 'ascending'
                                                                 : 'descending'
                                                             : undefined
@@ -501,14 +518,15 @@ return sortOrder === 'asc' ? 1 : -1;
                                                                     col.key as SortKey,
                                                                 )
                                                             }
-                                                            className="inline-flex items-center gap-1.5 font-semibold text-slate-500 hover:text-slate-900 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 rounded-[6px] px-1 -mx-1"
+                                                            className="-mx-1 inline-flex items-center gap-1.5 rounded-[6px] px-1 font-semibold text-slate-500 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 focus-visible:outline-none motion-reduce:transition-none"
                                                             aria-label={`Urutkan ${col.label} ${sortKey === col.key ? (sortOrder === 'asc' ? 'menaik' : 'menurun') : ''}`}
                                                         >
                                                             {col.label}
                                                             <ArrowUpDown
                                                                 className={cn(
                                                                     'size-3.5 shrink-0 transition-colors duration-[180ms]',
-                                                                    sortKey === col.key
+                                                                    sortKey ===
+                                                                        col.key
                                                                         ? 'text-[#0080FF]'
                                                                         : 'text-slate-400',
                                                                 )}
@@ -524,34 +542,62 @@ return sortOrder === 'asc' ? 1 : -1;
                                     </TableHeader>
                                     <TableBody>
                                         {isFiltering ? (
-                                            Array.from({ length: 5 }).map((_, idx) => (
-                                                <TableRow key={`skeleton-${idx}`}>
-                                                    <TableCell className="px-5">
-                                                        <div className="space-y-2 py-1">
-                                                            <Skeleton className="h-4 w-40 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                            <Skeleton className="h-3 w-20 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-4 w-24 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-4 w-20 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-5 w-16 rounded-full motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-5 w-20 rounded-full motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <div className="flex justify-end gap-2">
-                                                            <Skeleton className="h-9 w-16 rounded-[12px] motion-reduce:animate-none" aria-hidden="true" />
-                                                            <Skeleton className="h-9 w-16 rounded-[12px] motion-reduce:animate-none" aria-hidden="true" />
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
+                                            Array.from({ length: 5 }).map(
+                                                (_, idx) => (
+                                                    <TableRow
+                                                        key={`skeleton-${idx}`}
+                                                    >
+                                                        <TableCell className="px-5">
+                                                            <div className="space-y-2 py-1">
+                                                                <Skeleton
+                                                                    className="h-4 w-40 rounded-[6px] motion-reduce:animate-none"
+                                                                    aria-hidden="true"
+                                                                />
+                                                                <Skeleton
+                                                                    className="h-3 w-20 rounded-[6px] motion-reduce:animate-none"
+                                                                    aria-hidden="true"
+                                                                />
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-4 w-24 rounded-[6px] motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-4 w-20 rounded-[6px] motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-5 w-16 rounded-full motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-5 w-20 rounded-full motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <div className="flex justify-end gap-2">
+                                                                <Skeleton
+                                                                    className="h-9 w-16 rounded-[12px] motion-reduce:animate-none"
+                                                                    aria-hidden="true"
+                                                                />
+                                                                <Skeleton
+                                                                    className="h-9 w-16 rounded-[12px] motion-reduce:animate-none"
+                                                                    aria-hidden="true"
+                                                                />
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ),
+                                            )
                                         ) : isEmpty ? (
                                             <TableRow>
                                                 <TableCell
@@ -563,11 +609,13 @@ return sortOrder === 'asc' ? 1 : -1;
                                                         title="Tidak ada produk"
                                                         description="Belum ada produk yang sesuai filter. Tambah produk baru atau reset filter untuk melihat daftar lengkap."
                                                         actionHref={
-                                                            sellerProductsCreate().url
+                                                            sellerProductsCreate()
+                                                                .url
                                                         }
                                                         actionLabel="Tambah Produk"
                                                         secondaryActionHref={
-                                                            sellerProductsIndex().url
+                                                            sellerProductsIndex()
+                                                                .url
                                                         }
                                                         secondaryActionLabel="Reset"
                                                     />
@@ -576,7 +624,9 @@ return sortOrder === 'asc' ? 1 : -1;
                                         ) : (
                                             sortedData.map((product) => {
                                                 const StatusIcon =
-                                                    statusIcons[product.status.code];
+                                                    statusIcons[
+                                                        product.status.code
+                                                    ];
 
                                                 return (
                                                     <TableRow
@@ -587,9 +637,13 @@ return sortOrder === 'asc' ? 1 : -1;
                                                             <div>
                                                                 <p
                                                                     className="max-w-[20ch] truncate font-semibold text-slate-950"
-                                                                    title={product.name}
+                                                                    title={
+                                                                        product.name
+                                                                    }
                                                                 >
-                                                                    {product.name}
+                                                                    {
+                                                                        product.name
+                                                                    }
                                                                 </p>
                                                                 {product.is_pre_order && (
                                                                     <p className="mt-1 text-xs text-[#0080FF]">
@@ -612,16 +666,19 @@ return sortOrder === 'asc' ? 1 : -1;
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="px-5 text-slate-600">
-                                                            {product.category.name}
+                                                            {
+                                                                product.category
+                                                                    .name
+                                                            }
                                                         </TableCell>
-                                                        <TableCell className="px-5 font-semibold tabular-nums text-slate-900">
+                                                        <TableCell className="px-5 font-semibold text-slate-900 tabular-nums">
                                                             {formatRupiah(
                                                                 product.price,
                                                             )}
                                                         </TableCell>
                                                         <TableCell className="px-5">
                                                             {product.is_pre_order ? (
-                                                                <Badge className="rounded-full border border-[#BCE0FF] bg-[#EFF8FF] text-[#0080FF] gap-1.5">
+                                                                <Badge className="gap-1.5 rounded-full border border-[#BCE0FF] bg-[#EFF8FF] text-[#0080FF]">
                                                                     <Clock3
                                                                         className="size-3"
                                                                         aria-hidden="true"
@@ -630,16 +687,19 @@ return sortOrder === 'asc' ? 1 : -1;
                                                                 </Badge>
                                                             ) : (
                                                                 <span className="tabular-nums">
-                                                                    {product.stock}
+                                                                    {
+                                                                        product.stock
+                                                                    }
                                                                 </span>
                                                             )}
                                                         </TableCell>
                                                         <TableCell className="px-5">
                                                             <Badge
                                                                 className={cn(
-                                                                    'rounded-full gap-1.5 px-2.5 py-0.5 font-medium',
+                                                                    'gap-1.5 rounded-full px-2.5 py-0.5 font-medium',
                                                                     statusStyles[
-                                                                        product.status
+                                                                        product
+                                                                            .status
                                                                             .code
                                                                     ],
                                                                 )}
@@ -648,7 +708,11 @@ return sortOrder === 'asc' ? 1 : -1;
                                                                     className="size-3"
                                                                     aria-hidden="true"
                                                                 />
-                                                                {product.status.label}
+                                                                {
+                                                                    product
+                                                                        .status
+                                                                        .label
+                                                                }
                                                             </Badge>
                                                         </TableCell>
                                                         <TableCell className="px-5">
@@ -657,7 +721,7 @@ return sortOrder === 'asc' ? 1 : -1;
                                                                     asChild
                                                                     variant="outline"
                                                                     size="sm"
-                                                                    className="h-11 rounded-[12px] border-slate-200 bg-white px-3 font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                                                    className="h-11 rounded-[12px] border-slate-200 bg-white px-3 font-semibold text-slate-700 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                                                     aria-label={`Edit ${product.name}`}
                                                                 >
                                                                     <Link
@@ -684,7 +748,7 @@ return sortOrder === 'asc' ? 1 : -1;
                                                                             product,
                                                                         );
                                                                     }}
-                                                                    className="h-11 rounded-[12px] border-[#FECACA] bg-white px-3 font-semibold text-[#DC2626] hover:bg-[#FEF2F2] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#DC2626] focus-visible:ring-offset-2"
+                                                                    className="h-11 rounded-[12px] border-[#FECACA] bg-white px-3 font-semibold text-[#DC2626] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[#FEF2F2] focus-visible:ring-2 focus-visible:ring-[#DC2626] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                                                     aria-label={`Hapus ${product.name}`}
                                                                 >
                                                                     <Trash2
@@ -732,7 +796,9 @@ return sortOrder === 'asc' ? 1 : -1;
                                             icon={Package}
                                             title="Tidak ada produk"
                                             description="Belum ada produk yang sesuai filter. Tambah produk baru atau reset filter untuk melihat daftar lengkap."
-                                            actionHref={sellerProductsCreate().url}
+                                            actionHref={
+                                                sellerProductsCreate().url
+                                            }
                                             actionLabel="Tambah Produk"
                                             secondaryActionHref={
                                                 sellerProductsIndex().url
@@ -759,7 +825,10 @@ return sortOrder === 'asc' ? 1 : -1;
                                                             {product.name}
                                                         </p>
                                                         <p className="mt-1 text-xs text-slate-500">
-                                                            {product.category.name}
+                                                            {
+                                                                product.category
+                                                                    .name
+                                                            }
                                                         </p>
                                                         {product.is_pre_order && (
                                                             <p className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-[#0080FF]">
@@ -777,9 +846,10 @@ return sortOrder === 'asc' ? 1 : -1;
                                                     </div>
                                                     <Badge
                                                         className={cn(
-                                                            'shrink-0 rounded-full gap-1.5 font-medium',
+                                                            'shrink-0 gap-1.5 rounded-full font-medium',
                                                             statusStyles[
-                                                                product.status.code
+                                                                product.status
+                                                                    .code
                                                             ],
                                                         )}
                                                     >
@@ -792,14 +862,19 @@ return sortOrder === 'asc' ? 1 : -1;
                                                 </div>
 
                                                 <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                                                    <span className="font-semibold tabular-nums text-slate-900">
-                                                        {formatRupiah(product.price)}
+                                                    <span className="font-semibold text-slate-900 tabular-nums">
+                                                        {formatRupiah(
+                                                            product.price,
+                                                        )}
                                                     </span>
-                                                    <span className="text-slate-300" aria-hidden="true">
+                                                    <span
+                                                        className="text-slate-300"
+                                                        aria-hidden="true"
+                                                    >
                                                         •
                                                     </span>
                                                     {product.is_pre_order ? (
-                                                        <Badge className="rounded-full border border-[#BCE0FF] bg-[#EFF8FF] text-[#0080FF] gap-1">
+                                                        <Badge className="gap-1 rounded-full border border-[#BCE0FF] bg-[#EFF8FF] text-[#0080FF]">
                                                             <Clock3
                                                                 className="size-3"
                                                                 aria-hidden="true"
@@ -807,7 +882,7 @@ return sortOrder === 'asc' ? 1 : -1;
                                                             Pre-Order
                                                         </Badge>
                                                     ) : (
-                                                        <span className="text-sm tabular-nums text-slate-600">
+                                                        <span className="text-sm text-slate-600 tabular-nums">
                                                             Stok {product.stock}
                                                         </span>
                                                     )}
@@ -817,7 +892,7 @@ return sortOrder === 'asc' ? 1 : -1;
                                                     <Button
                                                         asChild
                                                         variant="outline"
-                                                        className="h-11 flex-1 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                                        className="h-11 flex-1 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                                     >
                                                         <Link
                                                             href={sellerProductsEdit(
@@ -836,10 +911,14 @@ return sortOrder === 'asc' ? 1 : -1;
                                                         type="button"
                                                         variant="outline"
                                                         onClick={() => {
-                                                            setDeleteError(undefined);
-                                                            setSelected(product);
+                                                            setDeleteError(
+                                                                undefined,
+                                                            );
+                                                            setSelected(
+                                                                product,
+                                                            );
                                                         }}
-                                                        className="h-11 flex-1 rounded-[12px] border-[#FECACA] bg-white font-semibold text-[#DC2626] hover:bg-[#FEF2F2] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#DC2626] focus-visible:ring-offset-2"
+                                                        className="h-11 flex-1 rounded-[12px] border-[#FECACA] bg-white font-semibold text-[#DC2626] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[#FEF2F2] focus-visible:ring-2 focus-visible:ring-[#DC2626] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                                         aria-label={`Hapus ${product.name}`}
                                                     >
                                                         <Trash2
@@ -884,7 +963,7 @@ return sortOrder === 'asc' ? 1 : -1;
                                                     }
                                                     size="sm"
                                                     className={cn(
-                                                        'h-11 rounded-[12px] px-4 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2',
+                                                        'h-11 rounded-[12px] px-4 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none',
                                                         link.active
                                                             ? 'bg-[#0080FF] text-white hover:bg-[#006FE0]'
                                                             : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
@@ -941,7 +1020,7 @@ return sortOrder === 'asc' ? 1 : -1;
                             <Button
                                 variant="outline"
                                 disabled={deleting}
-                                className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                             >
                                 Batal
                             </Button>
@@ -951,11 +1030,14 @@ return sortOrder === 'asc' ? 1 : -1;
                             variant="destructive"
                             disabled={deleting}
                             onClick={deleteProduct}
-                            className="h-11 rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#DC2626] focus-visible:ring-offset-2"
+                            className="h-11 rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#DC2626] focus-visible:ring-offset-2 motion-reduce:transition-none"
                             aria-busy={deleting}
                         >
                             {deleting && (
-                                <Spinner className="size-4" aria-hidden="true" />
+                                <Spinner
+                                    className="size-4"
+                                    aria-hidden="true"
+                                />
                             )}
                             {deleting ? 'Menghapus...' : 'Hapus'}
                         </Button>

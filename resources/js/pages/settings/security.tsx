@@ -42,11 +42,13 @@ export default function Security(props: Props) {
                             <Lock className="size-5 text-[#0080FF]" />
                         </span>
                         <div className="min-w-0 flex-1">
-                            <CardTitle className="text-base font-semibold leading-none text-slate-900">
+                            <CardTitle className="text-base leading-none font-semibold text-slate-900">
                                 Ubah password
                             </CardTitle>
                             <CardDescription className="mt-1.5 line-clamp-none text-sm leading-5 text-slate-500">
-                                Gunakan password yang kuat untuk menjaga akun tetap aman. Jangan bagikan password kepada siapa pun.
+                                Gunakan password yang kuat untuk menjaga akun
+                                tetap aman. Jangan bagikan password kepada siapa
+                                pun.
                             </CardDescription>
                         </div>
                     </div>
@@ -77,7 +79,10 @@ export default function Security(props: Props) {
                         {({ errors, processing }) => (
                             <>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="current_password" className="text-sm font-medium text-slate-700">
+                                    <Label
+                                        htmlFor="current_password"
+                                        className="text-sm font-medium text-slate-700"
+                                    >
                                         Password saat ini
                                     </Label>
 
@@ -90,11 +95,18 @@ export default function Security(props: Props) {
                                         placeholder="Masukkan password saat ini"
                                     />
 
-                                    <InputError message={errors.current_password} />
+                                    <InputError
+                                        message={errors.current_password}
+                                    />
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="password" className="text-sm font-medium text-slate-700">Password baru</Label>
+                                    <Label
+                                        htmlFor="password"
+                                        className="text-sm font-medium text-slate-700"
+                                    >
+                                        Password baru
+                                    </Label>
 
                                     <PasswordInput
                                         id="password"
@@ -107,13 +119,18 @@ export default function Security(props: Props) {
                                     />
 
                                     <p className="text-xs leading-4 text-slate-500">
-                                        Minimal 8 karakter, kombinasi huruf besar, huruf kecil, angka, dan simbol lebih aman.
+                                        Minimal 8 karakter, kombinasi huruf
+                                        besar, huruf kecil, angka, dan simbol
+                                        lebih aman.
                                     </p>
                                     <InputError message={errors.password} />
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="password_confirmation" className="text-sm font-medium text-slate-700">
+                                    <Label
+                                        htmlFor="password_confirmation"
+                                        className="text-sm font-medium text-slate-700"
+                                    >
                                         Konfirmasi password baru
                                     </Label>
 
@@ -137,11 +154,16 @@ export default function Security(props: Props) {
                                         data-test="update-password-button"
                                         className="h-11 rounded-xl px-5 font-semibold"
                                     >
-                                        {processing && <Spinner className="size-4" />}
-                                        {processing ? 'Menyimpan...' : 'Simpan password'}
+                                        {processing && (
+                                            <Spinner className="size-4" />
+                                        )}
+                                        {processing
+                                            ? 'Menyimpan...'
+                                            : 'Simpan password'}
                                     </Button>
                                     <span className="text-xs text-slate-500">
-                                        Password akan langsung berlaku untuk login berikutnya.
+                                        Password akan langsung berlaku untuk
+                                        login berikutnya.
                                     </span>
                                 </div>
                             </>

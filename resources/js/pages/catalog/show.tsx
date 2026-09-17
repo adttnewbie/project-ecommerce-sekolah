@@ -1,13 +1,6 @@
 import type { PageProps as SharedPageProps } from '@inertiajs/core';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
-import {
-    Clock3,
-    Package,
-    ShoppingCart,
-    Star,
-    Store,
-    Tags,
-} from 'lucide-react';
+import { Clock3, Package, ShoppingCart, Star, Store, Tags } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
@@ -18,10 +11,9 @@ import { Textarea } from '@/components/ui/textarea';
 import {
     preOrderDeadlineSummary,
     preOrderStatusMeta,
-    resolvePreOrderStatus
-    
+    resolvePreOrderStatus,
 } from '@/lib/pre-order';
-import type {PreOrderStatus} from '@/lib/pre-order';
+import type { PreOrderStatus } from '@/lib/pre-order';
 import { productImageUrl } from '@/lib/product-image';
 import { cn } from '@/lib/utils';
 import { home, login } from '@/routes';
@@ -140,8 +132,7 @@ export default function CatalogShow({ product }: CatalogShowProps) {
     const deadlineSummary = product.pre_order_deadline
         ? preOrderDeadlineSummary(product.pre_order_deadline)
         : null;
-    const isBuyer =
-        auth.user?.role === 'buyer' || auth.user?.role === 'seller';
+    const isBuyer = auth.user?.role === 'buyer' || auth.user?.role === 'seller';
     const [formRating, setFormRating] = useState(
         product.my_review?.rating ?? 0,
     );
@@ -153,14 +144,31 @@ export default function CatalogShow({ product }: CatalogShowProps) {
             <Head title={product.name} />
             <main className="min-h-[calc(100svh-4rem)] bg-slate-50">
                 <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-                    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
-                        <Link href={home()} className="hover:text-[#0080FF] focus-visible:text-[#0080FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 rounded">
+                    <nav
+                        aria-label="Breadcrumb"
+                        className="flex flex-wrap items-center gap-1.5 text-sm text-slate-500"
+                    >
+                        <Link
+                            href={home()}
+                            className="rounded hover:text-[#0080FF] focus-visible:text-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 focus-visible:outline-none"
+                        >
                             Beranda
                         </Link>
-                        <span aria-hidden className="text-slate-400">/</span>
-                        <span className="text-slate-700">{product.category.name}</span>
-                        <span aria-hidden className="text-slate-400">/</span>
-                        <span className="truncate font-medium text-slate-900" aria-current="page">{product.name}</span>
+                        <span aria-hidden className="text-slate-400">
+                            /
+                        </span>
+                        <span className="text-slate-700">
+                            {product.category.name}
+                        </span>
+                        <span aria-hidden className="text-slate-400">
+                            /
+                        </span>
+                        <span
+                            className="truncate font-medium text-slate-900"
+                            aria-current="page"
+                        >
+                            {product.name}
+                        </span>
                     </nav>
 
                     <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start">
@@ -251,8 +259,7 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                                     {
                                                         product.pre_order_estimate_days
                                                     }{' '}
-                                                    hari setelah pesanan
-                                                    dibuat.
+                                                    hari setelah pesanan dibuat.
                                                 </>
                                             )}
                                             {product.pre_order_note && (
@@ -351,17 +358,25 @@ export default function CatalogShow({ product }: CatalogShowProps) {
 
                                 {isBuyer ? (
                                     <div className="space-y-3">
-                                        {product.is_pre_order && product.pre_order_min_quantity && product.pre_order_min_quantity > 1 && !isPreOrderClosed && (
-                                            <p className="hidden text-xs text-slate-500 lg:block">
-                                                Minimum {product.pre_order_min_quantity} item per pesanan pre-order.
-                                            </p>
-                                        )}
-                                        <div className="hidden lg:flex lg:flex-wrap gap-2">
+                                        {product.is_pre_order &&
+                                            product.pre_order_min_quantity &&
+                                            product.pre_order_min_quantity >
+                                                1 &&
+                                            !isPreOrderClosed && (
+                                                <p className="hidden text-xs text-slate-500 lg:block">
+                                                    Minimum{' '}
+                                                    {
+                                                        product.pre_order_min_quantity
+                                                    }{' '}
+                                                    item per pesanan pre-order.
+                                                </p>
+                                            )}
+                                        <div className="hidden gap-2 lg:flex lg:flex-wrap">
                                             {notPurchasable ? (
                                                 <Button
                                                     type="button"
                                                     disabled
-                                                    className="h-11 w-full rounded-[12px] sm:w-fit px-6"
+                                                    className="h-11 w-full rounded-[12px] px-6 sm:w-fit"
                                                 >
                                                     {isOutOfStock
                                                         ? 'Stok habis'
@@ -370,7 +385,7 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                             ) : (
                                                 <Button
                                                     asChild
-                                                    className="h-11 w-full sm:w-fit rounded-[12px] bg-[#0080FF] px-6 shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-[#006FE0] active:bg-[#0059B8]"
+                                                    className="h-11 w-full rounded-[12px] bg-[#0080FF] px-6 shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-[#006FE0] active:bg-[#0059B8] sm:w-fit"
                                                 >
                                                     <Link
                                                         href={checkoutConfirm({
@@ -398,7 +413,10 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                                         <input
                                                             type="hidden"
                                                             name="quantity"
-                                                            value={product.pre_order_min_quantity ?? 1}
+                                                            value={
+                                                                product.pre_order_min_quantity ??
+                                                                1
+                                                            }
                                                             readOnly
                                                         />
                                                         <Button
@@ -562,7 +580,7 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                                         onMouseLeave={() =>
                                                             setHoveredRating(0)
                                                         }
-                                                        className="size-11 rounded-[12px] transition focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 focus-visible:outline-none grid place-items-center hover:bg-amber-50"
+                                                        className="grid size-11 place-items-center rounded-[12px] transition hover:bg-amber-50 focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 focus-visible:outline-none"
                                                     >
                                                         <Star
                                                             className={cn(
@@ -695,18 +713,33 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                         <div className="fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(15,23,42,0.08)] lg:hidden">
                             <div className="flex gap-2">
                                 {notPurchasable ? (
-                                    <Button type="button" disabled className="h-11 flex-1 rounded-[12px]">
-                                        {isOutOfStock ? 'Stok habis' : 'Pre-order ditutup'}
+                                    <Button
+                                        type="button"
+                                        disabled
+                                        className="h-11 flex-1 rounded-[12px]"
+                                    >
+                                        {isOutOfStock
+                                            ? 'Stok habis'
+                                            : 'Pre-order ditutup'}
                                     </Button>
                                 ) : (
                                     <>
-                                        <Form {...storeCartItem.form(product.slug)} disableWhileProcessing className="flex-1">
+                                        <Form
+                                            {...storeCartItem.form(
+                                                product.slug,
+                                            )}
+                                            disableWhileProcessing
+                                            className="flex-1"
+                                        >
                                             {({ processing }) => (
                                                 <>
                                                     <input
                                                         type="hidden"
                                                         name="quantity"
-                                                        value={product.pre_order_min_quantity ?? 1}
+                                                        value={
+                                                            product.pre_order_min_quantity ??
+                                                            1
+                                                        }
                                                         readOnly
                                                     />
                                                     <Button
@@ -716,25 +749,43 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                                         className="h-11 w-full rounded-[12px] border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-slate-50"
                                                         aria-label="Tambah ke Keranjang"
                                                     >
-                                                        {processing ? <Spinner /> : <ShoppingCart className="size-4" />}
+                                                        {processing ? (
+                                                            <Spinner />
+                                                        ) : (
+                                                            <ShoppingCart className="size-4" />
+                                                        )}
                                                         Keranjang
                                                     </Button>
                                                 </>
                                             )}
                                         </Form>
-                                        <Button asChild className="h-11 flex-1 rounded-[12px] bg-[#0080FF] px-4 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-[#006FE0] active:bg-[#0059B8]">
-                                            <Link href={checkoutConfirm({ query: { product: product.slug } })} aria-label="Beli Sekarang">
+                                        <Button
+                                            asChild
+                                            className="h-11 flex-1 rounded-[12px] bg-[#0080FF] px-4 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-[#006FE0] active:bg-[#0059B8]"
+                                        >
+                                            <Link
+                                                href={checkoutConfirm({
+                                                    query: {
+                                                        product: product.slug,
+                                                    },
+                                                })}
+                                                aria-label="Beli Sekarang"
+                                            >
                                                 Beli Sekarang
                                             </Link>
                                         </Button>
                                     </>
                                 )}
                             </div>
-                            {product.is_pre_order && product.pre_order_min_quantity && product.pre_order_min_quantity > 1 && !isPreOrderClosed && (
-                                <p className="mt-2 text-center text-xs leading-4 text-slate-500">
-                                    Minimum {product.pre_order_min_quantity} item per pesanan pre-order
-                                </p>
-                            )}
+                            {product.is_pre_order &&
+                                product.pre_order_min_quantity &&
+                                product.pre_order_min_quantity > 1 &&
+                                !isPreOrderClosed && (
+                                    <p className="mt-2 text-center text-xs leading-4 text-slate-500">
+                                        Minimum {product.pre_order_min_quantity}{' '}
+                                        item per pesanan pre-order
+                                    </p>
+                                )}
                         </div>
                     )}
                 </div>

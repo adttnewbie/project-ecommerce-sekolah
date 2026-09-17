@@ -23,9 +23,12 @@ const EmptyState = () => {
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 ring-1 ring-slate-200">
                 <KeyRound className="h-7 w-7 text-slate-400" />
             </div>
-            <p className="text-sm font-semibold text-slate-900">Belum ada passkey</p>
+            <p className="text-sm font-semibold text-slate-900">
+                Belum ada passkey
+            </p>
             <p className="mx-auto mt-1 max-w-sm text-sm leading-5 text-slate-500">
-                Tambahkan passkey agar bisa masuk tanpa password memakai sidik jari atau face unlock di perangkatmu.
+                Tambahkan passkey agar bisa masuk tanpa password memakai sidik
+                jari atau face unlock di perangkatmu.
             </p>
         </div>
     );
@@ -57,9 +60,12 @@ export default function ManagePasskeys(props: Props) {
                         <Fingerprint className="size-5 text-[#0080FF]" />
                     </span>
                     <div className="min-w-0 flex-1">
-                        <CardTitle className="text-base font-semibold text-slate-900">Passkeys</CardTitle>
+                        <CardTitle className="text-base font-semibold text-slate-900">
+                            Passkeys
+                        </CardTitle>
                         <CardDescription className="mt-1 text-sm leading-5 text-slate-500">
-                            Masuk tanpa password. Gunakan passkey di perangkat yang kompatibel.
+                            Masuk tanpa password. Gunakan passkey di perangkat
+                            yang kompatibel.
                         </CardDescription>
                     </div>
                     {passkeys.length > 0 && (
@@ -86,7 +92,8 @@ export default function ManagePasskeys(props: Props) {
 
                 <PasskeyRegistration onSuccess={handleRegisterSuccess} />
                 <p className="text-xs leading-4 text-slate-500">
-                    Passkey disimpan di perangkatmu dan tidak pernah dikirim sebagai password.
+                    Passkey disimpan di perangkatmu dan tidak pernah dikirim
+                    sebagai password.
                 </p>
             </CardContent>
         </Card>

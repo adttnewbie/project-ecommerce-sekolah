@@ -105,8 +105,8 @@ export default function AdminJurusanUpJurusan({ upJurusans }: Props) {
                         <ShieldCheck className="size-4" />
                         <AlertTitle>UP sudah aktif</AlertTitle>
                         <AlertDescription className="text-blue-700">
-                            Klik kartu UP di bawah untuk kelola produk &
-                            picket di halaman detail.
+                            Klik kartu UP di bawah untuk kelola produk & picket
+                            di halaman detail.
                         </AlertDescription>
                     </Alert>
                 ) : (
@@ -218,10 +218,7 @@ export default function AdminJurusanUpJurusan({ upJurusans }: Props) {
                                                             className="rounded-md"
                                                         >
                                                             <Package className="size-3.5" />
-                                                            {
-                                                                up.products
-                                                                    .length
-                                                            }{' '}
+                                                            {up.products.length}{' '}
                                                             produk
                                                         </Badge>
                                                         <Badge

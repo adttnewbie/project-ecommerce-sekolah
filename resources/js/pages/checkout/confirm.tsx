@@ -267,9 +267,13 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                     Keranjangmu masih kosong
                                 </h2>
                                 <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                                    Yuk, temukan produk yang kamu suka dan tambahkan ke keranjang.
+                                    Yuk, temukan produk yang kamu suka dan
+                                    tambahkan ke keranjang.
                                 </p>
-                                <Button asChild className="mt-5 h-11 rounded-[12px] px-6">
+                                <Button
+                                    asChild
+                                    className="mt-5 h-11 rounded-[12px] px-6"
+                                >
                                     <Link href={home()}>Mulai Belanja</Link>
                                 </Button>
                             </div>
@@ -580,13 +584,22 @@ export default function CheckoutConfirm({ items, summary }: Props) {
 
                                         {/* Voucher — Segera hadir §11.5 */}
                                         <div className="space-y-2">
-                                            <h2 className="text-sm font-semibold text-slate-800">Voucher</h2>
+                                            <h2 className="text-sm font-semibold text-slate-800">
+                                                Voucher
+                                            </h2>
                                             <div className="flex items-center justify-between gap-3 rounded-[14px] border border-dashed border-slate-300 bg-slate-50 px-4 py-3">
                                                 <div>
-                                                    <p className="text-sm font-medium text-slate-700">Punya kode voucher?</p>
-                                                    <p className="text-xs text-slate-500">Fitur voucher segera hadir.</p>
+                                                    <p className="text-sm font-medium text-slate-700">
+                                                        Punya kode voucher?
+                                                    </p>
+                                                    <p className="text-xs text-slate-500">
+                                                        Fitur voucher segera
+                                                        hadir.
+                                                    </p>
                                                 </div>
-                                                <Badge className="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-amber-700 ring-1 ring-amber-200">Segera hadir</Badge>
+                                                <Badge className="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-amber-700 ring-1 ring-amber-200">
+                                                    Segera hadir
+                                                </Badge>
                                             </div>
                                         </div>
 
@@ -611,10 +624,9 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                         {hasInvalidPreOrder && (
                                             <p className="rounded-[10px] border border-red-200 bg-[#FEF2F2] px-3 py-2 text-xs leading-5 text-[#DC2626]">
                                                 Ada item pre-order yang sudah
-                                                tidak dapat dibeli (batas
-                                                waktu lewat atau di bawah
-                                                jumlah minimal). Update cart
-                                                dulu.
+                                                tidak dapat dibeli (batas waktu
+                                                lewat atau di bawah jumlah
+                                                minimal). Update cart dulu.
                                             </p>
                                         )}
                                         <InputError message={errors.cart} />

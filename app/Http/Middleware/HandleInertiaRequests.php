@@ -152,15 +152,19 @@ class HandleInertiaRequests extends Middleware
      * Latest persisted notifications addressed to the user, honouring their
      * dismissals - the single source of truth shared with /notifications.
      *
+     * Dismissal keys are excluded via a SQL subquery instead of a separate
+     * pluck + in-memory reject, keeping the header at a single round-trip.
+     *
      * @return array<int, array{key: string, type: string, title: string, description: string|null, href: string, is_read: bool, created_at: string}>
      */
     private function persistedNotificationsFor(User $user): array
     {
-        $dismissedKeys = $this->dismissedNotificationKeys($user);
-
         return Notification::query()
             ->where('user_id', $user->id)
             ->active()
+            ->whereNotIn('key', NotificationDismissal::query()
+                ->where('user_id', $user->id)
+                ->select('key'))
             ->orderBy('created_at', 'desc')
             ->limit(self::HEADER_NOTIFICATION_LIMIT)
             ->get([
@@ -181,7 +185,6 @@ class HandleInertiaRequests extends Middleware
                 'is_read' => $notification->read_at !== null,
                 'created_at' => $notification->created_at->toISOString(),
             ])
-            ->reject(fn (array $notification) => in_array($notification['key'], $dismissedKeys, true))
             ->values()
             ->all();
     }

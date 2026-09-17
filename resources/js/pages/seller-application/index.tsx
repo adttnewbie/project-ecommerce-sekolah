@@ -71,7 +71,11 @@ const statusMeta = {
     },
 };
 
-function StepIndicator({ application }: { application: SellerApplication | null }) {
+function StepIndicator({
+    application,
+}: {
+    application: SellerApplication | null;
+}) {
     const activeStep = useMemo(() => {
         if (!application) {
             return 1;
@@ -97,12 +101,17 @@ function StepIndicator({ application }: { application: SellerApplication | null 
 
     return (
         <div className="rounded-[14px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
-            <p className="text-xs font-semibold tracking-widest text-slate-400 uppercase">Proses pengajuan</p>
+            <p className="text-xs font-semibold tracking-widest text-slate-400 uppercase">
+                Proses pengajuan
+            </p>
             <ol className="mt-3 flex items-start gap-2">
                 {steps.map((s, idx) => {
                     const isActive = s.n === activeStep;
-                    const isDone = s.n < activeStep || (application?.status === 'approved' && s.n <= 3);
-                    const isPendingStep = application?.status === 'pending' && s.n === 2;
+                    const isDone =
+                        s.n < activeStep ||
+                        (application?.status === 'approved' && s.n <= 3);
+                    const isPendingStep =
+                        application?.status === 'pending' && s.n === 2;
 
                     return (
                         <li key={s.n} className="flex flex-1 items-start gap-2">
@@ -119,13 +128,19 @@ function StepIndicator({ application }: { application: SellerApplication | null 
                                     ].join(' ')}
                                     aria-current={isActive ? 'step' : undefined}
                                 >
-                                    {isDone ? <CheckCircle2 className="size-4" /> : s.n}
+                                    {isDone ? (
+                                        <CheckCircle2 className="size-4" />
+                                    ) : (
+                                        s.n
+                                    )}
                                 </span>
                                 {idx < steps.length - 1 && (
                                     <span
                                         className={[
                                             'mt-2 hidden h-0.5 w-8 rounded-full lg:block xl:w-12',
-                                            s.n < activeStep ? 'bg-[#0080FF]' : 'bg-slate-200',
+                                            s.n < activeStep
+                                                ? 'bg-[#0080FF]'
+                                                : 'bg-slate-200',
                                         ].join(' ')}
                                         aria-hidden
                                     />
@@ -134,13 +149,19 @@ function StepIndicator({ application }: { application: SellerApplication | null 
                             <div className="min-w-0 flex-1">
                                 <p
                                     className={[
-                                        'text-sm font-semibold leading-none',
-                                        isActive ? 'text-slate-900' : isDone ? 'text-slate-700' : 'text-slate-500',
+                                        'text-sm leading-none font-semibold',
+                                        isActive
+                                            ? 'text-slate-900'
+                                            : isDone
+                                              ? 'text-slate-700'
+                                              : 'text-slate-500',
                                     ].join(' ')}
                                 >
                                     {s.title}
                                 </p>
-                                <p className="mt-1 text-xs leading-none text-slate-500">{s.desc}</p>
+                                <p className="mt-1 text-xs leading-none text-slate-500">
+                                    {s.desc}
+                                </p>
                             </div>
                         </li>
                     );
@@ -169,7 +190,9 @@ function formatDate(iso: string | null) {
 }
 
 export default function SellerApplicationIndex({ application }: Props) {
-    const { flash } = usePage().props as unknown as { flash?: { success?: string; error?: string } };
+    const { flash } = usePage().props as unknown as {
+        flash?: { success?: string; error?: string };
+    };
     const canApply = !application || application.status === 'rejected';
     const meta = application ? statusMeta[application.status] : null;
     const StatusIcon = meta?.icon;
@@ -188,16 +211,30 @@ export default function SellerApplicationIndex({ application }: Props) {
             <main className="min-h-[calc(100svh-4rem)] bg-[#F8FAFC]">
                 <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
                     {/* Breadcrumb */}
-                    <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-1.5 text-sm">
-                        <Link href="/" className="text-slate-500 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF]/20">
+                    <nav
+                        aria-label="Breadcrumb"
+                        className="mb-6 flex items-center gap-1.5 text-sm"
+                    >
+                        <Link
+                            href="/"
+                            className="text-slate-500 hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 focus-visible:outline-none"
+                        >
                             Beranda
                         </Link>
                         <span className="text-slate-300">/</span>
-                        <Link href="/settings/profile" className="text-slate-500 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF]/20">
+                        <Link
+                            href="/settings/profile"
+                            className="text-slate-500 hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 focus-visible:outline-none"
+                        >
                             Pengaturan
                         </Link>
                         <span className="text-slate-300">/</span>
-                        <span className="font-medium text-slate-900" aria-current="page">Ajukan Seller</span>
+                        <span
+                            className="font-medium text-slate-900"
+                            aria-current="page"
+                        >
+                            Ajukan Seller
+                        </span>
                     </nav>
 
                     {/* Header */}
@@ -209,29 +246,44 @@ export default function SellerApplicationIndex({ application }: Props) {
                                     Seller EduCart
                                 </Badge>
                                 {application && meta && (
-                                    <Badge className={`rounded-full px-2.5 py-1 text-xs font-semibold ${meta.badgeClass}`}>
-                                        {StatusIcon && <StatusIcon className="size-3" />}
+                                    <Badge
+                                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${meta.badgeClass}`}
+                                    >
+                                        {StatusIcon && (
+                                            <StatusIcon className="size-3" />
+                                        )}
                                         {meta.label}
                                     </Badge>
                                 )}
                             </div>
-                            <h1 className="mt-3 text-[30px] font-bold leading-none tracking-tight text-slate-900 lg:text-[36px]">Ajukan jadi seller</h1>
+                            <h1 className="mt-3 text-[30px] leading-none font-bold tracking-tight text-slate-900 lg:text-[36px]">
+                                Ajukan jadi seller
+                            </h1>
                             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-6">
-                                Akun buyer tetap aktif. Setelah admin menyetujui pengajuan, akun kamu otomatis berubah menjadi seller
-                                dan bisa langsung mengelola produk di dashboard.
+                                Akun buyer tetap aktif. Setelah admin menyetujui
+                                pengajuan, akun kamu otomatis berubah menjadi
+                                seller dan bisa langsung mengelola produk di
+                                dashboard.
                             </p>
                         </div>
 
                         <div className="flex shrink-0 items-center gap-2">
                             {isApproved ? (
-                                <Button asChild className="h-11 rounded-xl px-5 font-semibold">
+                                <Button
+                                    asChild
+                                    className="h-11 rounded-xl px-5 font-semibold"
+                                >
                                     <Link href="/seller/dashboard">
                                         <LayoutDashboard className="size-4" />
                                         Buka Seller Dashboard
                                     </Link>
                                 </Button>
                             ) : (
-                                <Button asChild variant="outline" className="h-11 rounded-xl border-slate-200 bg-white px-5">
+                                <Button
+                                    asChild
+                                    variant="outline"
+                                    className="h-11 rounded-xl border-slate-200 bg-white px-5"
+                                >
                                     <Link href="/settings/profile">
                                         <ArrowLeft className="size-4" />
                                         Kembali ke pengaturan
@@ -242,19 +294,25 @@ export default function SellerApplicationIndex({ application }: Props) {
                     </div>
 
                     {flash?.success && (
-                        <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-[#ECFDF3] px-4 py-3 text-sm text-emerald-800 shadow-sm" role="status">
+                        <div
+                            className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-[#ECFDF3] px-4 py-3 text-sm text-emerald-800 shadow-sm"
+                            role="status"
+                        >
                             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
                             <p className="leading-5">{flash.success}</p>
                         </div>
                     )}
                     {flash?.error && (
-                        <div className="mb-6 flex items-start gap-3 rounded-xl border border-rose-200 bg-[#FEF2F2] px-4 py-3 text-sm text-rose-700 shadow-sm" role="alert">
+                        <div
+                            className="mb-6 flex items-start gap-3 rounded-xl border border-rose-200 bg-[#FEF2F2] px-4 py-3 text-sm text-rose-700 shadow-sm"
+                            role="alert"
+                        >
                             <XCircle className="mt-0.5 size-4 shrink-0 text-rose-600" />
                             <p className="leading-5">{flash.error}</p>
                         </div>
                     )}
 
-                    <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:gap-8 lg:items-start">
+                    <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-8">
                         {/* Left */}
                         <div className="space-y-6 lg:sticky lg:top-[88px]">
                             <StepIndicator application={application} />
@@ -267,7 +325,9 @@ export default function SellerApplicationIndex({ application }: Props) {
                                         </span>
                                         Kenapa jualan di EduCart?
                                     </CardTitle>
-                                    <CardDescription className="text-sm leading-5">Cocok untuk pelajar & UMKM sekolah</CardDescription>
+                                    <CardDescription className="text-sm leading-5">
+                                        Cocok untuk pelajar & UMKM sekolah
+                                    </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-3 text-sm leading-6 text-slate-600">
                                     <ul className="space-y-3">
@@ -276,7 +336,12 @@ export default function SellerApplicationIndex({ application }: Props) {
                                                 <Store className="size-3.5 text-slate-600" />
                                             </span>
                                             <span>
-                                                <span className="font-semibold text-slate-900">Toko langsung aktif</span> — tanpa verifikasi ribet, langsung upload produk setelah disetujui.
+                                                <span className="font-semibold text-slate-900">
+                                                    Toko langsung aktif
+                                                </span>{' '}
+                                                — tanpa verifikasi ribet,
+                                                langsung upload produk setelah
+                                                disetujui.
                                             </span>
                                         </li>
                                         <li className="flex gap-3">
@@ -284,7 +349,12 @@ export default function SellerApplicationIndex({ application }: Props) {
                                                 <ShieldCheck className="size-3.5 text-slate-600" />
                                             </span>
                                             <span>
-                                                <span className="font-semibold text-slate-900">Transaksi aman</span> — pembayaran diverifikasi picket/admin, dana tercatat jelas.
+                                                <span className="font-semibold text-slate-900">
+                                                    Transaksi aman
+                                                </span>{' '}
+                                                — pembayaran diverifikasi
+                                                picket/admin, dana tercatat
+                                                jelas.
                                             </span>
                                         </li>
                                         <li className="flex gap-3">
@@ -292,91 +362,142 @@ export default function SellerApplicationIndex({ application }: Props) {
                                                 <UserRound className="size-3.5 text-slate-600" />
                                             </span>
                                             <span>
-                                                <span className="font-semibold text-slate-900">Jangkauan luas</span> — pembeli dari seluruh warga sekolah.
+                                                <span className="font-semibold text-slate-900">
+                                                    Jangkauan luas
+                                                </span>{' '}
+                                                — pembeli dari seluruh warga
+                                                sekolah.
                                             </span>
                                         </li>
                                     </ul>
                                     <div className="rounded-xl border border-blue-100 bg-[#EFF8FF] p-3">
-                                        <p className="flex gap-2 text-xs font-semibold leading-5 text-[#0A3F76]">
+                                        <p className="flex gap-2 text-xs leading-5 font-semibold text-[#0A3F76]">
                                             <Info className="mt-0.5 size-3.5 shrink-0" />
                                             Tips
                                         </p>
                                         <p className="mt-1 text-xs leading-5 text-slate-600">
-                                            Tulis rencana produk yang spesifik (contoh: “Snack 2k, alat tulis, sablon kaos kelas”) agar admin lebih cepat menyetujui.
+                                            Tulis rencana produk yang spesifik
+                                            (contoh: “Snack 2k, alat tulis,
+                                            sablon kaos kelas”) agar admin lebih
+                                            cepat menyetujui.
                                         </p>
                                     </div>
                                 </CardContent>
                             </Card>
 
                             {application && meta && StatusIcon && (
-                                <Card className={`rounded-[14px] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] ${meta.cardBorder}`}>
+                                <Card
+                                    className={`rounded-[14px] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] ${meta.cardBorder}`}
+                                >
                                     <CardHeader>
                                         <CardTitle className="flex items-center gap-2 text-base text-slate-900">
-                                            <span className={`grid size-8 place-items-center rounded-xl ring-1 ${meta.iconBg}`}>
+                                            <span
+                                                className={`grid size-8 place-items-center rounded-xl ring-1 ${meta.iconBg}`}
+                                            >
                                                 <StatusIcon className="size-4" />
                                             </span>
                                             Status pengajuan
                                         </CardTitle>
                                         <CardDescription>
-                                            Pengajuan terakhir untuk <span className="font-medium text-slate-700">{application.store_name}</span>
+                                            Pengajuan terakhir untuk{' '}
+                                            <span className="font-medium text-slate-700">
+                                                {application.store_name}
+                                            </span>
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <Badge className={`rounded-[6px] px-2.5 py-1 text-xs font-semibold ${meta.badgeClass}`}>
+                                            <Badge
+                                                className={`rounded-[6px] px-2.5 py-1 text-xs font-semibold ${meta.badgeClass}`}
+                                            >
                                                 <StatusIcon className="size-3.5" />
                                                 {meta.label}
                                             </Badge>
-                                            <span className="text-xs text-slate-500">{formatDate(application.created_at)} · ID #{application.id}</span>
+                                            <span className="text-xs text-slate-500">
+                                                {formatDate(
+                                                    application.created_at,
+                                                )}{' '}
+                                                · ID #{application.id}
+                                            </span>
                                         </div>
 
                                         <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
                                             <div className="flex justify-between gap-4 text-xs">
-                                                <span className="text-slate-500">Diajukan</span>
-                                                <span className="font-medium text-slate-900">{formatDate(application.created_at)}</span>
+                                                <span className="text-slate-500">
+                                                    Diajukan
+                                                </span>
+                                                <span className="font-medium text-slate-900">
+                                                    {formatDate(
+                                                        application.created_at,
+                                                    )}
+                                                </span>
                                             </div>
                                             <Separator />
                                             <div className="flex justify-between gap-4 text-xs">
-                                                <span className="text-slate-500">Direview</span>
-                                                <span className="font-medium text-slate-900">{application.reviewed_at ? formatDate(application.reviewed_at) : '—'}</span>
+                                                <span className="text-slate-500">
+                                                    Direview
+                                                </span>
+                                                <span className="font-medium text-slate-900">
+                                                    {application.reviewed_at
+                                                        ? formatDate(
+                                                              application.reviewed_at,
+                                                          )
+                                                        : '—'}
+                                                </span>
                                             </div>
                                             {isApproved && (
                                                 <>
                                                     <Separator />
                                                     <p className="text-xs leading-5 text-emerald-700">
-                                                        Selamat! Akun kamu sekarang seller. Buka dashboard untuk mulai tambah produk.
+                                                        Selamat! Akun kamu
+                                                        sekarang seller. Buka
+                                                        dashboard untuk mulai
+                                                        tambah produk.
                                                     </p>
                                                 </>
                                             )}
                                         </div>
 
-                                        {application.status === 'rejected' && application.rejection_reason && (
-                                            <div className="rounded-xl border border-rose-200 bg-[#FEF2F2] p-3">
-                                                <p className="flex items-center gap-2 text-xs font-semibold text-rose-800">
-                                                    <MessageSquare className="size-3.5" />
-                                                    Alasan ditolak
-                                                </p>
-                                                <p className="mt-1 text-sm leading-6 text-rose-700">{application.rejection_reason}</p>
-                                            </div>
-                                        )}
+                                        {application.status === 'rejected' &&
+                                            application.rejection_reason && (
+                                                <div className="rounded-xl border border-rose-200 bg-[#FEF2F2] p-3">
+                                                    <p className="flex items-center gap-2 text-xs font-semibold text-rose-800">
+                                                        <MessageSquare className="size-3.5" />
+                                                        Alasan ditolak
+                                                    </p>
+                                                    <p className="mt-1 text-sm leading-6 text-rose-700">
+                                                        {
+                                                            application.rejection_reason
+                                                        }
+                                                    </p>
+                                                </div>
+                                            )}
 
                                         {application.status === 'pending' && (
                                             <p className="flex gap-2 rounded-xl border border-amber-200 bg-[#FFF7ED] p-3 text-xs leading-5 text-amber-800">
                                                 <Clock3 className="mt-0.5 size-3.5 shrink-0" />
-                                                Pengajuan kamu sedang diproses. Kamu akan mendapat notifikasi saat admin selesai mereview.
+                                                Pengajuan kamu sedang diproses.
+                                                Kamu akan mendapat notifikasi
+                                                saat admin selesai mereview.
                                             </p>
                                         )}
 
                                         {isApproved ? (
-                                            <Button asChild className="h-11 w-full rounded-xl font-semibold">
+                                            <Button
+                                                asChild
+                                                className="h-11 w-full rounded-xl font-semibold"
+                                            >
                                                 <Link href="/seller/dashboard">
                                                     <LayoutDashboard className="size-4" />
                                                     Buka Seller Dashboard
                                                 </Link>
                                             </Button>
-                                        ) : application.status === 'rejected' ? (
+                                        ) : application.status ===
+                                          'rejected' ? (
                                             <p className="text-xs leading-5 text-slate-500">
-                                                Kamu bisa mengajukan ulang dengan mengisi form di sebelah. Pastikan data lebih lengkap.
+                                                Kamu bisa mengajukan ulang
+                                                dengan mengisi form di sebelah.
+                                                Pastikan data lebih lengkap.
                                             </p>
                                         ) : null}
                                     </CardContent>
@@ -385,11 +506,19 @@ export default function SellerApplicationIndex({ application }: Props) {
 
                             <Card className="rounded-[14px] border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
                                 <CardHeader>
-                                    <CardTitle className="text-base">Butuh bantuan?</CardTitle>
-                                    <CardDescription>Hubungi admin jika ada kendala</CardDescription>
+                                    <CardTitle className="text-base">
+                                        Butuh bantuan?
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Hubungi admin jika ada kendala
+                                    </CardDescription>
                                 </CardHeader>
                                 <CardContent className="text-sm leading-6 text-slate-600">
-                                    <p>Pastikan nomor WhatsApp aktif. Admin mungkin menghubungi untuk verifikasi toko.</p>
+                                    <p>
+                                        Pastikan nomor WhatsApp aktif. Admin
+                                        mungkin menghubungi untuk verifikasi
+                                        toko.
+                                    </p>
                                 </CardContent>
                             </Card>
                         </div>
@@ -413,15 +542,26 @@ export default function SellerApplicationIndex({ application }: Props) {
                             </CardHeader>
                             <CardContent>
                                 {canApply ? (
-                                    <Form action="/seller-application" method="post" className="space-y-5" disableWhileProcessing>
+                                    <Form
+                                        action="/seller-application"
+                                        method="post"
+                                        className="space-y-5"
+                                        disableWhileProcessing
+                                    >
                                         {({ errors, processing }) => (
                                             <>
                                                 <div className="grid gap-2">
-                                                    <Label htmlFor="store_name" className="text-sm font-medium text-slate-700">
-                                                        Nama toko <span className="text-rose-600">*</span>
+                                                    <Label
+                                                        htmlFor="store_name"
+                                                        className="text-sm font-medium text-slate-700"
+                                                    >
+                                                        Nama toko{' '}
+                                                        <span className="text-rose-600">
+                                                            *
+                                                        </span>
                                                     </Label>
                                                     <div className="relative">
-                                                        <Store className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                                                        <Store className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
                                                         <Input
                                                             id="store_name"
                                                             name="store_name"
@@ -430,27 +570,57 @@ export default function SellerApplicationIndex({ application }: Props) {
                                                             placeholder="Contoh: Toko ATK XI RPL"
                                                             className="pl-10"
                                                             autoComplete="organization"
-                                                            aria-invalid={!!errors.store_name}
-                                                            aria-describedby={errors.store_name ? 'store_name-error' : undefined}
+                                                            aria-invalid={
+                                                                !!errors.store_name
+                                                            }
+                                                            aria-describedby={
+                                                                errors.store_name
+                                                                    ? 'store_name-error'
+                                                                    : undefined
+                                                            }
                                                             value={storeName}
-                                                            onChange={(e) => setStoreName(e.target.value)}
+                                                            onChange={(e) =>
+                                                                setStoreName(
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                     <div className="flex items-center justify-between gap-2">
-                                                        <InputError id="store_name-error" message={errors.store_name} />
-                                                        <span className="ml-auto text-xs tabular-nums text-slate-400" aria-live="polite">
-                                                            {storeName.length}/100
+                                                        <InputError
+                                                            id="store_name-error"
+                                                            message={
+                                                                errors.store_name
+                                                            }
+                                                        />
+                                                        <span
+                                                            className="ml-auto text-xs text-slate-400 tabular-nums"
+                                                            aria-live="polite"
+                                                        >
+                                                            {storeName.length}
+                                                            /100
                                                         </span>
                                                     </div>
-                                                    <p className="text-xs leading-4 text-slate-500">Nama akan tampil di katalog &amp; halaman toko.</p>
+                                                    <p className="text-xs leading-4 text-slate-500">
+                                                        Nama akan tampil di
+                                                        katalog &amp; halaman
+                                                        toko.
+                                                    </p>
                                                 </div>
 
                                                 <div className="grid gap-2">
-                                                    <Label htmlFor="phone" className="text-sm font-medium text-slate-700">
-                                                        Nomor WhatsApp <span className="text-rose-600">*</span>
+                                                    <Label
+                                                        htmlFor="phone"
+                                                        className="text-sm font-medium text-slate-700"
+                                                    >
+                                                        Nomor WhatsApp{' '}
+                                                        <span className="text-rose-600">
+                                                            *
+                                                        </span>
                                                     </Label>
                                                     <div className="relative">
-                                                        <Phone className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                                                        <Phone className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
                                                         <Input
                                                             id="phone"
                                                             name="phone"
@@ -460,18 +630,37 @@ export default function SellerApplicationIndex({ application }: Props) {
                                                             className="pl-10"
                                                             inputMode="tel"
                                                             autoComplete="tel"
-                                                            aria-invalid={!!errors.phone}
+                                                            aria-invalid={
+                                                                !!errors.phone
+                                                            }
                                                             value={phone}
-                                                            onChange={(e) => setPhone(e.target.value)}
+                                                            onChange={(e) =>
+                                                                setPhone(
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
                                                         />
                                                     </div>
-                                                    <InputError message={errors.phone} />
-                                                    <p className="text-xs leading-4 text-slate-500">Pastikan nomor aktif &amp; bisa dihubungi admin.</p>
+                                                    <InputError
+                                                        message={errors.phone}
+                                                    />
+                                                    <p className="text-xs leading-4 text-slate-500">
+                                                        Pastikan nomor aktif
+                                                        &amp; bisa dihubungi
+                                                        admin.
+                                                    </p>
                                                 </div>
 
                                                 <div className="grid gap-2">
-                                                    <Label htmlFor="product_plan" className="text-sm font-medium text-slate-700">
-                                                        Produk yang akan dijual <span className="text-rose-600">*</span>
+                                                    <Label
+                                                        htmlFor="product_plan"
+                                                        className="text-sm font-medium text-slate-700"
+                                                    >
+                                                        Produk yang akan dijual{' '}
+                                                        <span className="text-rose-600">
+                                                            *
+                                                        </span>
                                                     </Label>
                                                     <Textarea
                                                         id="product_plan"
@@ -480,19 +669,38 @@ export default function SellerApplicationIndex({ application }: Props) {
                                                         maxLength={1000}
                                                         placeholder="Tulis jenis produk, contoh: makanan ringan, alat tulis, karya jurusan."
                                                         className="min-h-28"
-                                                        aria-invalid={!!errors.product_plan}
+                                                        aria-invalid={
+                                                            !!errors.product_plan
+                                                        }
                                                         value={productPlan}
-                                                        onChange={(e) => setProductPlan(e.target.value)}
+                                                        onChange={(e) =>
+                                                            setProductPlan(
+                                                                e.target.value,
+                                                            )
+                                                        }
                                                     />
                                                     <div className="flex items-center justify-between gap-2">
-                                                        <InputError message={errors.product_plan} />
-                                                        <span className="ml-auto text-xs tabular-nums text-slate-400">{productPlan.length}/1000</span>
+                                                        <InputError
+                                                            message={
+                                                                errors.product_plan
+                                                            }
+                                                        />
+                                                        <span className="ml-auto text-xs text-slate-400 tabular-nums">
+                                                            {productPlan.length}
+                                                            /1000
+                                                        </span>
                                                     </div>
                                                 </div>
 
                                                 <div className="grid gap-2">
-                                                    <Label htmlFor="reason" className="text-sm font-medium text-slate-700">
-                                                        Catatan tambahan <span className="text-slate-400 text-xs font-normal">(opsional)</span>
+                                                    <Label
+                                                        htmlFor="reason"
+                                                        className="text-sm font-medium text-slate-700"
+                                                    >
+                                                        Catatan tambahan{' '}
+                                                        <span className="text-xs font-normal text-slate-400">
+                                                            (opsional)
+                                                        </span>
                                                     </Label>
                                                     <Textarea
                                                         id="reason"
@@ -500,21 +708,45 @@ export default function SellerApplicationIndex({ application }: Props) {
                                                         maxLength={1000}
                                                         placeholder="Ceritakan alasan ingin jadi seller, pengalaman, atau jadwal jaga toko."
                                                         className="min-h-24"
-                                                        aria-invalid={!!errors.reason}
+                                                        aria-invalid={
+                                                            !!errors.reason
+                                                        }
                                                         value={reason}
-                                                        onChange={(e) => setReason(e.target.value)}
+                                                        onChange={(e) =>
+                                                            setReason(
+                                                                e.target.value,
+                                                            )
+                                                        }
                                                     />
                                                     <div className="flex items-center justify-between gap-2">
-                                                        <InputError message={errors.reason} />
-                                                        <span className="ml-auto text-xs tabular-nums text-slate-400">{reason.length}/1000</span>
+                                                        <InputError
+                                                            message={
+                                                                errors.reason
+                                                            }
+                                                        />
+                                                        <span className="ml-auto text-xs text-slate-400 tabular-nums">
+                                                            {reason.length}/1000
+                                                        </span>
                                                     </div>
                                                 </div>
 
                                                 <div className="flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                                                    <p className="text-xs leading-5 text-slate-500">Dengan mengirim, kamu menyetujui syarat menjadi seller EduCart.</p>
-                                                    <Button type="submit" disabled={processing} className="h-11 w-full rounded-xl px-6 font-semibold sm:w-auto">
-                                                        {processing && <Spinner className="size-4" />}
-                                                        {processing ? 'Mengirim...' : 'Kirim pengajuan'}
+                                                    <p className="text-xs leading-5 text-slate-500">
+                                                        Dengan mengirim, kamu
+                                                        menyetujui syarat
+                                                        menjadi seller EduCart.
+                                                    </p>
+                                                    <Button
+                                                        type="submit"
+                                                        disabled={processing}
+                                                        className="h-11 w-full rounded-xl px-6 font-semibold sm:w-auto"
+                                                    >
+                                                        {processing && (
+                                                            <Spinner className="size-4" />
+                                                        )}
+                                                        {processing
+                                                            ? 'Mengirim...'
+                                                            : 'Kirim pengajuan'}
                                                     </Button>
                                                 </div>
                                             </>
@@ -526,19 +758,33 @@ export default function SellerApplicationIndex({ application }: Props) {
                                             <CheckCircle2 className="size-7 text-[#16A34A]" />
                                         </div>
                                         <div>
-                                            <h3 className="text-base font-semibold text-slate-900">Kamu sudah menjadi seller</h3>
+                                            <h3 className="text-base font-semibold text-slate-900">
+                                                Kamu sudah menjadi seller
+                                            </h3>
                                             <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-slate-500">
-                                                Selamat! Akunmu telah disetujui. Sekarang kamu bisa mengelola produk, stok, dan pesanan dari Seller Dashboard.
+                                                Selamat! Akunmu telah disetujui.
+                                                Sekarang kamu bisa mengelola
+                                                produk, stok, dan pesanan dari
+                                                Seller Dashboard.
                                             </p>
                                         </div>
-                                        <Button asChild className="h-11 w-full rounded-xl font-semibold">
+                                        <Button
+                                            asChild
+                                            className="h-11 w-full rounded-xl font-semibold"
+                                        >
                                             <Link href="/seller/dashboard">
                                                 <LayoutDashboard className="size-4" />
                                                 Buka Seller Dashboard
                                             </Link>
                                         </Button>
-                                        <Button asChild variant="outline" className="h-11 w-full rounded-xl border-slate-200">
-                                            <Link href="/">Kembali ke katalog</Link>
+                                        <Button
+                                            asChild
+                                            variant="outline"
+                                            className="h-11 w-full rounded-xl border-slate-200"
+                                        >
+                                            <Link href="/">
+                                                Kembali ke katalog
+                                            </Link>
                                         </Button>
                                     </div>
                                 ) : (
@@ -546,30 +792,58 @@ export default function SellerApplicationIndex({ application }: Props) {
                                         <div className="flex gap-3 rounded-xl border border-amber-200 bg-[#FFF7ED] p-4">
                                             <Clock3 className="mt-0.5 size-5 shrink-0 text-amber-600" />
                                             <div>
-                                                <p className="text-sm font-semibold text-amber-800">Pengajuan sedang diproses</p>
+                                                <p className="text-sm font-semibold text-amber-800">
+                                                    Pengajuan sedang diproses
+                                                </p>
                                                 <p className="mt-1 text-sm leading-6 text-amber-700">
-                                                    Admin sedang mereview data tokomu. Kamu akan dapat notifikasi saat ada update. Mohon tunggu 1–2 hari kerja.
+                                                    Admin sedang mereview data
+                                                    tokomu. Kamu akan dapat
+                                                    notifikasi saat ada update.
+                                                    Mohon tunggu 1–2 hari kerja.
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                            <p className="text-sm font-medium text-slate-900">Ringkasan pengajuan</p>
+                                            <p className="text-sm font-medium text-slate-900">
+                                                Ringkasan pengajuan
+                                            </p>
                                             <dl className="mt-3 space-y-2 text-sm">
                                                 <div className="flex justify-between gap-4">
-                                                    <dt className="text-slate-500">Toko</dt>
-                                                    <dd className="font-medium text-slate-900">{application?.store_name}</dd>
+                                                    <dt className="text-slate-500">
+                                                        Toko
+                                                    </dt>
+                                                    <dd className="font-medium text-slate-900">
+                                                        {
+                                                            application?.store_name
+                                                        }
+                                                    </dd>
                                                 </div>
                                                 <div className="flex justify-between gap-4">
-                                                    <dt className="text-slate-500">WhatsApp</dt>
-                                                    <dd className="font-medium text-slate-900">{application?.phone}</dd>
+                                                    <dt className="text-slate-500">
+                                                        WhatsApp
+                                                    </dt>
+                                                    <dd className="font-medium text-slate-900">
+                                                        {application?.phone}
+                                                    </dd>
                                                 </div>
                                                 <div className="flex justify-between gap-4">
-                                                    <dt className="text-slate-500">Diajukan</dt>
-                                                    <dd className="text-slate-700">{formatDate(application?.created_at ?? null)}</dd>
+                                                    <dt className="text-slate-500">
+                                                        Diajukan
+                                                    </dt>
+                                                    <dd className="text-slate-700">
+                                                        {formatDate(
+                                                            application?.created_at ??
+                                                                null,
+                                                        )}
+                                                    </dd>
                                                 </div>
                                             </dl>
                                         </div>
-                                        <Button asChild variant="outline" className="h-11 w-full rounded-xl border-slate-200">
+                                        <Button
+                                            asChild
+                                            variant="outline"
+                                            className="h-11 w-full rounded-xl border-slate-200"
+                                        >
                                             <Link href="/settings/profile">
                                                 <ArrowLeft className="size-4" />
                                                 Kembali ke pengaturan

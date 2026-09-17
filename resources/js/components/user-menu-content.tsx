@@ -57,9 +57,7 @@ export function UserMenuContent({ user }: Props) {
                         <button
                             type="button"
                             className="block w-full cursor-pointer"
-                            onClick={() =>
-                                router.post(leaveShoppingMode().url)
-                            }
+                            onClick={() => router.post(leaveShoppingMode().url)}
                         >
                             <LayoutDashboard className="mr-2" />
                             Dashboard Seller

@@ -47,9 +47,7 @@ function parseDateOnly(dateString: string): Date {
 }
 
 export function isPreOrderStatus(value: unknown): value is PreOrderStatus {
-    return (
-        value === 'open' || value === 'closing_soon' || value === 'closed'
-    );
+    return value === 'open' || value === 'closing_soon' || value === 'closed';
 }
 
 export function preOrderStatusMeta(status: PreOrderStatus): PreOrderStatusMeta {
@@ -57,13 +55,11 @@ export function preOrderStatusMeta(status: PreOrderStatus): PreOrderStatusMeta {
 }
 
 /** Resolve status defensively when the backend prop may be absent. */
-export function resolvePreOrderStatus(
-    info: {
-        is_pre_order: boolean;
-        pre_order_status?: PreOrderStatus | null;
-        pre_order_deadline?: string | null;
-    },
-): PreOrderStatus | null {
+export function resolvePreOrderStatus(info: {
+    is_pre_order: boolean;
+    pre_order_status?: PreOrderStatus | null;
+    pre_order_deadline?: string | null;
+}): PreOrderStatus | null {
     if (!info.is_pre_order) {
         return null;
     }
@@ -99,8 +95,7 @@ export function daysUntil(dateString: string): number {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const diffMs =
-        parseDateOnly(dateString).getTime() - today.getTime();
+    const diffMs = parseDateOnly(dateString).getTime() - today.getTime();
 
     return Math.round(diffMs / 86_400_000);
 }
@@ -146,9 +141,7 @@ export function preOrderDeadlineSummary(
     if (countdown === null) {
         const days = daysUntil(deadline);
 
-        return days < 0
-            ? `${formatted} (telah berakhir)`
-            : formatted;
+        return days < 0 ? `${formatted} (telah berakhir)` : formatted;
     }
 
     return `${formatted} (${countdown})`;

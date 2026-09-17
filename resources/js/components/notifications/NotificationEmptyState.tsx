@@ -24,7 +24,7 @@ export function NotificationEmptyState({
             </div>
 
             {/* Title — H4 20/600 slate-900 */}
-            <h3 className="mb-1.5 text-base font-semibold leading-6 text-slate-900">
+            <h3 className="mb-1.5 text-base leading-6 font-semibold text-slate-900">
                 {title}
             </h3>
 

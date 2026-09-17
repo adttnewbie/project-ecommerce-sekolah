@@ -69,11 +69,15 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
                 <DialogContent className="sm:max-w-md">
                     <DialogTitle>Hapus passkey?</DialogTitle>
                     <DialogDescription className="text-sm leading-6 text-slate-600">
-                        Kamu akan menghapus passkey &quot;{passkey.name}&quot;. Kamu tidak akan bisa masuk memakai passkey ini lagi.
+                        Kamu akan menghapus passkey &quot;{passkey.name}&quot;.
+                        Kamu tidak akan bisa masuk memakai passkey ini lagi.
                     </DialogDescription>
                     <DialogFooter className="gap-2">
                         <DialogClose asChild>
-                            <Button variant="secondary" className="h-11 rounded-xl">
+                            <Button
+                                variant="secondary"
+                                className="h-11 rounded-xl"
+                            >
                                 Batal
                             </Button>
                         </DialogClose>

@@ -153,14 +153,10 @@ const sanctionBadgeClass = (code: string) => {
     }
 };
 
-function PaginationBar({
-    paginator,
-}: {
-    paginator: Paginated<unknown>;
-}) {
+function PaginationBar({ paginator }: { paginator: Paginated<unknown> }) {
     if (!paginator || paginator.last_page <= 1) {
-return null;
-}
+        return null;
+    }
 
     const hasLinks = paginator.links && paginator.links.length > 3;
 
@@ -217,9 +213,7 @@ return null;
                                         ? 'bg-[#0080FF] text-white hover:bg-[#006FE0]'
                                         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900',
                                 )}
-                                aria-current={
-                                    link.active ? 'page' : undefined
-                                }
+                                aria-current={link.active ? 'page' : undefined}
                             >
                                 {link.url ? (
                                     <Link
@@ -309,13 +303,9 @@ export default function AdminSanctions({
     const [userQuery, setUserQuery] = useState('');
     const [selectedUserId, setSelectedUserId] = useState<string>('');
 
-    const userPool: UserOption[] =
-        role === 'seller'
-            ? sellers
-            : buyers;
+    const userPool: UserOption[] = role === 'seller' ? sellers : buyers;
     const selectedUser = useMemo(
-        () =>
-            userPool.find((u) => String(u.id) === selectedUserId) ?? null,
+        () => userPool.find((u) => String(u.id) === selectedUserId) ?? null,
         [userPool, selectedUserId],
     );
 
@@ -366,8 +356,8 @@ export default function AdminSanctions({
                                 {sellerViolationsTotal > 0 && (
                                     <Badge className="rounded-[6px] bg-violet-50 text-violet-700 ring-1 ring-violet-200">
                                         <Gavel className="size-3.5" />
-                                        {sellerViolationsTotal}{' '}
-                                        pelanggaran seller
+                                        {sellerViolationsTotal} pelanggaran
+                                        seller
                                     </Badge>
                                 )}
                                 {sanctionsTotal > 0 && (
@@ -415,9 +405,9 @@ export default function AdminSanctions({
                                         Daftar Sanksi
                                     </CardTitle>
                                     <CardDescription className="mt-1">
-                                        Peringatan diberikan otomatis oleh sistem
-                                        saat ambang tercapai. Ban dapat dicabut
-                                        kapan saja oleh admin.
+                                        Peringatan diberikan otomatis oleh
+                                        sistem saat ambang tercapai. Ban dapat
+                                        dicabut kapan saja oleh admin.
                                     </CardDescription>
                                 </div>
                                 <Badge
@@ -566,12 +556,12 @@ export default function AdminSanctions({
                                                                     </Badge>
                                                                 )}
                                                             </TableCell>
-                                                            <TableCell className="whitespace-nowrap px-5 text-sm text-slate-600">
+                                                            <TableCell className="px-5 text-sm whitespace-nowrap text-slate-600">
                                                                 {formatDate(
                                                                     sanction.starts_at,
                                                                 )}
                                                             </TableCell>
-                                                            <TableCell className="whitespace-nowrap px-5 text-sm text-slate-600">
+                                                            <TableCell className="px-5 text-sm whitespace-nowrap text-slate-600">
                                                                 {sanction.ends_at
                                                                     ? formatDate(
                                                                           sanction.ends_at,
@@ -899,7 +889,8 @@ export default function AdminSanctions({
                                                     <ComboboxInput
                                                         id="user-combobox"
                                                         placeholder={
-                                                            userPool.length === 0
+                                                            userPool.length ===
+                                                            0
                                                                 ? `Tidak ada ${role === 'seller' ? 'seller' : 'buyer'}`
                                                                 : `Cari nama atau email ${role}…`
                                                         }
@@ -912,14 +903,13 @@ export default function AdminSanctions({
                                                                 : undefined
                                                         }
                                                         disabled={
-                                                            userPool.length === 0
+                                                            userPool.length ===
+                                                            0
                                                         }
-                                                        showClear={
-                                                            Boolean(
-                                                                selectedUserId ||
-                                                                    userQuery,
-                                                            )
-                                                        }
+                                                        showClear={Boolean(
+                                                            selectedUserId ||
+                                                            userQuery,
+                                                        )}
                                                     />
                                                     <ComboboxContent>
                                                         <ComboboxList>
@@ -953,9 +943,7 @@ export default function AdminSanctions({
                                                                 </div>
                                                             ) : (
                                                                 filteredUsers.map(
-                                                                    (
-                                                                        user,
-                                                                    ) => (
+                                                                    (user) => (
                                                                         <ComboboxItem
                                                                             key={
                                                                                 user.id
@@ -998,12 +986,12 @@ export default function AdminSanctions({
                                                     message={errors.user_id}
                                                 />
                                                 <p className="text-xs leading-5 text-slate-500">
-                                                    {userPool.length}{' '}
-                                                    {role} tersedia • ketik
-                                                    untuk menyaring, pilih
-                                                    untuk mengisi. Tombol “Beri
-                                                    Sanksi” aktif setelah{' '}
-                                                    {role} dipilih.
+                                                    {userPool.length} {role}{' '}
+                                                    tersedia • ketik untuk
+                                                    menyaring, pilih untuk
+                                                    mengisi. Tombol “Beri
+                                                    Sanksi” aktif setelah {role}{' '}
+                                                    dipilih.
                                                 </p>
                                                 {selectedUser && (
                                                     <div className="flex items-center gap-2 rounded-[8px] border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
@@ -1041,7 +1029,11 @@ export default function AdminSanctions({
                                                         *
                                                     </span>
                                                 </Label>
-                                                <Select name="type" required key={`type-${role}`}>
+                                                <Select
+                                                    name="type"
+                                                    required
+                                                    key={`type-${role}`}
+                                                >
                                                     <SelectTrigger
                                                         id="type"
                                                         className="w-full rounded-[8px] border-slate-200 bg-white"
@@ -1052,13 +1044,13 @@ export default function AdminSanctions({
                                                         <SelectValue placeholder="Pilih jenis sanksi" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {role ===
-                                                        'seller' ? (
+                                                        {role === 'seller' ? (
                                                             <>
                                                                 <SelectItem value="listing_ban">
-                                                                    Blokir Produk
-                                                                    — seller
-                                                                    tidak bisa
+                                                                    Blokir
+                                                                    Produk —
+                                                                    seller tidak
+                                                                    bisa
                                                                     mengelola
                                                                     produk
                                                                 </SelectItem>
@@ -1080,13 +1072,14 @@ export default function AdminSanctions({
                                                                     Blokir
                                                                     Checkout —
                                                                     buyer tidak
-                                                                    bisa checkout
+                                                                    bisa
+                                                                    checkout
                                                                 </SelectItem>
                                                                 <SelectItem value="review_ban">
-                                                                    Blokir Ulasan
-                                                                    — buyer
-                                                                    tidak bisa
-                                                                    memberi
+                                                                    Blokir
+                                                                    Ulasan —
+                                                                    buyer tidak
+                                                                    bisa memberi
                                                                     ulasan
                                                                 </SelectItem>
                                                                 <SelectItem value="permanent_ban">
@@ -1325,8 +1318,9 @@ export default function AdminSanctions({
                                                         )}
                                                     </div>
                                                     <p className="mt-2 text-xs leading-5 text-slate-500">
-                                                        Periode window menghitung
-                                                        akumulasi poin dalam{' '}
+                                                        Periode window
+                                                        menghitung akumulasi
+                                                        poin dalam{' '}
                                                         <span className="font-medium text-slate-700">
                                                             {
                                                                 settings.window_days
@@ -1449,7 +1443,8 @@ export default function AdminSanctions({
                                                             htmlFor="seller_payment_confirm_sla_hours"
                                                             className="text-slate-700"
                                                         >
-                                                            Konfirmasi Bayar (jam)
+                                                            Konfirmasi Bayar
+                                                            (jam)
                                                         </Label>
                                                         <Input
                                                             id="seller_payment_confirm_sla_hours"
@@ -1499,8 +1494,9 @@ export default function AdminSanctions({
                                                         )}
                                                     </div>
                                                     <p className="mt-2 text-xs leading-5 text-slate-500">
-                                                        Periode window menghitung
-                                                        akumulasi poin dalam{' '}
+                                                        Periode window
+                                                        menghitung akumulasi
+                                                        poin dalam{' '}
                                                         <span className="font-medium text-slate-700">
                                                             {
                                                                 seller_settings.window_days
@@ -1517,8 +1513,9 @@ export default function AdminSanctions({
                                                         </span>
                                                         . Pengiriman lambat
                                                         memakai SLA 48 jam dan
-                                                        produk titipan UP Jurusan
-                                                        dikelola petugas piket.
+                                                        produk titipan UP
+                                                        Jurusan dikelola petugas
+                                                        piket.
                                                     </p>
                                                 </div>
 
@@ -1576,18 +1573,17 @@ export default function AdminSanctions({
                                         Pelanggaran Terbaru
                                     </CardTitle>
                                     <CardDescription>
-                                        Catatan pelanggaran yang terekam otomatis
-                                        dari aktivitas buyer — jadi dasar
-                                        perhitungan ambang.
+                                        Catatan pelanggaran yang terekam
+                                        otomatis dari aktivitas buyer — jadi
+                                        dasar perhitungan ambang.
                                     </CardDescription>
                                 </div>
                                 <Badge
                                     variant="secondary"
                                     className="w-fit rounded-[6px] bg-slate-50 text-slate-600 ring-1 ring-slate-200"
                                 >
-                                    {violations.from ?? 0}–
-                                    {violations.to ?? 0} dari{' '}
-                                    {violations.total ?? 0}
+                                    {violations.from ?? 0}–{violations.to ?? 0}{' '}
+                                    dari {violations.total ?? 0}
                                 </Badge>
                             </div>
                         </CardHeader>
@@ -1682,7 +1678,7 @@ export default function AdminSanctions({
                                                                     }
                                                                 </Badge>
                                                             </TableCell>
-                                                            <TableCell className="whitespace-nowrap px-5 text-sm text-slate-600">
+                                                            <TableCell className="px-5 text-sm whitespace-nowrap text-slate-600">
                                                                 {formatDate(
                                                                     violation.occurred_at,
                                                                 )}
@@ -1734,9 +1730,7 @@ export default function AdminSanctions({
                                                 </div>
                                                 <div className="mt-3 space-y-1">
                                                     <div className="text-sm font-medium text-slate-800">
-                                                        {
-                                                            violation.type.label
-                                                        }
+                                                        {violation.type.label}
                                                     </div>
                                                     {violation.description && (
                                                         <p className="line-clamp-2 text-xs leading-5 text-slate-500">
@@ -1788,8 +1782,9 @@ export default function AdminSanctions({
                                     </CardTitle>
                                     <CardDescription>
                                         Catatan pelanggaran yang terekam
-                                        otomatis dari aktivitas seller — keterlambatan
-                                        pengiriman, pembatalan, dan moderasi produk.
+                                        otomatis dari aktivitas seller —
+                                        keterlambatan pengiriman, pembatalan,
+                                        dan moderasi produk.
                                     </CardDescription>
                                 </div>
                                 <Badge
@@ -1846,9 +1841,7 @@ export default function AdminSanctions({
                                                 {seller_violations.data.map(
                                                     (violation) => (
                                                         <TableRow
-                                                            key={
-                                                                violation.id
-                                                            }
+                                                            key={violation.id}
                                                         >
                                                             <TableCell className="px-5">
                                                                 <div className="font-medium text-slate-900">
@@ -1895,7 +1888,7 @@ export default function AdminSanctions({
                                                                     }
                                                                 </Badge>
                                                             </TableCell>
-                                                            <TableCell className="whitespace-nowrap px-5 text-sm text-slate-600">
+                                                            <TableCell className="px-5 text-sm whitespace-nowrap text-slate-600">
                                                                 {formatDate(
                                                                     violation.occurred_at,
                                                                 )}
@@ -1937,28 +1930,28 @@ export default function AdminSanctions({
                                                         <div className="min-w-0">
                                                             <div className="truncate text-sm font-semibold text-slate-900">
                                                                 {
-                                                                    violation.seller
+                                                                    violation
+                                                                        .seller
                                                                         .name
                                                                 }
                                                             </div>
                                                             <div className="truncate text-xs text-slate-500">
                                                                 {
-                                                                    violation.seller
+                                                                    violation
+                                                                        .seller
                                                                         .email
                                                                 }
                                                             </div>
                                                         </div>
                                                         <Badge className="shrink-0 rounded-[6px] bg-slate-900 px-2 py-1 text-xs font-bold text-white">
-                                                            +
-                                                            {
-                                                                violation.points
-                                                            }
+                                                            +{violation.points}
                                                         </Badge>
                                                     </div>
                                                     <div className="mt-3 space-y-1">
                                                         <div className="text-sm font-medium text-slate-800">
                                                             {
-                                                                violation.type.label
+                                                                violation.type
+                                                                    .label
                                                             }
                                                         </div>
                                                         {violation.description && (
@@ -2001,9 +1994,7 @@ export default function AdminSanctions({
                                 </>
                             )}
                             {seller_violations.data.length > 0 && (
-                                <PaginationBar
-                                    paginator={seller_violations}
-                                />
+                                <PaginationBar paginator={seller_violations} />
                             )}
                         </CardContent>
                     </Card>

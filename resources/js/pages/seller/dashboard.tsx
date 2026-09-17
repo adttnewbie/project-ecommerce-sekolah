@@ -234,7 +234,7 @@ export default function SellerDashboard({
                                     key={item.key}
                                     href={sellerOrdersIndex()}
                                     aria-label={`Lihat pesanan ${item.label}`}
-                                    className="rounded-[14px] border border-slate-100 bg-white p-4 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:border-[#BCE0FF] hover:bg-[#EFF8FF]/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                                    className="rounded-[14px] border border-slate-100 bg-white p-4 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:border-[#BCE0FF] hover:bg-[#EFF8FF]/40 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 focus-visible:outline-none motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                                 >
                                     <p className="text-sm text-slate-500">
                                         {item.label}
@@ -244,7 +244,10 @@ export default function SellerDashboard({
                                     </p>
                                     <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#0080FF]">
                                         Lihat pesanan
-                                        <ChevronRight className="size-3.5" aria-hidden="true" />
+                                        <ChevronRight
+                                            className="size-3.5"
+                                            aria-hidden="true"
+                                        />
                                     </span>
                                 </Link>
                             ))}
@@ -276,14 +279,17 @@ export default function SellerDashboard({
                                         return (
                                             <div
                                                 key={task.title}
-                                                className="flex flex-col items-stretch gap-3 rounded-[12px] border border-slate-100 p-3 sm:flex-row sm:items-center transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-[#BCE0FF] hover:bg-[#EFF8FF]/30 motion-reduce:transition-none"
+                                                className="flex flex-col items-stretch gap-3 rounded-[12px] border border-slate-100 p-3 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-[#BCE0FF] hover:bg-[#EFF8FF]/30 motion-reduce:transition-none sm:flex-row sm:items-center"
                                             >
                                                 <div className="flex min-w-0 items-start gap-3 sm:flex-1 sm:items-center">
                                                     <span
                                                         className={`grid size-9 shrink-0 place-items-center rounded-[10px] ${toneStyles[task.tone]}`}
                                                         aria-hidden="true"
                                                     >
-                                                        <Icon className="size-4" aria-hidden="true" />
+                                                        <Icon
+                                                            className="size-4"
+                                                            aria-hidden="true"
+                                                        />
                                                     </span>
                                                     <div className="min-w-0 flex-1">
                                                         <p className="text-sm font-semibold text-slate-950">
@@ -491,10 +497,17 @@ export default function SellerDashboard({
                                         terbaru.
                                     </CardDescription>
                                 </div>
-                                <Button asChild variant="ghost" className="h-11 min-h-11 rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none">
+                                <Button
+                                    asChild
+                                    variant="ghost"
+                                    className="h-11 min-h-11 rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
+                                >
                                     <Link href={sellerOrdersIndex()}>
                                         Semua transaksi
-                                        <ArrowUpRight className="size-4" aria-hidden="true" />
+                                        <ArrowUpRight
+                                            className="size-4"
+                                            aria-hidden="true"
+                                        />
                                     </Link>
                                 </Button>
                             </CardHeader>
@@ -524,7 +537,10 @@ export default function SellerDashboard({
                                                         icon={Inbox}
                                                         title="Belum ada transaksi"
                                                         description="Transaksi online dan POS terbaru akan tampil di sini."
-                                                        actionHref={sellerOrdersIndex().url}
+                                                        actionHref={
+                                                            sellerOrdersIndex()
+                                                                .url
+                                                        }
                                                         actionLabel="Lihat Pesanan"
                                                     />
                                                 </TableCell>
@@ -577,7 +593,10 @@ export default function SellerDashboard({
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell className="pr-5 text-slate-500">
-                                                    <time dateTime={order.time} className="tabular-nums">
+                                                    <time
+                                                        dateTime={order.time}
+                                                        className="tabular-nums"
+                                                    >
                                                         {order.time}
                                                     </time>
                                                 </TableCell>

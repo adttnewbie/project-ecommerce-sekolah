@@ -56,11 +56,15 @@ export default function TwoFactorRecoveryCodes({
         <Card className="rounded-[14px] border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
             <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                    <LockKeyhole className="size-4 text-slate-500" aria-hidden="true" />
+                    <LockKeyhole
+                        className="size-4 text-slate-500"
+                        aria-hidden="true"
+                    />
                     Kode pemulihan 2FA
                 </CardTitle>
                 <CardDescription className="text-sm leading-5 text-slate-500">
-                    Simpan kode ini di pengelola password yang aman. Kode dipakai sekali jika kamu kehilangan perangkat 2FA.
+                    Simpan kode ini di pengelola password yang aman. Kode
+                    dipakai sekali jika kamu kehilangan perangkat 2FA.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -75,7 +79,8 @@ export default function TwoFactorRecoveryCodes({
                             className="size-4"
                             aria-hidden="true"
                         />
-                        {codesAreVisible ? 'Sembunyikan' : 'Lihat'} kode pemulihan
+                        {codesAreVisible ? 'Sembunyikan' : 'Lihat'} kode
+                        pemulihan
                     </Button>
 
                     {canRegenerateCodes && (
@@ -92,7 +97,8 @@ export default function TwoFactorRecoveryCodes({
                                     aria-describedby="regenerate-warning"
                                     className="h-11 rounded-xl"
                                 >
-                                    <RefreshCw className="size-4" /> Buat ulang kode
+                                    <RefreshCw className="size-4" /> Buat ulang
+                                    kode
                                 </Button>
                             )}
                         </Form>
@@ -145,7 +151,9 @@ export default function TwoFactorRecoveryCodes({
 
                                 <div className="text-xs leading-4 text-slate-500 select-none">
                                     <p id="regenerate-warning">
-                                        Tiap kode hanya bisa dipakai sekali dan akan terhapus setelah dipakai. Butuh kode baru? Klik{' '}
+                                        Tiap kode hanya bisa dipakai sekali dan
+                                        akan terhapus setelah dipakai. Butuh
+                                        kode baru? Klik{' '}
                                         <span className="font-semibold text-slate-700">
                                             Buat ulang kode
                                         </span>{' '}

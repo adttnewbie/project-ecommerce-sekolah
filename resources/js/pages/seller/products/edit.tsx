@@ -131,13 +131,16 @@ export default function SellerProductEdit({
                         <div>
                             <div className="mb-2 flex flex-wrap items-center gap-2">
                                 <Badge className="rounded-[6px] border border-[#BCE0FF] bg-[#EFF8FF] text-[#0080FF]">
-                                    <PackageCheck className="size-3.5" aria-hidden="true" />
+                                    <PackageCheck
+                                        className="size-3.5"
+                                        aria-hidden="true"
+                                    />
                                     Seller Center
                                 </Badge>
                                 <Badge
                                     variant="secondary"
                                     className={cn(
-                                        'rounded-full gap-1.5 font-medium',
+                                        'gap-1.5 rounded-full font-medium',
                                         statusStyles[product.status.code],
                                     )}
                                 >
@@ -154,10 +157,13 @@ export default function SellerProductEdit({
                         <Button
                             asChild
                             variant="outline"
-                            className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                            className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                         >
                             <Link href={sellerProductsIndex()}>
-                                <ArrowLeft className="size-4" aria-hidden="true" />
+                                <ArrowLeft
+                                    className="size-4"
+                                    aria-hidden="true"
+                                />
                                 Kembali
                             </Link>
                         </Button>
@@ -172,19 +178,27 @@ export default function SellerProductEdit({
                             <>
                                 {/* Skeleton for form loading */}
                                 {processing && (
-                                    <div className="space-y-8" aria-hidden="true">
-                                        {Array.from({ length: 3 }).map((_, idx) => (
-                                            <Card key={`skeleton-${idx}`} className={cardClassName}>
-                                                <CardHeader className="p-6">
-                                                    <Skeleton className="h-5 w-40 rounded-[6px] motion-reduce:animate-none" />
-                                                    <Skeleton className="mt-1 h-4 w-64 rounded-[6px] motion-reduce:animate-none" />
-                                                </CardHeader>
-                                                <CardContent className="space-y-4 p-6">
-                                                    <Skeleton className="h-11 w-full rounded-[10px] motion-reduce:animate-none" />
-                                                    <Skeleton className="h-24 w-full rounded-[10px] motion-reduce:animate-none" />
-                                                </CardContent>
-                                            </Card>
-                                        ))}
+                                    <div
+                                        className="space-y-8"
+                                        aria-hidden="true"
+                                    >
+                                        {Array.from({ length: 3 }).map(
+                                            (_, idx) => (
+                                                <Card
+                                                    key={`skeleton-${idx}`}
+                                                    className={cardClassName}
+                                                >
+                                                    <CardHeader className="p-6">
+                                                        <Skeleton className="h-5 w-40 rounded-[6px] motion-reduce:animate-none" />
+                                                        <Skeleton className="mt-1 h-4 w-64 rounded-[6px] motion-reduce:animate-none" />
+                                                    </CardHeader>
+                                                    <CardContent className="space-y-4 p-6">
+                                                        <Skeleton className="h-11 w-full rounded-[10px] motion-reduce:animate-none" />
+                                                        <Skeleton className="h-24 w-full rounded-[10px] motion-reduce:animate-none" />
+                                                    </CardContent>
+                                                </Card>
+                                            ),
+                                        )}
                                     </div>
                                 )}
 
@@ -193,18 +207,31 @@ export default function SellerProductEdit({
                                     <CardHeader className="flex-row items-center border-b border-slate-100 p-6">
                                         <div className="space-y-1">
                                             <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-950">
-                                                <span className="grid size-8 place-items-center rounded-[10px] bg-[#EFF8FF] text-[#0080FF] ring-1 ring-[#BCE0FF]" aria-hidden="true">
-                                                    <Tags className="size-4" aria-hidden="true" />
+                                                <span
+                                                    className="grid size-8 place-items-center rounded-[10px] bg-[#EFF8FF] text-[#0080FF] ring-1 ring-[#BCE0FF]"
+                                                    aria-hidden="true"
+                                                >
+                                                    <Tags
+                                                        className="size-4"
+                                                        aria-hidden="true"
+                                                    />
                                                 </span>
                                                 Informasi Dasar
                                             </CardTitle>
                                             <CardDescription>
-                                                Nama, kategori, dan deskripsi produk.
+                                                Nama, kategori, dan deskripsi
+                                                produk.
                                             </CardDescription>
                                         </div>
                                         <CardAction>
-                                            <div className="hidden size-10 items-center justify-center rounded-[10px] bg-slate-100 text-slate-600 sm:flex" aria-hidden="true">
-                                                <FileText className="size-5" aria-hidden="true" />
+                                            <div
+                                                className="hidden size-10 items-center justify-center rounded-[10px] bg-slate-100 text-slate-600 sm:flex"
+                                                aria-hidden="true"
+                                            >
+                                                <FileText
+                                                    className="size-5"
+                                                    aria-hidden="true"
+                                                />
                                             </div>
                                         </CardAction>
                                     </CardHeader>
@@ -225,8 +252,14 @@ export default function SellerProductEdit({
                                                     maxLength={120}
                                                     defaultValue={product.name}
                                                     className={inputClassName}
-                                                    aria-invalid={Boolean(errors.name)}
-                                                    aria-describedby={errors.name ? 'name-error' : undefined}
+                                                    aria-invalid={Boolean(
+                                                        errors.name,
+                                                    )}
+                                                    aria-describedby={
+                                                        errors.name
+                                                            ? 'name-error'
+                                                            : undefined
+                                                    }
                                                 />
                                                 <InputError
                                                     id="name-error"
@@ -244,19 +277,31 @@ export default function SellerProductEdit({
                                                 <Select
                                                     name="category_id"
                                                     value={categoryId}
-                                                    onValueChange={setCategoryId}
+                                                    onValueChange={
+                                                        setCategoryId
+                                                    }
                                                     required
                                                 >
                                                     <SelectTrigger
                                                         id="category_id"
-                                                        className={selectTriggerClassName}
-                                                        aria-invalid={Boolean(errors.category_id)}
-                                                        aria-describedby={errors.category_id ? 'category_id-error' : undefined}
+                                                        className={
+                                                            selectTriggerClassName
+                                                        }
+                                                        aria-invalid={Boolean(
+                                                            errors.category_id,
+                                                        )}
+                                                        aria-describedby={
+                                                            errors.category_id
+                                                                ? 'category_id-error'
+                                                                : undefined
+                                                        }
                                                     >
                                                         <SelectValue placeholder="Pilih kategori" />
                                                     </SelectTrigger>
                                                     <SelectContent
-                                                        style={selectPortalTheme}
+                                                        style={
+                                                            selectPortalTheme
+                                                        }
                                                         className="rounded-[10px] shadow-lg"
                                                     >
                                                         <SelectGroup>
@@ -302,10 +347,18 @@ export default function SellerProductEdit({
                                                 required
                                                 minLength={10}
                                                 maxLength={5000}
-                                                defaultValue={product.description}
-                                                aria-invalid={Boolean(errors.description)}
-                                                aria-describedby={errors.description ? 'description-error' : undefined}
-                                                className="min-h-24 rounded-[10px] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20"
+                                                defaultValue={
+                                                    product.description
+                                                }
+                                                aria-invalid={Boolean(
+                                                    errors.description,
+                                                )}
+                                                aria-describedby={
+                                                    errors.description
+                                                        ? 'description-error'
+                                                        : undefined
+                                                }
+                                                className="min-h-24 rounded-[10px] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 motion-reduce:transition-none"
                                             />
                                             <InputError
                                                 id="description-error"
@@ -314,7 +367,10 @@ export default function SellerProductEdit({
                                         </div>
 
                                         <p className="text-xs text-slate-500">
-                                            Slug: <span className="font-medium text-slate-700">{product.slug}</span>
+                                            Slug:{' '}
+                                            <span className="font-medium text-slate-700">
+                                                {product.slug}
+                                            </span>
                                         </p>
                                     </CardContent>
                                 </Card>
@@ -324,18 +380,31 @@ export default function SellerProductEdit({
                                     <CardHeader className="flex-row items-center border-b border-slate-100 p-6">
                                         <div className="space-y-1">
                                             <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-950">
-                                                <span className="grid size-8 place-items-center rounded-[10px] bg-[#ECFDF3] text-[#16A34A] ring-1 ring-[#BBF7D0]" aria-hidden="true">
-                                                    <Wallet className="size-4" aria-hidden="true" />
+                                                <span
+                                                    className="grid size-8 place-items-center rounded-[10px] bg-[#ECFDF3] text-[#16A34A] ring-1 ring-[#BBF7D0]"
+                                                    aria-hidden="true"
+                                                >
+                                                    <Wallet
+                                                        className="size-4"
+                                                        aria-hidden="true"
+                                                    />
                                                 </span>
                                                 Harga & Stok
                                             </CardTitle>
                                             <CardDescription>
-                                                Harga, diskon, dan sistem pemesanan.
+                                                Harga, diskon, dan sistem
+                                                pemesanan.
                                             </CardDescription>
                                         </div>
                                         <CardAction>
-                                            <div className="hidden size-10 items-center justify-center rounded-[10px] bg-slate-100 text-slate-600 sm:flex" aria-hidden="true">
-                                                <CircleDollarSign className="size-5" aria-hidden="true" />
+                                            <div
+                                                className="hidden size-10 items-center justify-center rounded-[10px] bg-slate-100 text-slate-600 sm:flex"
+                                                aria-hidden="true"
+                                            >
+                                                <CircleDollarSign
+                                                    className="size-5"
+                                                    aria-hidden="true"
+                                                />
                                             </div>
                                         </CardAction>
                                     </CardHeader>
@@ -349,7 +418,10 @@ export default function SellerProductEdit({
                                                     Harga
                                                 </Label>
                                                 <div className="relative">
-                                                    <CircleDollarSign className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                                                    <CircleDollarSign
+                                                        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
+                                                        aria-hidden="true"
+                                                    />
                                                     <Input
                                                         id="price"
                                                         name="price"
@@ -359,10 +431,18 @@ export default function SellerProductEdit({
                                                         max={100000000}
                                                         step={1}
                                                         inputMode="numeric"
-                                                        defaultValue={product.price}
+                                                        defaultValue={
+                                                            product.price
+                                                        }
                                                         className={`${inputClassName} pl-9`}
-                                                        aria-invalid={Boolean(errors.price)}
-                                                        aria-describedby={errors.price ? 'price-error' : undefined}
+                                                        aria-invalid={Boolean(
+                                                            errors.price,
+                                                        )}
+                                                        aria-describedby={
+                                                            errors.price
+                                                                ? 'price-error'
+                                                                : undefined
+                                                        }
                                                     />
                                                 </div>
                                                 <InputError
@@ -379,7 +459,10 @@ export default function SellerProductEdit({
                                                     Harga sebelum diskon (Rp)
                                                 </Label>
                                                 <div className="relative">
-                                                    <CircleDollarSign className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                                                    <CircleDollarSign
+                                                        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
+                                                        aria-hidden="true"
+                                                    />
                                                     <Input
                                                         id="original_price"
                                                         name="original_price"
@@ -389,15 +472,22 @@ export default function SellerProductEdit({
                                                         step={1}
                                                         inputMode="numeric"
                                                         placeholder={String(
-                                                            product.price + 5000,
+                                                            product.price +
+                                                                5000,
                                                         )}
                                                         defaultValue={
                                                             product.original_price ??
                                                             ''
                                                         }
                                                         className={`${inputClassName} pl-9`}
-                                                        aria-invalid={Boolean(errors.original_price)}
-                                                        aria-describedby={errors.original_price ? 'original_price-error' : undefined}
+                                                        aria-invalid={Boolean(
+                                                            errors.original_price,
+                                                        )}
+                                                        aria-describedby={
+                                                            errors.original_price
+                                                                ? 'original_price-error'
+                                                                : undefined
+                                                        }
                                                     />
                                                 </div>
                                                 <p className="text-xs text-slate-500">
@@ -406,7 +496,9 @@ export default function SellerProductEdit({
                                                 </p>
                                                 <InputError
                                                     id="original_price-error"
-                                                    message={errors.original_price}
+                                                    message={
+                                                        errors.original_price
+                                                    }
                                                 />
                                             </div>
                                         </div>
@@ -430,9 +522,17 @@ export default function SellerProductEdit({
                                             >
                                                 <SelectTrigger
                                                     id="fulfillment_type"
-                                                    className={selectTriggerClassName}
-                                                    aria-invalid={Boolean(errors.fulfillment_type)}
-                                                    aria-describedby={errors.fulfillment_type ? 'fulfillment_type-error' : undefined}
+                                                    className={
+                                                        selectTriggerClassName
+                                                    }
+                                                    aria-invalid={Boolean(
+                                                        errors.fulfillment_type,
+                                                    )}
+                                                    aria-describedby={
+                                                        errors.fulfillment_type
+                                                            ? 'fulfillment_type-error'
+                                                            : undefined
+                                                    }
                                                 >
                                                     <SelectValue placeholder="Pilih sistem pemesanan" />
                                                 </SelectTrigger>
@@ -455,26 +555,41 @@ export default function SellerProductEdit({
                                             </Select>
                                             <InputError
                                                 id="fulfillment_type-error"
-                                                message={errors.fulfillment_type}
+                                                message={
+                                                    errors.fulfillment_type
+                                                }
                                             />
                                         </div>
 
                                         {/* Stock omission note with info box bg-[#EFF8FF] */}
                                         <div className="rounded-[10px] border border-[#BCE0FF] bg-[#EFF8FF] p-4">
                                             <p className="flex items-center gap-2 text-sm font-medium text-[#0080FF]">
-                                                <Info className="size-4 shrink-0" aria-hidden="true" />
+                                                <Info
+                                                    className="size-4 shrink-0"
+                                                    aria-hidden="true"
+                                                />
                                                 Informasi stok
                                             </p>
                                             <p className="mt-1 text-sm leading-6 text-slate-600">
-                                                Stok dikelola melalui menu Inventori untuk produk yang sudah disetujui. Perubahan stok tidak dilakukan di halaman edit, kecuali untuk produk pre-order melalui pengaturan PO.
+                                                Stok dikelola melalui menu
+                                                Inventori untuk produk yang
+                                                sudah disetujui. Perubahan stok
+                                                tidak dilakukan di halaman edit,
+                                                kecuali untuk produk pre-order
+                                                melalui pengaturan PO.
                                             </p>
                                         </div>
 
                                         {product.status.code === 'draft' && (
                                             <div className="rounded-[10px] border border-[#BCE0FF] bg-[#EFF8FF] p-4 text-sm leading-6 text-[#0080FF]">
-                                                <p className="font-medium">Produk masih draft</p>
+                                                <p className="font-medium">
+                                                    Produk masih draft
+                                                </p>
                                                 <p className="mt-1 text-slate-600">
-                                                    Simpan draft untuk melanjutkan nanti, atau ajukan produk agar masuk antrian moderasi.
+                                                    Simpan draft untuk
+                                                    melanjutkan nanti, atau
+                                                    ajukan produk agar masuk
+                                                    antrian moderasi.
                                                 </p>
                                             </div>
                                         )}
@@ -484,12 +599,17 @@ export default function SellerProductEdit({
                                                 <div className={fieldClassName}>
                                                     <Label
                                                         htmlFor="pre_order_estimate_days"
-                                                        className={labelClassName}
+                                                        className={
+                                                            labelClassName
+                                                        }
                                                     >
                                                         Estimasi PO
                                                     </Label>
                                                     <div className="relative">
-                                                        <Clock3 className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                                                        <Clock3
+                                                            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
+                                                            aria-hidden="true"
+                                                        />
                                                         <Input
                                                             id="pre_order_estimate_days"
                                                             name="pre_order_estimate_days"
@@ -504,20 +624,30 @@ export default function SellerProductEdit({
                                                                 7
                                                             }
                                                             className={`${inputClassName} pl-9`}
-                                                            aria-invalid={Boolean(errors.pre_order_estimate_days)}
-                                                            aria-describedby={errors.pre_order_estimate_days ? 'pre_order_estimate_days-error' : undefined}
+                                                            aria-invalid={Boolean(
+                                                                errors.pre_order_estimate_days,
+                                                            )}
+                                                            aria-describedby={
+                                                                errors.pre_order_estimate_days
+                                                                    ? 'pre_order_estimate_days-error'
+                                                                    : undefined
+                                                            }
                                                         />
                                                     </div>
                                                     <InputError
                                                         id="pre_order_estimate_days-error"
-                                                        message={errors.pre_order_estimate_days}
+                                                        message={
+                                                            errors.pre_order_estimate_days
+                                                        }
                                                     />
                                                 </div>
 
                                                 <div className={fieldClassName}>
                                                     <Label
                                                         htmlFor="pre_order_note"
-                                                        className={labelClassName}
+                                                        className={
+                                                            labelClassName
+                                                        }
                                                     >
                                                         Catatan PO
                                                     </Label>
@@ -530,19 +660,31 @@ export default function SellerProductEdit({
                                                             ''
                                                         }
                                                         placeholder="Contoh: Diproduksi setelah kuota pesanan terkumpul"
-                                                        className={inputClassName}
-                                                        aria-invalid={Boolean(errors.pre_order_note)}
-                                                        aria-describedby={errors.pre_order_note ? 'pre_order_note-error' : undefined}
+                                                        className={
+                                                            inputClassName
+                                                        }
+                                                        aria-invalid={Boolean(
+                                                            errors.pre_order_note,
+                                                        )}
+                                                        aria-describedby={
+                                                            errors.pre_order_note
+                                                                ? 'pre_order_note-error'
+                                                                : undefined
+                                                        }
                                                     />
                                                     <InputError
                                                         id="pre_order_note-error"
-                                                        message={errors.pre_order_note}
+                                                        message={
+                                                            errors.pre_order_note
+                                                        }
                                                     />
                                                 </div>
                                                 <div className={fieldClassName}>
                                                     <Label
                                                         htmlFor="pre_order_deadline"
-                                                        className={labelClassName}
+                                                        className={
+                                                            labelClassName
+                                                        }
                                                     >
                                                         Deadline PO
                                                     </Label>
@@ -554,20 +696,32 @@ export default function SellerProductEdit({
                                                             product.pre_order_deadline ??
                                                             ''
                                                         }
-                                                        className={inputClassName}
-                                                        aria-invalid={Boolean(errors.pre_order_deadline)}
-                                                        aria-describedby={errors.pre_order_deadline ? 'pre_order_deadline-error' : undefined}
+                                                        className={
+                                                            inputClassName
+                                                        }
+                                                        aria-invalid={Boolean(
+                                                            errors.pre_order_deadline,
+                                                        )}
+                                                        aria-describedby={
+                                                            errors.pre_order_deadline
+                                                                ? 'pre_order_deadline-error'
+                                                                : undefined
+                                                        }
                                                     />
                                                     <InputError
                                                         id="pre_order_deadline-error"
-                                                        message={errors.pre_order_deadline}
+                                                        message={
+                                                            errors.pre_order_deadline
+                                                        }
                                                     />
                                                 </div>
 
                                                 <div className={fieldClassName}>
                                                     <Label
                                                         htmlFor="pre_order_min_quantity"
-                                                        className={labelClassName}
+                                                        className={
+                                                            labelClassName
+                                                        }
                                                     >
                                                         Minimum Kuota
                                                     </Label>
@@ -584,13 +738,23 @@ export default function SellerProductEdit({
                                                             ''
                                                         }
                                                         placeholder="Opsional"
-                                                        className={inputClassName}
-                                                        aria-invalid={Boolean(errors.pre_order_min_quantity)}
-                                                        aria-describedby={errors.pre_order_min_quantity ? 'pre_order_min_quantity-error' : undefined}
+                                                        className={
+                                                            inputClassName
+                                                        }
+                                                        aria-invalid={Boolean(
+                                                            errors.pre_order_min_quantity,
+                                                        )}
+                                                        aria-describedby={
+                                                            errors.pre_order_min_quantity
+                                                                ? 'pre_order_min_quantity-error'
+                                                                : undefined
+                                                        }
                                                     />
                                                     <InputError
                                                         id="pre_order_min_quantity-error"
-                                                        message={errors.pre_order_min_quantity}
+                                                        message={
+                                                            errors.pre_order_min_quantity
+                                                        }
                                                     />
                                                 </div>
                                             </div>
@@ -603,18 +767,31 @@ export default function SellerProductEdit({
                                     <CardHeader className="flex-row items-center border-b border-slate-100 p-6">
                                         <div className="space-y-1">
                                             <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-950">
-                                                <span className="grid size-8 place-items-center rounded-[10px] bg-[#FFF7ED] text-[#EA580C] ring-1 ring-[#FFEDD5]" aria-hidden="true">
-                                                    <ImagePlus className="size-4" aria-hidden="true" />
+                                                <span
+                                                    className="grid size-8 place-items-center rounded-[10px] bg-[#FFF7ED] text-[#EA580C] ring-1 ring-[#FFEDD5]"
+                                                    aria-hidden="true"
+                                                >
+                                                    <ImagePlus
+                                                        className="size-4"
+                                                        aria-hidden="true"
+                                                    />
                                                 </span>
                                                 Media & Pengaturan
                                             </CardTitle>
                                             <CardDescription>
-                                                Gambar produk dan detail pre-order.
+                                                Gambar produk dan detail
+                                                pre-order.
                                             </CardDescription>
                                         </div>
                                         <CardAction>
-                                            <div className="hidden size-10 items-center justify-center rounded-[10px] bg-slate-100 text-slate-600 sm:flex" aria-hidden="true">
-                                                <Clock3 className="size-5" aria-hidden="true" />
+                                            <div
+                                                className="hidden size-10 items-center justify-center rounded-[10px] bg-slate-100 text-slate-600 sm:flex"
+                                                aria-hidden="true"
+                                            >
+                                                <Clock3
+                                                    className="size-5"
+                                                    aria-hidden="true"
+                                                />
                                             </div>
                                         </CardAction>
                                     </CardHeader>
@@ -629,35 +806,59 @@ export default function SellerProductEdit({
                                             {product.image ? (
                                                 <div className="overflow-hidden rounded-[10px] border border-slate-200 bg-slate-50">
                                                     <img
-                                                        src={productImageUrl(product.image) ?? ''}
+                                                        src={
+                                                            productImageUrl(
+                                                                product.image,
+                                                            ) ?? ''
+                                                        }
                                                         alt={`Gambar produk ${product.name}`}
                                                         className="h-48 w-full object-cover object-center"
                                                         loading="lazy"
                                                     />
-                                                    <p className="truncate px-3 py-2 text-xs text-slate-500" title={product.image}>
-                                                        Gambar saat ini: {product.image}
+                                                    <p
+                                                        className="truncate px-3 py-2 text-xs text-slate-500"
+                                                        title={product.image}
+                                                    >
+                                                        Gambar saat ini:{' '}
+                                                        {product.image}
                                                     </p>
                                                 </div>
                                             ) : (
                                                 <div className="grid place-items-center rounded-[10px] border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
-                                                    <ImagePlus className="size-6 text-slate-400" aria-hidden="true" />
-                                                    <p className="mt-2 text-sm text-slate-500">Belum ada gambar</p>
+                                                    <ImagePlus
+                                                        className="size-6 text-slate-400"
+                                                        aria-hidden="true"
+                                                    />
+                                                    <p className="mt-2 text-sm text-slate-500">
+                                                        Belum ada gambar
+                                                    </p>
                                                 </div>
                                             )}
                                             <div className="relative">
-                                                <ImagePlus className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                                                <ImagePlus
+                                                    className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
+                                                    aria-hidden="true"
+                                                />
                                                 <Input
                                                     id="image"
                                                     name="image"
                                                     type="file"
                                                     accept="image/jpeg,image/png,image/webp"
                                                     className={`${inputClassName} h-11 pl-9 file:mr-3 file:rounded-[6px] file:border-0 file:bg-slate-100 file:px-2 file:text-sm file:font-medium file:text-slate-700`}
-                                                    aria-invalid={Boolean(errors.image)}
-                                                    aria-describedby={errors.image ? 'image-error' : undefined}
+                                                    aria-invalid={Boolean(
+                                                        errors.image,
+                                                    )}
+                                                    aria-describedby={
+                                                        errors.image
+                                                            ? 'image-error'
+                                                            : undefined
+                                                    }
                                                 />
                                             </div>
                                             <p className="text-xs text-slate-500">
-                                                Biarkan kosong jika tidak ingin mengganti gambar. Format: JPEG, PNG, WebP.
+                                                Biarkan kosong jika tidak ingin
+                                                mengganti gambar. Format: JPEG,
+                                                PNG, WebP.
                                             </p>
                                             <InputError
                                                 id="image-error"
@@ -665,21 +866,25 @@ export default function SellerProductEdit({
                                             />
                                         </div>
 
-                                        {fulfillmentType === 'pre_order' && product.status.code !== 'draft' && (
-                                            <div className="rounded-[10px] border border-[#BCE0FF] bg-[#EFF8FF] p-3 text-sm text-[#0080FF]">
-                                                Pengaturan pre-order aktif. Pastikan estimasi dan deadline sesuai kemampuan produksi.
-                                            </div>
-                                        )}
+                                        {fulfillmentType === 'pre_order' &&
+                                            product.status.code !== 'draft' && (
+                                                <div className="rounded-[10px] border border-[#BCE0FF] bg-[#EFF8FF] p-3 text-sm text-[#0080FF]">
+                                                    Pengaturan pre-order aktif.
+                                                    Pastikan estimasi dan
+                                                    deadline sesuai kemampuan
+                                                    produksi.
+                                                </div>
+                                            )}
                                     </CardContent>
                                 </Card>
 
                                 {/* Sticky bottom action bar */}
-                                <div className="sticky bottom-0 bg-white/95 backdrop-blur border-t border-slate-200 p-4 flex justify-end gap-3 shadow-lg z-10 rounded-[14px]">
+                                <div className="sticky bottom-0 z-10 flex justify-end gap-3 rounded-[14px] border-t border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur">
                                     <Button
                                         asChild
                                         type="button"
                                         variant="outline"
-                                        className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                        className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                     >
                                         <Link href={sellerProductsIndex()}>
                                             Batal
@@ -692,40 +897,60 @@ export default function SellerProductEdit({
                                                 name="status"
                                                 value="draft"
                                                 variant="outline"
-                                                className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                                className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                                 disabled={processing}
                                                 aria-busy={processing}
                                             >
                                                 {processing && (
-                                                    <Spinner className="size-4" aria-hidden="true" />
+                                                    <Spinner
+                                                        className="size-4"
+                                                        aria-hidden="true"
+                                                    />
                                                 )}
-                                                <Save className="size-4" aria-hidden="true" />
+                                                <Save
+                                                    className="size-4"
+                                                    aria-hidden="true"
+                                                />
                                                 Simpan Draft
                                             </Button>
                                             <Button
                                                 type="submit"
                                                 name="status"
                                                 value="pending"
-                                                className="h-11 rounded-[12px] bg-[#0080FF] px-6 font-semibold text-white hover:bg-[#006FE0] active:bg-[#0059B8] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                                className="h-11 rounded-[12px] bg-[#0080FF] px-6 font-semibold text-white transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[#006FE0] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 active:bg-[#0059B8] motion-reduce:transition-none"
                                                 disabled={processing}
                                                 aria-busy={processing}
                                             >
                                                 {processing && (
-                                                    <Spinner className="size-4" aria-hidden="true" />
+                                                    <Spinner
+                                                        className="size-4"
+                                                        aria-hidden="true"
+                                                    />
                                                 )}
-                                                <Send className="size-4" aria-hidden="true" />
+                                                <Send
+                                                    className="size-4"
+                                                    aria-hidden="true"
+                                                />
                                                 Ajukan Produk
                                             </Button>
                                         </>
                                     ) : (
                                         <Button
                                             type="submit"
-                                            className="h-11 rounded-[12px] bg-[#0080FF] px-6 font-semibold text-white hover:bg-[#006FE0] active:bg-[#0059B8] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                            className="h-11 rounded-[12px] bg-[#0080FF] px-6 font-semibold text-white transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[#006FE0] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 active:bg-[#0059B8] motion-reduce:transition-none"
                                             disabled={processing}
                                             aria-busy={processing}
                                         >
-                                            {processing && <Spinner className="size-4" aria-hidden="true" />}
-                                            <Save className="size-4" aria-hidden="true" />
+                                            {processing && (
+                                                <Spinner
+                                                    className="size-4"
+                                                    aria-hidden="true"
+                                                />
+                                            )}
+                                            <Save
+                                                className="size-4"
+                                                aria-hidden="true"
+                                            />
                                             Simpan Perubahan
                                         </Button>
                                     )}

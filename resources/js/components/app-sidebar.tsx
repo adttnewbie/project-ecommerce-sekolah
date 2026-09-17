@@ -127,16 +127,15 @@ export function AppSidebar() {
                                             <span>{item.title}</span>
                                         </a>
                                     ) : (
-                                    <Link href={item.href} prefetch>
-                                        {item.icon && <item.icon />}
-                                        <span>{item.title}</span>
-                                        {(auth.user?.role === 'buyer' ||
-                                            auth.user?.role ===
-                                                'seller') &&
-                                            item.title === 'Keranjang' &&
-                                            Boolean(
-                                                buyerHeader?.cartItemsCount,
-                                            ) && (
+                                        <Link href={item.href} prefetch>
+                                            {item.icon && <item.icon />}
+                                            <span>{item.title}</span>
+                                            {(auth.user?.role === 'buyer' ||
+                                                auth.user?.role === 'seller') &&
+                                                item.title === 'Keranjang' &&
+                                                Boolean(
+                                                    buyerHeader?.cartItemsCount,
+                                                ) && (
                                                     <span className="ml-auto rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
                                                         {
                                                             buyerHeader?.cartItemsCount
@@ -168,9 +167,7 @@ export function AppSidebar() {
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            router.post(
-                                                enterShoppingMode().url,
-                                            )
+                                            router.post(enterShoppingMode().url)
                                         }
                                     >
                                         <ShoppingCart />

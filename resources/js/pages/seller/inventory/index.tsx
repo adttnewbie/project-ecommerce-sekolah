@@ -1,5 +1,11 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { AlertTriangle, ArrowUpDown, Boxes, PackageCheck, Search } from 'lucide-react';
+import {
+    AlertTriangle,
+    ArrowUpDown,
+    Boxes,
+    PackageCheck,
+    Search,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import InputError from '@/components/input-error';
 import { SellerEmptyState } from '@/components/seller/empty-state';
@@ -149,12 +155,12 @@ export default function SellerInventoryIndex({
             }
 
             if (aVal < bVal) {
-return sortOrder === 'asc' ? -1 : 1;
-}
+                return sortOrder === 'asc' ? -1 : 1;
+            }
 
             if (aVal > bVal) {
-return sortOrder === 'asc' ? 1 : -1;
-}
+                return sortOrder === 'asc' ? 1 : -1;
+            }
 
             return 0;
         });
@@ -173,7 +179,11 @@ return sortOrder === 'asc' ? 1 : -1;
                     stock: stockFilter === 'all' ? '' : stockFilter,
                 }).filter(([, value]) => value),
             ),
-            { preserveState: true, replace: true, onFinish: () => setIsFiltering(false) },
+            {
+                preserveState: true,
+                replace: true,
+                onFinish: () => setIsFiltering(false),
+            },
         );
     };
 
@@ -201,7 +211,8 @@ return sortOrder === 'asc' ? 1 : -1;
                 onStart: () => setProcessing(true),
                 onFinish: () => setProcessing(false),
                 onSuccess: () => setSelected(null),
-                onError: (errors) => setStockError((errors as Record<string, string>).stock),
+                onError: (errors) =>
+                    setStockError((errors as Record<string, string>).stock),
             },
         );
     };
@@ -231,7 +242,11 @@ return sortOrder === 'asc' ? 1 : -1;
     ];
 
     const isEmpty = !isFiltering && sortedData.length === 0;
-    const columns: { key: SortKey | 'category' | 'condition' | 'actions'; label: string; sortable: boolean }[] = [
+    const columns: {
+        key: SortKey | 'category' | 'condition' | 'actions';
+        label: string;
+        sortable: boolean;
+    }[] = [
         { key: 'name', label: 'Produk', sortable: true },
         { key: 'category', label: 'Kategori', sortable: false },
         { key: 'status', label: 'Moderasi', sortable: true },
@@ -247,7 +262,8 @@ return sortOrder === 'asc' ? 1 : -1;
                 <div className="space-y-6">
                     <section>
                         <Badge className="mb-2 rounded-[6px] border border-[#BCE0FF] bg-[#EFF8FF] text-[#0080FF]">
-                            <Boxes className="size-3.5" aria-hidden="true" /> Seller Center
+                            <Boxes className="size-3.5" aria-hidden="true" />{' '}
+                            Seller Center
                         </Badge>
                         <h1 className="text-2xl font-semibold text-slate-950">
                             Inventori
@@ -272,37 +288,42 @@ return sortOrder === 'asc' ? 1 : -1;
                     )}
 
                     <section className="grid gap-4 sm:grid-cols-3">
-                        {summaries.map(({ label, value, tone, wrapper, icon: Icon }) => (
-                            <Card
-                                key={label}
-                                className="rounded-[14px] border-slate-100 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-md motion-reduce:transition-none motion-reduce:hover:shadow-sm"
-                            >
-                                <CardContent className="flex items-center justify-between p-5">
-                                    <div>
-                                        <p className="text-sm text-slate-500">
-                                            {label}
-                                        </p>
-                                        <p
+                        {summaries.map(
+                            ({ label, value, tone, wrapper, icon: Icon }) => (
+                                <Card
+                                    key={label}
+                                    className="rounded-[14px] border-slate-100 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-md motion-reduce:transition-none motion-reduce:hover:shadow-sm"
+                                >
+                                    <CardContent className="flex items-center justify-between p-5">
+                                        <div>
+                                            <p className="text-sm text-slate-500">
+                                                {label}
+                                            </p>
+                                            <p
+                                                className={cn(
+                                                    'mt-1 text-2xl font-semibold tabular-nums',
+                                                    tone,
+                                                )}
+                                            >
+                                                {value}
+                                            </p>
+                                        </div>
+                                        <span
                                             className={cn(
-                                                'mt-1 text-2xl font-semibold tabular-nums',
-                                                tone,
+                                                'grid size-10 place-items-center rounded-[10px] border',
+                                                wrapper,
                                             )}
+                                            aria-hidden="true"
                                         >
-                                            {value}
-                                        </p>
-                                    </div>
-                                    <span
-                                        className={cn(
-                                            'grid size-10 place-items-center rounded-[10px] border',
-                                            wrapper,
-                                        )}
-                                        aria-hidden="true"
-                                    >
-                                        <Icon className="size-5" aria-hidden="true" />
-                                    </span>
-                                </CardContent>
-                            </Card>
-                        ))}
+                                            <Icon
+                                                className="size-5"
+                                                aria-hidden="true"
+                                            />
+                                        </span>
+                                    </CardContent>
+                                </Card>
+                            ),
+                        )}
                     </section>
 
                     <Card className="gap-0 overflow-hidden rounded-[14px] border-slate-100 py-0 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-md motion-reduce:transition-none motion-reduce:hover:shadow-sm">
@@ -320,7 +341,10 @@ return sortOrder === 'asc' ? 1 : -1;
                             >
                                 <label className="relative">
                                     <span className="sr-only">Cari produk</span>
-                                    <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                                    <Search
+                                        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
+                                        aria-hidden="true"
+                                    />
                                     <Input
                                         value={q}
                                         onChange={(event) =>
@@ -328,9 +352,13 @@ return sortOrder === 'asc' ? 1 : -1;
                                         }
                                         placeholder="Cari produk"
                                         aria-describedby="q-error"
-                                        className="h-11 rounded-[10px] border-slate-200 bg-white pl-9 shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20"
+                                        className="h-11 rounded-[10px] border-slate-200 bg-white pl-9 shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 motion-reduce:transition-none"
                                     />
-                                    <span id="q-error" className="sr-only" aria-live="polite" />
+                                    <span
+                                        id="q-error"
+                                        className="sr-only"
+                                        aria-live="polite"
+                                    />
                                 </label>
                                 <label>
                                     <span className="sr-only">
@@ -340,10 +368,13 @@ return sortOrder === 'asc' ? 1 : -1;
                                         value={stockFilter}
                                         onValueChange={setStockFilter}
                                     >
-                                        <SelectTrigger aria-label="Filter kondisi stok" className="h-11 w-full rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20">
+                                        <SelectTrigger
+                                            aria-label="Filter kondisi stok"
+                                            className="h-11 w-full rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 motion-reduce:transition-none"
+                                        >
                                             <SelectValue placeholder="Pilih kondisi stok" />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-[14px] bg-white text-slate-900 ring-slate-200 shadow-lg">
+                                        <SelectContent className="rounded-[14px] bg-white text-slate-900 shadow-lg ring-slate-200">
                                             <SelectGroup>
                                                 <SelectLabel>
                                                     Kondisi stok
@@ -365,16 +396,21 @@ return sortOrder === 'asc' ? 1 : -1;
                                     <Button
                                         type="submit"
                                         disabled={isFiltering}
-                                        className="h-11 rounded-[12px] px-5 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                        className="h-11 rounded-[12px] px-5 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                     >
-                                        {isFiltering && <Spinner className="size-4" aria-hidden="true" />}
+                                        {isFiltering && (
+                                            <Spinner
+                                                className="size-4"
+                                                aria-hidden="true"
+                                            />
+                                        )}
                                         Terapkan
                                     </Button>
                                     <Button
                                         type="button"
                                         variant="outline"
                                         onClick={resetFilters}
-                                        className="h-11 rounded-[12px] border-slate-200 bg-white px-5 font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                        className="h-11 rounded-[12px] border-slate-200 bg-white px-5 font-semibold text-slate-700 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                     >
                                         Reset
                                     </Button>
@@ -392,7 +428,8 @@ return sortOrder === 'asc' ? 1 : -1;
                                                     className="px-5"
                                                     aria-sort={
                                                         sortKey === col.key
-                                                            ? sortOrder === 'asc'
+                                                            ? sortOrder ===
+                                                              'asc'
                                                                 ? 'ascending'
                                                                 : 'descending'
                                                             : undefined
@@ -401,15 +438,20 @@ return sortOrder === 'asc' ? 1 : -1;
                                                     {col.sortable ? (
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleSort(col.key as SortKey)}
-                                                            className="inline-flex items-center gap-1.5 font-semibold text-slate-500 hover:text-slate-900 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 rounded-[6px] px-1 -mx-1"
+                                                            onClick={() =>
+                                                                handleSort(
+                                                                    col.key as SortKey,
+                                                                )
+                                                            }
+                                                            className="-mx-1 inline-flex items-center gap-1.5 rounded-[6px] px-1 font-semibold text-slate-500 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 focus-visible:outline-none motion-reduce:transition-none"
                                                             aria-label={`Urutkan ${col.label} ${sortKey === col.key ? (sortOrder === 'asc' ? 'menaik' : 'menurun') : ''}`}
                                                         >
                                                             {col.label}
                                                             <ArrowUpDown
                                                                 className={cn(
                                                                     'size-3.5 shrink-0 transition-colors duration-[180ms]',
-                                                                    sortKey === col.key
+                                                                    sortKey ===
+                                                                        col.key
                                                                         ? 'text-[#0080FF]'
                                                                         : 'text-slate-400',
                                                                 )}
@@ -425,52 +467,91 @@ return sortOrder === 'asc' ? 1 : -1;
                                     </TableHeader>
                                     <TableBody>
                                         {isFiltering ? (
-                                            Array.from({ length: 5 }).map((_, idx) => (
-                                                <TableRow key={`skeleton-${idx}`}>
-                                                    <TableCell className="px-5">
-                                                        <div className="space-y-2 py-1">
-                                                            <Skeleton className="h-4 w-40 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                            <Skeleton className="h-3 w-24 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-4 w-24 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-5 w-20 rounded-full motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-5 w-16 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-5 w-16 rounded-full motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <div className="flex justify-end">
-                                                            <Skeleton className="h-11 w-24 rounded-[12px] motion-reduce:animate-none" aria-hidden="true" />
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
+                                            Array.from({ length: 5 }).map(
+                                                (_, idx) => (
+                                                    <TableRow
+                                                        key={`skeleton-${idx}`}
+                                                    >
+                                                        <TableCell className="px-5">
+                                                            <div className="space-y-2 py-1">
+                                                                <Skeleton
+                                                                    className="h-4 w-40 rounded-[6px] motion-reduce:animate-none"
+                                                                    aria-hidden="true"
+                                                                />
+                                                                <Skeleton
+                                                                    className="h-3 w-24 rounded-[6px] motion-reduce:animate-none"
+                                                                    aria-hidden="true"
+                                                                />
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-4 w-24 rounded-[6px] motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-5 w-20 rounded-full motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-5 w-16 rounded-[6px] motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-5 w-16 rounded-full motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <div className="flex justify-end">
+                                                                <Skeleton
+                                                                    className="h-11 w-24 rounded-[12px] motion-reduce:animate-none"
+                                                                    aria-hidden="true"
+                                                                />
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ),
+                                            )
                                         ) : isEmpty ? (
                                             <TableRow>
-                                                <TableCell colSpan={6} className="p-0">
+                                                <TableCell
+                                                    colSpan={6}
+                                                    className="p-0"
+                                                >
                                                     <SellerEmptyState
                                                         icon={Boxes}
                                                         title="Tidak ada produk"
                                                         description="Tidak ada produk yang sesuai filter. Coba ubah kata kunci pencarian atau tambah produk baru untuk mulai mengelola stok."
-                                                        actionHref={sellerProductsCreate().url}
+                                                        actionHref={
+                                                            sellerProductsCreate()
+                                                                .url
+                                                        }
                                                         actionLabel="Tambah Produk"
-                                                        secondaryActionHref={inventoryIndex().url}
+                                                        secondaryActionHref={
+                                                            inventoryIndex().url
+                                                        }
                                                         secondaryActionLabel="Reset"
                                                     />
                                                 </TableCell>
                                             </TableRow>
                                         ) : (
                                             sortedData.map((product) => (
-                                                <TableRow key={product.id} className="transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none">
+                                                <TableRow
+                                                    key={product.id}
+                                                    className="transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+                                                >
                                                     <TableCell className="min-w-56 px-5 font-medium">
-                                                        <p className="max-w-[20ch] truncate font-semibold text-slate-950" title={product.name}>
+                                                        <p
+                                                            className="max-w-[20ch] truncate font-semibold text-slate-950"
+                                                            title={product.name}
+                                                        >
                                                             {product.name}
                                                         </p>
                                                     </TableCell>
@@ -482,15 +563,19 @@ return sortOrder === 'asc' ? 1 : -1;
                                                             className={cn(
                                                                 'rounded-full px-2.5 py-0.5 font-medium',
                                                                 statusStyles[
-                                                                    product.status
+                                                                    product
+                                                                        .status
                                                                         .code
                                                                 ],
                                                             )}
                                                         >
-                                                            {product.status.label}
+                                                            {
+                                                                product.status
+                                                                    .label
+                                                            }
                                                         </Badge>
                                                     </TableCell>
-                                                    <TableCell className="px-5 text-lg font-semibold tabular-nums text-slate-900">
+                                                    <TableCell className="px-5 text-lg font-semibold text-slate-900 tabular-nums">
                                                         {product.stock}
                                                     </TableCell>
                                                     <TableCell className="px-5">
@@ -498,10 +583,10 @@ return sortOrder === 'asc' ? 1 : -1;
                                                             className={cn(
                                                                 'rounded-full px-2.5 py-0.5 font-medium',
                                                                 product.is_out_of_stock
-                                                                    ? 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]'
+                                                                    ? 'border border-[#FECACA] bg-[#FEF2F2] text-[#DC2626]'
                                                                     : product.is_low_stock
-                                                                      ? 'bg-[#FFF7ED] text-[#EA580C] border border-[#FFEDD5]'
-                                                                      : 'bg-[#ECFDF3] text-[#16A34A] border border-[#BBF7D0]',
+                                                                      ? 'border border-[#FFEDD5] bg-[#FFF7ED] text-[#EA580C]'
+                                                                      : 'border border-[#BBF7D0] bg-[#ECFDF3] text-[#16A34A]',
                                                             )}
                                                         >
                                                             {product.is_out_of_stock
@@ -515,7 +600,7 @@ return sortOrder === 'asc' ? 1 : -1;
                                                         <Button
                                                             type="button"
                                                             variant="outline"
-                                                            className="h-11 rounded-[12px] border-slate-200 bg-white px-4 font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                                            className="h-11 rounded-[12px] border-slate-200 bg-white px-4 font-semibold text-slate-700 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                                             onClick={() =>
                                                                 openStockEditor(
                                                                     product,
@@ -563,9 +648,13 @@ return sortOrder === 'asc' ? 1 : -1;
                                             icon={Boxes}
                                             title="Tidak ada produk"
                                             description="Tidak ada produk yang sesuai filter. Coba ubah kata kunci pencarian atau tambah produk baru untuk mulai mengelola stok."
-                                            actionHref={sellerProductsCreate().url}
+                                            actionHref={
+                                                sellerProductsCreate().url
+                                            }
                                             actionLabel="Tambah Produk"
-                                            secondaryActionHref={inventoryIndex().url}
+                                            secondaryActionHref={
+                                                inventoryIndex().url
+                                            }
                                             secondaryActionLabel="Reset"
                                         />
                                     </div>
@@ -577,39 +666,62 @@ return sortOrder === 'asc' ? 1 : -1;
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="truncate text-sm font-semibold text-slate-950" title={product.name}>
+                                                    <p
+                                                        className="truncate text-sm font-semibold text-slate-950"
+                                                        title={product.name}
+                                                    >
                                                         {product.name}
                                                     </p>
                                                     <p className="mt-1 text-xs text-slate-500">
                                                         {product.category.name}
                                                     </p>
                                                 </div>
-                                                <Badge className={cn('shrink-0 rounded-full font-medium', statusStyles[product.status.code])}>
+                                                <Badge
+                                                    className={cn(
+                                                        'shrink-0 rounded-full font-medium',
+                                                        statusStyles[
+                                                            product.status.code
+                                                        ],
+                                                    )}
+                                                >
                                                     {product.status.label}
                                                 </Badge>
                                             </div>
                                             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                                                <span className="font-semibold tabular-nums text-slate-900">Stok {product.stock}</span>
-                                                <span className="text-slate-300" aria-hidden="true">•</span>
+                                                <span className="font-semibold text-slate-900 tabular-nums">
+                                                    Stok {product.stock}
+                                                </span>
+                                                <span
+                                                    className="text-slate-300"
+                                                    aria-hidden="true"
+                                                >
+                                                    •
+                                                </span>
                                                 <Badge
                                                     className={cn(
                                                         'rounded-full font-medium',
                                                         product.is_out_of_stock
-                                                            ? 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]'
+                                                            ? 'border border-[#FECACA] bg-[#FEF2F2] text-[#DC2626]'
                                                             : product.is_low_stock
-                                                              ? 'bg-[#FFF7ED] text-[#EA580C] border border-[#FFEDD5]'
-                                                              : 'bg-[#ECFDF3] text-[#16A34A] border border-[#BBF7D0]',
+                                                              ? 'border border-[#FFEDD5] bg-[#FFF7ED] text-[#EA580C]'
+                                                              : 'border border-[#BBF7D0] bg-[#ECFDF3] text-[#16A34A]',
                                                     )}
                                                 >
-                                                    {product.is_out_of_stock ? 'Habis' : product.is_low_stock ? 'Rendah' : 'Aman'}
+                                                    {product.is_out_of_stock
+                                                        ? 'Habis'
+                                                        : product.is_low_stock
+                                                          ? 'Rendah'
+                                                          : 'Aman'}
                                                 </Badge>
                                             </div>
                                             <div className="mt-4">
                                                 <Button
                                                     type="button"
                                                     variant="outline"
-                                                    onClick={() => openStockEditor(product)}
-                                                    className="h-11 w-full rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                                    onClick={() =>
+                                                        openStockEditor(product)
+                                                    }
+                                                    className="h-11 w-full rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                                     aria-label={`Edit stok ${product.name}`}
                                                 >
                                                     Edit stok
@@ -633,7 +745,7 @@ return sortOrder === 'asc' ? 1 : -1;
                                             )}
                                             disabled={!products.prev_page_url}
                                             variant="outline"
-                                            className="h-11 rounded-[12px] border-slate-200 bg-white px-4 font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 disabled:opacity-50"
+                                            className="h-11 rounded-[12px] border-slate-200 bg-white px-4 font-semibold text-slate-700 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 disabled:opacity-50 motion-reduce:transition-none"
                                         >
                                             {products.prev_page_url ? (
                                                 <Link
@@ -653,7 +765,7 @@ return sortOrder === 'asc' ? 1 : -1;
                                             )}
                                             disabled={!products.next_page_url}
                                             variant="outline"
-                                            className="h-11 rounded-[12px] border-slate-200 bg-white px-4 font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 disabled:opacity-50"
+                                            className="h-11 rounded-[12px] border-slate-200 bg-white px-4 font-semibold text-slate-700 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 disabled:opacity-50 motion-reduce:transition-none"
                                         >
                                             {products.next_page_url ? (
                                                 <Link
@@ -707,8 +819,10 @@ return sortOrder === 'asc' ? 1 : -1;
                                     setStock(event.target.value)
                                 }
                                 aria-invalid={Boolean(stockError)}
-                                aria-describedby={stockError ? 'stock-error' : undefined}
-                                className="h-11 rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20"
+                                aria-describedby={
+                                    stockError ? 'stock-error' : undefined
+                                }
+                                className="h-11 rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 motion-reduce:transition-none"
                             />
                             <InputError message={stockError} id="stock-error" />
                         </div>
@@ -718,13 +832,23 @@ return sortOrder === 'asc' ? 1 : -1;
                                     type="button"
                                     variant="outline"
                                     disabled={processing}
-                                    className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                    className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                 >
                                     Batal
                                 </Button>
                             </DialogClose>
-                            <Button type="submit" disabled={processing} className="h-11 rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2" aria-busy={processing}>
-                                {processing && <Spinner className="size-4" aria-hidden="true" />}
+                            <Button
+                                type="submit"
+                                disabled={processing}
+                                className="h-11 rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
+                                aria-busy={processing}
+                            >
+                                {processing && (
+                                    <Spinner
+                                        className="size-4"
+                                        aria-hidden="true"
+                                    />
+                                )}
                                 {processing ? 'Menyimpan...' : 'Simpan stok'}
                             </Button>
                         </DialogFooter>

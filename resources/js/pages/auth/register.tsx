@@ -204,8 +204,8 @@ export default function Register({ passwordRules, positions, classes }: Props) {
         setLocalErrors(found);
 
         if (Object.values(found).some(Boolean)) {
-return;
-}
+            return;
+        }
 
         goTo(Math.min(step + 1, steps.length - 1));
     };
@@ -269,8 +269,8 @@ return;
                                                         type="button"
                                                         onClick={() => {
                                                             if (index < step) {
-goTo(index);
-}
+                                                                goTo(index);
+                                                            }
                                                         }}
                                                         disabled={
                                                             index >= step ||
@@ -581,7 +581,9 @@ goTo(index);
                                                 </Label>
                                                 <div className="relative">
                                                     <GraduationCap
-                                                        className={iconClassName}
+                                                        className={
+                                                            iconClassName
+                                                        }
                                                     />
                                                     <Select
                                                         value={gradeLevel}
@@ -612,9 +614,7 @@ goTo(index);
                                                                     Kelas
                                                                 </SelectLabel>
                                                                 {gradeLevels.map(
-                                                                    (
-                                                                        level,
-                                                                    ) => (
+                                                                    (level) => (
                                                                         <SelectItem
                                                                             key={
                                                                                 level
@@ -644,7 +644,9 @@ goTo(index);
                                                 </Label>
                                                 <div className="relative">
                                                     <School
-                                                        className={iconClassName}
+                                                        className={
+                                                            iconClassName
+                                                        }
                                                     />
                                                     <Select
                                                         name="class_id"
@@ -926,15 +928,11 @@ function StepJumpOnServerError({
 
     useEffect(() => {
         if (!signature) {
-return;
-}
+            return;
+        }
 
         for (let index = 0; index < steps.length; index += 1) {
-            if (
-                stepErrorFields[index].some((field) =>
-                    keys.includes(field),
-                )
-            ) {
+            if (stepErrorFields[index].some((field) => keys.includes(field))) {
                 onJump(index);
                 break;
             }

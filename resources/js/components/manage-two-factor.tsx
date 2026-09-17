@@ -78,7 +78,9 @@ export default function ManageTwoFactor(props: Props) {
                                     )}
                                 </CardTitle>
                                 <CardDescription className="mt-1 max-w-[36ch] text-sm leading-5 text-slate-500">
-                                    Tambahkan lapisan keamanan. Saat login kamu akan diminta kode 6 digit dari aplikasi autentikator.
+                                    Tambahkan lapisan keamanan. Saat login kamu
+                                    akan diminta kode 6 digit dari aplikasi
+                                    autentikator.
                                 </CardDescription>
                             </div>
                         </div>
@@ -93,7 +95,9 @@ export default function ManageTwoFactor(props: Props) {
                                     2FA sudah aktif
                                 </p>
                                 <p className="mt-1 text-sm leading-5 text-emerald-700">
-                                    Kamu akan diminta kode dari aplikasi autentikator di HP setiap kali login. Simpan kode pemulihan di tempat aman.
+                                    Kamu akan diminta kode dari aplikasi
+                                    autentikator di HP setiap kali login. Simpan
+                                    kode pemulihan di tempat aman.
                                 </p>
                             </div>
 
@@ -106,7 +110,9 @@ export default function ManageTwoFactor(props: Props) {
                                             disabled={processing}
                                             className="h-11 rounded-xl px-5 font-semibold"
                                         >
-                                            {processing ? 'Memproses...' : 'Nonaktifkan 2FA'}
+                                            {processing
+                                                ? 'Memproses...'
+                                                : 'Nonaktifkan 2FA'}
                                         </Button>
                                     )}
                                 </Form>
@@ -122,7 +128,11 @@ export default function ManageTwoFactor(props: Props) {
                         <>
                             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                                 <p className="text-sm leading-5 text-slate-600">
-                                    Saat 2FA aktif, kamu perlu memasukkan kode 6 digit dari aplikasi seperti Google Authenticator atau Authy setiap login. Ini menjaga akun tetap aman meski password bocor.
+                                    Saat 2FA aktif, kamu perlu memasukkan kode 6
+                                    digit dari aplikasi seperti Google
+                                    Authenticator atau Authy setiap login. Ini
+                                    menjaga akun tetap aman meski password
+                                    bocor.
                                 </p>
                             </div>
 
@@ -138,7 +148,9 @@ export default function ManageTwoFactor(props: Props) {
                                 ) : (
                                     <Form
                                         {...enable.form()}
-                                        onSuccess={() => setShowSetupModal(true)}
+                                        onSuccess={() =>
+                                            setShowSetupModal(true)
+                                        }
                                     >
                                         {({ processing }) => (
                                             <Button
@@ -146,13 +158,16 @@ export default function ManageTwoFactor(props: Props) {
                                                 disabled={processing}
                                                 className="h-11 rounded-xl px-5 font-semibold"
                                             >
-                                                {processing ? 'Memproses...' : 'Aktifkan 2FA'}
+                                                {processing
+                                                    ? 'Memproses...'
+                                                    : 'Aktifkan 2FA'}
                                             </Button>
                                         )}
                                     </Form>
                                 )}
                                 <p className="mt-2 text-xs text-slate-500">
-                                    Proses hanya butuh &lt; 1 menit. Siapkan aplikasi autentikator di HP.
+                                    Proses hanya butuh &lt; 1 menit. Siapkan
+                                    aplikasi autentikator di HP.
                                 </p>
                             </div>
                         </>

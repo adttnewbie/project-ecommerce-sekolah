@@ -138,7 +138,14 @@ const nextActionFor = (item: SellerOrderItem) => {
         return { code: 'in_production' as const, action: 'Mulai produksi' };
     }
 
-    return nextStatus[item.status.code as Exclude<OrderStatus, 'sent' | 'completed' | 'cancelled'>] ?? null;
+    return (
+        nextStatus[
+            item.status.code as Exclude<
+                OrderStatus,
+                'sent' | 'completed' | 'cancelled'
+            >
+        ] ?? null
+    );
 };
 
 const formatRupiah = (value: number) =>
@@ -185,8 +192,8 @@ export default function SellerOrdersIndex({
 
     const sortedData = useMemo(() => {
         if (!sortKey) {
-return orderItems.data;
-}
+            return orderItems.data;
+        }
 
         const copy = [...orderItems.data];
         copy.sort((a, b) => {
@@ -211,12 +218,12 @@ return orderItems.data;
             }
 
             if (aVal < bVal) {
-return sortOrder === 'asc' ? -1 : 1;
-}
+                return sortOrder === 'asc' ? -1 : 1;
+            }
 
             if (aVal > bVal) {
-return sortOrder === 'asc' ? 1 : -1;
-}
+                return sortOrder === 'asc' ? 1 : -1;
+            }
 
             return 0;
         });
@@ -237,7 +244,11 @@ return sortOrder === 'asc' ? 1 : -1;
                     status: status === 'all' ? '' : status,
                 }).filter(([, value]) => value),
             ),
-            { preserveState: true, replace: true, onFinish: () => setIsFiltering(false) },
+            {
+                preserveState: true,
+                replace: true,
+                onFinish: () => setIsFiltering(false),
+            },
         );
     };
 
@@ -276,7 +287,8 @@ return sortOrder === 'asc' ? 1 : -1;
                 preserveScroll: true,
                 onStart: () => setProcessingId(item.id),
                 onFinish: () => setProcessingId(undefined),
-                onError: (errors) => setStatusError((errors as Record<string, string>).status),
+                onError: (errors) =>
+                    setStatusError((errors as Record<string, string>).status),
             },
         );
     };
@@ -299,12 +311,18 @@ return sortOrder === 'asc' ? 1 : -1;
                 preserveScroll: true,
                 onStart: () => setPaymentProcessingId(item.id),
                 onFinish: () => setPaymentProcessingId(undefined),
-                onError: (errors) => setPaymentError((errors as Record<string, string>).payment),
+                onError: (errors) =>
+                    setPaymentError((errors as Record<string, string>).payment),
             },
         );
     };
 
-    const tableColumns: { key: string; label: string; sortable: boolean; sortKey?: SortKey }[] = [
+    const tableColumns: {
+        key: string;
+        label: string;
+        sortable: boolean;
+        sortKey?: SortKey;
+    }[] = [
         { key: 'order', label: 'Order', sortable: false },
         { key: 'buyer', label: 'Pembeli', sortable: false },
         { key: 'product', label: 'Produk', sortable: false },
@@ -323,7 +341,10 @@ return sortOrder === 'asc' ? 1 : -1;
                 <div className="space-y-6">
                     <section>
                         <Badge className="mb-2 rounded-[6px] border border-[#BCE0FF] bg-[#EFF8FF] text-[#0080FF]">
-                            <ShoppingCart className="size-3.5" aria-hidden="true" />{' '}
+                            <ShoppingCart
+                                className="size-3.5"
+                                aria-hidden="true"
+                            />{' '}
                             {orderItems.total} item pesanan
                         </Badge>
                         <h1 className="text-2xl font-semibold text-slate-950">
@@ -371,7 +392,10 @@ return sortOrder === 'asc' ? 1 : -1;
                                     <span className="sr-only">
                                         Cari pesanan
                                     </span>
-                                    <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                                    <Search
+                                        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
+                                        aria-hidden="true"
+                                    />
                                     <Input
                                         id="q"
                                         value={q}
@@ -380,9 +404,13 @@ return sortOrder === 'asc' ? 1 : -1;
                                         }
                                         placeholder="Nomor order, pembeli, atau produk"
                                         aria-describedby="q-filter-error"
-                                        className="h-11 rounded-[10px] border-slate-200 bg-white pl-9 shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20"
+                                        className="h-11 rounded-[10px] border-slate-200 bg-white pl-9 shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 motion-reduce:transition-none"
                                     />
-                                    <span id="q-filter-error" className="sr-only" aria-live="polite" />
+                                    <span
+                                        id="q-filter-error"
+                                        className="sr-only"
+                                        aria-live="polite"
+                                    />
                                 </label>
                                 <label>
                                     <span className="sr-only">
@@ -392,10 +420,13 @@ return sortOrder === 'asc' ? 1 : -1;
                                         value={status}
                                         onValueChange={setStatus}
                                     >
-                                        <SelectTrigger aria-label="Filter status pesanan" className="h-11 w-full rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20">
+                                        <SelectTrigger
+                                            aria-label="Filter status pesanan"
+                                            className="h-11 w-full rounded-[10px] border-slate-200 bg-white shadow-none transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 motion-reduce:transition-none"
+                                        >
                                             <SelectValue placeholder="Pilih status pesanan" />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-[14px] bg-white text-slate-900 ring-slate-200 shadow-lg">
+                                        <SelectContent className="rounded-[14px] bg-white text-slate-900 shadow-lg ring-slate-200">
                                             <SelectGroup>
                                                 <SelectLabel>
                                                     Status pesanan
@@ -429,15 +460,20 @@ return sortOrder === 'asc' ? 1 : -1;
                                     <Button
                                         type="submit"
                                         disabled={isFiltering}
-                                        className="h-11 rounded-[12px] px-5 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                        className="h-11 rounded-[12px] px-5 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                     >
-                                        {isFiltering && <Spinner className="size-4" aria-hidden="true" />}
+                                        {isFiltering && (
+                                            <Spinner
+                                                className="size-4"
+                                                aria-hidden="true"
+                                            />
+                                        )}
                                         Terapkan
                                     </Button>
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        className="h-11 rounded-[12px] border-slate-200 bg-white px-5 font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                        className="h-11 rounded-[12px] border-slate-200 bg-white px-5 font-semibold text-slate-700 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                         onClick={resetFilters}
                                     >
                                         Reset
@@ -446,7 +482,7 @@ return sortOrder === 'asc' ? 1 : -1;
                             </form>
 
                             {/* Desktop table */}
-                            <div className="hidden md:block overflow-x-auto">
+                            <div className="hidden overflow-x-auto md:block">
                                 <Table>
                                     <TableHeader className="sticky top-0 z-10 bg-slate-50">
                                         <TableRow className="bg-slate-50 hover:bg-slate-50">
@@ -455,25 +491,33 @@ return sortOrder === 'asc' ? 1 : -1;
                                                     key={col.key}
                                                     className="px-5"
                                                     aria-sort={
-                                                        col.sortKey && sortKey === col.sortKey
-                                                            ? sortOrder === 'asc'
+                                                        col.sortKey &&
+                                                        sortKey === col.sortKey
+                                                            ? sortOrder ===
+                                                              'asc'
                                                                 ? 'ascending'
                                                                 : 'descending'
                                                             : undefined
                                                     }
                                                 >
-                                                    {col.sortable && col.sortKey ? (
+                                                    {col.sortable &&
+                                                    col.sortKey ? (
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleSort(col.sortKey as SortKey)}
-                                                            className="inline-flex items-center gap-1.5 font-semibold text-slate-500 hover:text-slate-900 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 rounded-[6px] px-1 -mx-1"
+                                                            onClick={() =>
+                                                                handleSort(
+                                                                    col.sortKey as SortKey,
+                                                                )
+                                                            }
+                                                            className="-mx-1 inline-flex items-center gap-1.5 rounded-[6px] px-1 font-semibold text-slate-500 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 focus-visible:outline-none motion-reduce:transition-none"
                                                             aria-label={`Urutkan ${col.label} ${sortKey === col.sortKey ? (sortOrder === 'asc' ? 'menaik' : 'menurun') : ''}`}
                                                         >
                                                             {col.label}
                                                             <ArrowUpDown
                                                                 className={cn(
                                                                     'size-3.5 shrink-0 transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
-                                                                    sortKey === col.sortKey
+                                                                    sortKey ===
+                                                                        col.sortKey
                                                                         ? 'text-[#0080FF]'
                                                                         : 'text-slate-400',
                                                                 )}
@@ -489,64 +533,115 @@ return sortOrder === 'asc' ? 1 : -1;
                                     </TableHeader>
                                     <TableBody>
                                         {isFiltering ? (
-                                            Array.from({ length: 5 }).map((_, idx) => (
-                                                <TableRow key={`skeleton-${idx}`}>
-                                                    <TableCell className="px-5">
-                                                        <div className="space-y-2 py-1">
-                                                            <Skeleton className="h-4 w-28 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                            <Skeleton className="h-3 w-16 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-4 w-24 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="min-w-52 px-5">
-                                                        <div className="space-y-2 py-1">
-                                                            <Skeleton className="h-4 w-36 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                            <Skeleton className="h-3 w-20 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-4 w-8 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-4 w-20 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <div className="space-y-1">
-                                                            <Skeleton className="h-5 w-20 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                            <Skeleton className="h-3 w-16 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-5 w-20 rounded-full motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <Skeleton className="h-4 w-28 rounded-[6px] motion-reduce:animate-none" aria-hidden="true" />
-                                                    </TableCell>
-                                                    <TableCell className="px-5">
-                                                        <div className="flex justify-end gap-2">
-                                                            <Skeleton className="h-11 w-[72px] rounded-[12px] motion-reduce:animate-none" aria-hidden="true" />
-                                                            <Skeleton className="h-11 w-[110px] rounded-[12px] motion-reduce:animate-none" aria-hidden="true" />
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
+                                            Array.from({ length: 5 }).map(
+                                                (_, idx) => (
+                                                    <TableRow
+                                                        key={`skeleton-${idx}`}
+                                                    >
+                                                        <TableCell className="px-5">
+                                                            <div className="space-y-2 py-1">
+                                                                <Skeleton
+                                                                    className="h-4 w-28 rounded-[6px] motion-reduce:animate-none"
+                                                                    aria-hidden="true"
+                                                                />
+                                                                <Skeleton
+                                                                    className="h-3 w-16 rounded-[6px] motion-reduce:animate-none"
+                                                                    aria-hidden="true"
+                                                                />
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-4 w-24 rounded-[6px] motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="min-w-52 px-5">
+                                                            <div className="space-y-2 py-1">
+                                                                <Skeleton
+                                                                    className="h-4 w-36 rounded-[6px] motion-reduce:animate-none"
+                                                                    aria-hidden="true"
+                                                                />
+                                                                <Skeleton
+                                                                    className="h-3 w-20 rounded-[6px] motion-reduce:animate-none"
+                                                                    aria-hidden="true"
+                                                                />
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-4 w-8 rounded-[6px] motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-4 w-20 rounded-[6px] motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <div className="space-y-1">
+                                                                <Skeleton
+                                                                    className="h-5 w-20 rounded-[6px] motion-reduce:animate-none"
+                                                                    aria-hidden="true"
+                                                                />
+                                                                <Skeleton
+                                                                    className="h-3 w-16 rounded-[6px] motion-reduce:animate-none"
+                                                                    aria-hidden="true"
+                                                                />
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-5 w-20 rounded-full motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <Skeleton
+                                                                className="h-4 w-28 rounded-[6px] motion-reduce:animate-none"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="px-5">
+                                                            <div className="flex justify-end gap-2">
+                                                                <Skeleton
+                                                                    className="h-11 w-[72px] rounded-[12px] motion-reduce:animate-none"
+                                                                    aria-hidden="true"
+                                                                />
+                                                                <Skeleton
+                                                                    className="h-11 w-[110px] rounded-[12px] motion-reduce:animate-none"
+                                                                    aria-hidden="true"
+                                                                />
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ),
+                                            )
                                         ) : isEmpty ? (
                                             <TableRow>
-                                                <TableCell colSpan={9} className="p-0">
+                                                <TableCell
+                                                    colSpan={9}
+                                                    className="p-0"
+                                                >
                                                     <SellerEmptyState
                                                         icon={ShoppingCart}
                                                         title="Tidak ada pesanan"
                                                         description="Belum ada pesanan yang sesuai filter. Coba ubah kata kunci atau reset filter untuk melihat semua pesanan."
-                                                        actionHref={ordersIndex().url}
+                                                        actionHref={
+                                                            ordersIndex().url
+                                                        }
                                                         actionLabel="Reset"
                                                     />
                                                 </TableCell>
                                             </TableRow>
                                         ) : (
                                             sortedData.map((item) => (
-                                                <TableRow key={item.id} className="transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none">
+                                                <TableRow
+                                                    key={item.id}
+                                                    className="transition-colors duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+                                                >
                                                     <TableCell className="px-5 font-semibold">
                                                         {item.code ??
                                                             `#${item.order_id}`}
@@ -563,7 +658,9 @@ return sortOrder === 'asc' ? 1 : -1;
                                                     <TableCell className="min-w-52 px-5">
                                                         <div>
                                                             <p className="font-medium text-slate-950">
-                                                                {item.product_name}
+                                                                {
+                                                                    item.product_name
+                                                                }
                                                             </p>
                                                             {item.is_pre_order && (
                                                                 <p className="mt-1 text-xs text-[#0080FF]">
@@ -581,7 +678,7 @@ return sortOrder === 'asc' ? 1 : -1;
                                                     <TableCell className="px-5 tabular-nums">
                                                         {item.quantity}
                                                     </TableCell>
-                                                    <TableCell className="px-5 font-medium tabular-nums text-slate-900">
+                                                    <TableCell className="px-5 font-medium text-slate-900 tabular-nums">
                                                         {formatRupiah(
                                                             item.subtotal,
                                                         )}
@@ -592,7 +689,8 @@ return sortOrder === 'asc' ? 1 : -1;
                                                                 className={cn(
                                                                     'rounded-[6px] border font-medium',
                                                                     paymentStatusStyles[
-                                                                        item.payment
+                                                                        item
+                                                                            .payment
                                                                             .status
                                                                             .code
                                                                     ],
@@ -618,7 +716,8 @@ return sortOrder === 'asc' ? 1 : -1;
                                                             className={cn(
                                                                 'rounded-full border font-medium',
                                                                 statusStyles[
-                                                                    item.status.code
+                                                                    item.status
+                                                                        .code
                                                                 ],
                                                             )}
                                                         >
@@ -626,8 +725,14 @@ return sortOrder === 'asc' ? 1 : -1;
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell className="min-w-40 px-5 text-sm text-slate-500">
-                                                        <time dateTime={item.created_at}>
-                                                            {formatDate(item.created_at)}
+                                                        <time
+                                                            dateTime={
+                                                                item.created_at
+                                                            }
+                                                        >
+                                                            {formatDate(
+                                                                item.created_at,
+                                                            )}
                                                         </time>
                                                     </TableCell>
                                                     <TableCell className="px-5">
@@ -635,7 +740,7 @@ return sortOrder === 'asc' ? 1 : -1;
                                                             <Button
                                                                 asChild
                                                                 variant="outline"
-                                                                className="h-11 rounded-[12px] border-slate-200 bg-white px-3 font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                                                className="h-11 rounded-[12px] border-slate-200 bg-white px-3 font-semibold text-slate-700 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                                                 aria-label={`Detail ${item.code ?? item.order_id}`}
                                                             >
                                                                 {item.source ===
@@ -645,7 +750,10 @@ return sortOrder === 'asc' ? 1 : -1;
                                                                             item.id,
                                                                         )}
                                                                     >
-                                                                        <Eye className="size-3.5" aria-hidden="true" />{' '}
+                                                                        <Eye
+                                                                            className="size-3.5"
+                                                                            aria-hidden="true"
+                                                                        />{' '}
                                                                         Detail
                                                                     </Link>
                                                                 ) : (
@@ -655,7 +763,10 @@ return sortOrder === 'asc' ? 1 : -1;
                                                                             '#'
                                                                         }
                                                                     >
-                                                                        <Eye className="size-3.5" aria-hidden="true" />{' '}
+                                                                        <Eye
+                                                                            className="size-3.5"
+                                                                            aria-hidden="true"
+                                                                        />{' '}
                                                                         Detail
                                                                     </Link>
                                                                 )}
@@ -663,17 +774,20 @@ return sortOrder === 'asc' ? 1 : -1;
                                                             {item.source ===
                                                                 'online' &&
                                                                 !item.managed_by_up_jurusan &&
-                                                                item.payment.status
+                                                                item.payment
+                                                                    .status
                                                                     .code !==
                                                                     'paid' &&
-                                                                item.status.code !==
+                                                                item.status
+                                                                    .code !==
                                                                     'cancelled' &&
-                                                                item.status.code !==
+                                                                item.status
+                                                                    .code !==
                                                                     'completed' && (
                                                                     <Button
                                                                         type="button"
                                                                         variant="outline"
-                                                                        className="h-11 rounded-[12px] border-[#BBF7D0] bg-white px-3 font-semibold text-[#16A34A] hover:bg-[#ECFDF3] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#16A34A] focus-visible:ring-offset-2"
+                                                                        className="h-11 rounded-[12px] border-[#BBF7D0] bg-white px-3 font-semibold text-[#16A34A] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[#ECFDF3] focus-visible:ring-2 focus-visible:ring-[#16A34A] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                                                         disabled={
                                                                             paymentProcessingId ===
                                                                             item.id
@@ -685,10 +799,17 @@ return sortOrder === 'asc' ? 1 : -1;
                                                                         }
                                                                         aria-label={`Tandai lunas ${item.code ?? item.order_id}`}
                                                                     >
-                                                                        {paymentProcessingId === item.id ? (
-                                                                            <Spinner className="size-3.5" aria-hidden="true" />
+                                                                        {paymentProcessingId ===
+                                                                        item.id ? (
+                                                                            <Spinner
+                                                                                className="size-3.5"
+                                                                                aria-hidden="true"
+                                                                            />
                                                                         ) : (
-                                                                            <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                                                                            <CheckCircle2
+                                                                                className="size-3.5"
+                                                                                aria-hidden="true"
+                                                                            />
                                                                         )}{' '}
                                                                         {paymentProcessingId ===
                                                                         item.id
@@ -706,7 +827,7 @@ return sortOrder === 'asc' ? 1 : -1;
                                                               ) ? (
                                                                 <Button
                                                                     type="button"
-                                                                    className="h-11 rounded-[12px] px-4 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                                                    className="h-11 rounded-[12px] px-4 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                                                     disabled={
                                                                         processingId ===
                                                                         item.id
@@ -720,14 +841,18 @@ return sortOrder === 'asc' ? 1 : -1;
                                                                 >
                                                                     {processingId ===
                                                                     item.id ? (
-                                                                        <Spinner className="size-3.5" aria-hidden="true" />
+                                                                        <Spinner
+                                                                            className="size-3.5"
+                                                                            aria-hidden="true"
+                                                                        />
                                                                     ) : null}
                                                                     {processingId ===
                                                                     item.id
                                                                         ? 'Memproses...'
                                                                         : nextActionFor(
                                                                               item,
-                                                                          )?.action}
+                                                                          )
+                                                                              ?.action}
                                                                 </Button>
                                                             ) : null}
                                                         </div>
@@ -788,46 +913,98 @@ return sortOrder === 'asc' ? 1 : -1;
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="truncate text-sm font-semibold text-slate-950" title={item.code ?? `#${item.order_id}`}>
-                                                        {item.code ?? `#${item.order_id}`}
+                                                    <p
+                                                        className="truncate text-sm font-semibold text-slate-950"
+                                                        title={
+                                                            item.code ??
+                                                            `#${item.order_id}`
+                                                        }
+                                                    >
+                                                        {item.code ??
+                                                            `#${item.order_id}`}
                                                     </p>
-                                                    <p className="mt-1 truncate text-xs text-slate-500">{item.buyer.name}</p>
-                                                    {item.source === 'offline' && (
-                                                        <Badge className="mt-1.5 rounded-[6px] border border-[#BBF7D0] bg-[#ECFDF3] text-[#16A34A] text-[11px]">
+                                                    <p className="mt-1 truncate text-xs text-slate-500">
+                                                        {item.buyer.name}
+                                                    </p>
+                                                    {item.source ===
+                                                        'offline' && (
+                                                        <Badge className="mt-1.5 rounded-[6px] border border-[#BBF7D0] bg-[#ECFDF3] text-[11px] text-[#16A34A]">
                                                             Offline/POS
                                                         </Badge>
                                                     )}
                                                 </div>
-                                                <Badge className={cn('shrink-0 rounded-full border text-xs font-medium', statusStyles[item.status.code])}>
+                                                <Badge
+                                                    className={cn(
+                                                        'shrink-0 rounded-full border text-xs font-medium',
+                                                        statusStyles[
+                                                            item.status.code
+                                                        ],
+                                                    )}
+                                                >
                                                     {item.status.label}
                                                 </Badge>
                                             </div>
 
                                             <div className="mt-3">
-                                                <p className="line-clamp-2 text-sm font-medium text-slate-900">{item.product_name}</p>
+                                                <p className="line-clamp-2 text-sm font-medium text-slate-900">
+                                                    {item.product_name}
+                                                </p>
                                                 {item.is_pre_order && (
                                                     <p className="mt-1 text-xs font-medium text-[#0080FF]">
-                                                        PO {item.pre_order_estimate_days} hari
-                                                        {item.pre_order_deadline ? ` • Deadline ${item.pre_order_deadline}` : ''}
+                                                        PO{' '}
+                                                        {
+                                                            item.pre_order_estimate_days
+                                                        }{' '}
+                                                        hari
+                                                        {item.pre_order_deadline
+                                                            ? ` • Deadline ${item.pre_order_deadline}`
+                                                            : ''}
                                                     </p>
                                                 )}
                                             </div>
 
                                             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                                                <span className="text-xs text-slate-500">Qty {item.quantity}</span>
-                                                <span className="text-slate-300" aria-hidden="true">•</span>
-                                                <span className="font-semibold tabular-nums text-slate-900">{formatRupiah(item.subtotal)}</span>
+                                                <span className="text-xs text-slate-500">
+                                                    Qty {item.quantity}
+                                                </span>
+                                                <span
+                                                    className="text-slate-300"
+                                                    aria-hidden="true"
+                                                >
+                                                    •
+                                                </span>
+                                                <span className="font-semibold text-slate-900 tabular-nums">
+                                                    {formatRupiah(
+                                                        item.subtotal,
+                                                    )}
+                                                </span>
                                             </div>
 
                                             <div className="mt-3 flex flex-wrap items-center gap-2">
-                                                <Badge className={cn('rounded-[6px] border text-xs font-medium', paymentStatusStyles[item.payment.status.code])}>
+                                                <Badge
+                                                    className={cn(
+                                                        'rounded-[6px] border text-xs font-medium',
+                                                        paymentStatusStyles[
+                                                            item.payment.status
+                                                                .code
+                                                        ],
+                                                    )}
+                                                >
                                                     {item.payment.status.label}
                                                 </Badge>
-                                                <span className="text-xs text-slate-500">{item.payment.method.label}</span>
+                                                <span className="text-xs text-slate-500">
+                                                    {item.payment.method.label}
+                                                </span>
                                             </div>
 
                                             <p className="mt-3 text-xs text-slate-500">
-                                                <time dateTime={item.created_at}>{formatDate(item.created_at)}</time>
+                                                <time
+                                                    dateTime={item.created_at}
+                                                >
+                                                    {formatDate(
+                                                        item.created_at,
+                                                    )}
+                                                </time>
                                             </p>
 
                                             <div className="mt-4 flex flex-col gap-2">
@@ -835,53 +1012,109 @@ return sortOrder === 'asc' ? 1 : -1;
                                                     <Button
                                                         asChild
                                                         variant="outline"
-                                                        className="h-11 flex-1 rounded-[12px] border-slate-200 bg-white font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                                        className="h-11 flex-1 rounded-[12px] border-slate-200 bg-white font-semibold text-slate-700 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                                         aria-label={`Detail ${item.code ?? item.order_id}`}
                                                     >
-                                                        {item.source === 'online' ? (
-                                                            <Link href={ordersShow(item.id)}>
-                                                                <Eye className="size-3.5" aria-hidden="true" /> Detail
+                                                        {item.source ===
+                                                        'online' ? (
+                                                            <Link
+                                                                href={ordersShow(
+                                                                    item.id,
+                                                                )}
+                                                            >
+                                                                <Eye
+                                                                    className="size-3.5"
+                                                                    aria-hidden="true"
+                                                                />{' '}
+                                                                Detail
                                                             </Link>
                                                         ) : (
-                                                            <Link href={item.detail_url ?? '#'}>
-                                                                <Eye className="size-3.5" aria-hidden="true" /> Detail
+                                                            <Link
+                                                                href={
+                                                                    item.detail_url ??
+                                                                    '#'
+                                                                }
+                                                            >
+                                                                <Eye
+                                                                    className="size-3.5"
+                                                                    aria-hidden="true"
+                                                                />{' '}
+                                                                Detail
                                                             </Link>
                                                         )}
                                                     </Button>
                                                     {item.source === 'online' &&
                                                         !item.managed_by_up_jurusan &&
-                                                        item.payment.status.code !== 'paid' &&
-                                                        item.status.code !== 'cancelled' &&
-                                                        item.status.code !== 'completed' && (
+                                                        item.payment.status
+                                                            .code !== 'paid' &&
+                                                        item.status.code !==
+                                                            'cancelled' &&
+                                                        item.status.code !==
+                                                            'completed' && (
                                                             <Button
                                                                 type="button"
                                                                 variant="outline"
-                                                                className="h-11 flex-1 rounded-[12px] border-[#BBF7D0] bg-white font-semibold text-[#16A34A] hover:bg-[#ECFDF3] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#16A34A] focus-visible:ring-offset-2"
-                                                                disabled={paymentProcessingId === item.id}
-                                                                onClick={() => approvePayment(item)}
+                                                                className="h-11 flex-1 rounded-[12px] border-[#BBF7D0] bg-white font-semibold text-[#16A34A] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[#ECFDF3] focus-visible:ring-2 focus-visible:ring-[#16A34A] focus-visible:ring-offset-2 motion-reduce:transition-none"
+                                                                disabled={
+                                                                    paymentProcessingId ===
+                                                                    item.id
+                                                                }
+                                                                onClick={() =>
+                                                                    approvePayment(
+                                                                        item,
+                                                                    )
+                                                                }
                                                                 aria-label={`Tandai lunas ${item.code ?? item.order_id}`}
                                                             >
-                                                                {paymentProcessingId === item.id ? (
-                                                                    <Spinner className="size-3.5" aria-hidden="true" />
+                                                                {paymentProcessingId ===
+                                                                item.id ? (
+                                                                    <Spinner
+                                                                        className="size-3.5"
+                                                                        aria-hidden="true"
+                                                                    />
                                                                 ) : (
-                                                                    <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                                                                    <CheckCircle2
+                                                                        className="size-3.5"
+                                                                        aria-hidden="true"
+                                                                    />
                                                                 )}
-                                                                {paymentProcessingId === item.id ? 'Memproses...' : 'Tandai lunas'}
+                                                                {paymentProcessingId ===
+                                                                item.id
+                                                                    ? 'Memproses...'
+                                                                    : 'Tandai lunas'}
                                                             </Button>
                                                         )}
                                                 </div>
                                                 {item.managed_by_up_jurusan ? (
-                                                    <Badge className="w-fit rounded-[6px] border border-slate-200 bg-slate-100 text-slate-700">Dikelola UP Jurusan</Badge>
+                                                    <Badge className="w-fit rounded-[6px] border border-slate-200 bg-slate-100 text-slate-700">
+                                                        Dikelola UP Jurusan
+                                                    </Badge>
                                                 ) : nextActionFor(item) ? (
                                                     <Button
                                                         type="button"
-                                                        className="h-11 w-full rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
-                                                        disabled={processingId === item.id}
-                                                        onClick={() => advanceStatus(item)}
+                                                        className="h-11 w-full rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
+                                                        disabled={
+                                                            processingId ===
+                                                            item.id
+                                                        }
+                                                        onClick={() =>
+                                                            advanceStatus(item)
+                                                        }
                                                         aria-label={`${nextActionFor(item)?.action} ${item.code ?? item.order_id}`}
                                                     >
-                                                        {processingId === item.id ? <Spinner className="size-3.5" aria-hidden="true" /> : null}
-                                                        {processingId === item.id ? 'Memproses...' : nextActionFor(item)?.action}
+                                                        {processingId ===
+                                                        item.id ? (
+                                                            <Spinner
+                                                                className="size-3.5"
+                                                                aria-hidden="true"
+                                                            />
+                                                        ) : null}
+                                                        {processingId ===
+                                                        item.id
+                                                            ? 'Memproses...'
+                                                            : nextActionFor(
+                                                                  item,
+                                                              )?.action}
                                                     </Button>
                                                 ) : null}
                                             </div>
@@ -903,7 +1136,7 @@ return sortOrder === 'asc' ? 1 : -1;
                                             )}
                                             disabled={!orderItems.prev_page_url}
                                             variant="outline"
-                                            className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                            className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                         >
                                             {orderItems.prev_page_url ? (
                                                 <Link
@@ -923,7 +1156,7 @@ return sortOrder === 'asc' ? 1 : -1;
                                             )}
                                             disabled={!orderItems.next_page_url}
                                             variant="outline"
-                                            className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                            className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                         >
                                             {orderItems.next_page_url ? (
                                                 <Link

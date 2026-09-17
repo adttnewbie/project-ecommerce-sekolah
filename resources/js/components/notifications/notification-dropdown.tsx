@@ -115,13 +115,13 @@ export function NotificationDropdown({
         <div className="sticky top-0 z-10 flex flex-col gap-3 rounded-t-[inherit] border-b border-slate-100 bg-white px-4 py-3">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-base font-semibold leading-6 text-slate-900">
+                    <h3 className="truncate text-base leading-6 font-semibold text-slate-900">
                         {ariaLabel}
                     </h3>
                     {unreadCount > 0 ? (
                         <p className="mt-0.5 text-xs leading-4 text-slate-500">
                             <span className="inline-flex items-center gap-1.5">
-                                <span className="inline-flex items-center rounded-full bg-[#EFF8FF] px-2 py-0.5 text-[11px] font-semibold leading-none text-[#006FE0] ring-1 ring-[#BCE0FF]">
+                                <span className="inline-flex items-center rounded-full bg-[#EFF8FF] px-2 py-0.5 text-[11px] leading-none font-semibold text-[#006FE0] ring-1 ring-[#BCE0FF]">
                                     {displayUnread}
                                 </span>
                                 <span>belum dibaca</span>
@@ -141,7 +141,7 @@ export function NotificationDropdown({
                     <button
                         type="button"
                         onClick={markAllAsRead}
-                        className="shrink-0 rounded-full px-2 py-1 text-xs font-semibold whitespace-nowrap text-[#0080FF] transition duration-200 hover:bg-[#EFF8FF] hover:text-[#006FE0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,128,255,0.45)] focus-visible:ring-offset-2"
+                        className="shrink-0 rounded-full px-2 py-1 text-xs font-semibold whitespace-nowrap text-[#0080FF] transition duration-200 hover:bg-[#EFF8FF] hover:text-[#006FE0] focus-visible:ring-2 focus-visible:ring-[rgba(0,128,255,0.45)] focus-visible:ring-offset-2 focus-visible:outline-none"
                     >
                         Tandai semua dibaca
                     </button>
@@ -196,7 +196,7 @@ export function NotificationDropdown({
     );
 
     const list = hasItems ? (
-        <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300">
+        <div className="flex-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent overflow-y-auto overscroll-contain hover:scrollbar-thumb-slate-300">
             {filteredItems.map((notification) => (
                 <HeaderNotificationItem
                     key={notification.key}
@@ -291,7 +291,7 @@ export function NotificationDropdown({
                     <div className="shrink-0">
                         <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-white px-4 py-3">
                             <div className="min-w-0 flex-1">
-                                <h3 className="truncate text-base font-semibold leading-6 text-slate-900">
+                                <h3 className="truncate text-base leading-6 font-semibold text-slate-900">
                                     {ariaLabel}
                                 </h3>
                                 {unreadCount > 0 ? (

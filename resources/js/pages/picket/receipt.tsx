@@ -85,18 +85,33 @@ export default function PicketReceipt({ sale }: Props) {
                                 >
                                     <Copy className="size-4" />
                                 </Button>
-                                {copied && <span className="text-xs font-medium text-emerald-600">Tersalin!</span>}
+                                {copied && (
+                                    <span className="text-xs font-medium text-emerald-600">
+                                        Tersalin!
+                                    </span>
+                                )}
                             </h1>
-                            <p className="mt-1 text-sm leading-6 text-slate-500">{formatDateTime(sale.sold_at)} • {sale.total_quantity} item</p>
+                            <p className="mt-1 text-sm leading-6 text-slate-500">
+                                {formatDateTime(sale.sold_at)} •{' '}
+                                {sale.total_quantity} item
+                            </p>
                         </div>
                         <div className="flex gap-2">
-                            <Button asChild variant="outline" className="h-11 rounded-xl">
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="h-11 rounded-xl"
+                            >
                                 <Link href="/picket/pos">
                                     <ArrowLeft className="size-4" />
                                     POS
                                 </Link>
                             </Button>
-                            <Button type="button" onClick={() => window.print()} className="h-11 rounded-xl">
+                            <Button
+                                type="button"
+                                onClick={() => window.print()}
+                                className="h-11 rounded-xl"
+                            >
                                 <Printer className="size-4" />
                                 Print
                             </Button>
@@ -108,27 +123,50 @@ export default function PicketReceipt({ sale }: Props) {
                             <header className="border-b border-slate-200 pb-6">
                                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                                     <div>
-                                        <p className="text-sm font-semibold tracking-wide text-slate-500 uppercase">EduCart POS</p>
-                                        <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">{sale.up_jurusan.name}</h2>
-                                        <p className="mt-1 text-sm text-slate-500">Transaksi tunai • Diinput oleh {sale.picket.name}</p>
+                                        <p className="text-sm font-semibold tracking-wide text-slate-500 uppercase">
+                                            EduCart POS
+                                        </p>
+                                        <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
+                                            {sale.up_jurusan.name}
+                                        </h2>
+                                        <p className="mt-1 text-sm text-slate-500">
+                                            Transaksi tunai • Diinput oleh{' '}
+                                            {sale.picket.name}
+                                        </p>
                                     </div>
                                     <div className="rounded-xl bg-slate-50 px-4 py-3 text-left ring-1 ring-slate-200 sm:text-right">
-                                        <p className="font-mono text-sm font-bold text-slate-900">{sale.code}</p>
-                                        <p className="mt-1 text-xs text-slate-500">{formatDateTime(sale.sold_at)}</p>
+                                        <p className="font-mono text-sm font-bold text-slate-900">
+                                            {sale.code}
+                                        </p>
+                                        <p className="mt-1 text-xs text-slate-500">
+                                            {formatDateTime(sale.sold_at)}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="mt-6 grid gap-4 rounded-xl bg-slate-50 p-4 text-sm ring-1 ring-slate-200 sm:grid-cols-3">
                                     <div>
-                                        <span className="text-xs font-medium tracking-wide text-slate-500 uppercase">Picket</span>
-                                        <p className="mt-1 font-semibold text-slate-900">{sale.picket.name}</p>
+                                        <span className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                            Picket
+                                        </span>
+                                        <p className="mt-1 font-semibold text-slate-900">
+                                            {sale.picket.name}
+                                        </p>
                                     </div>
                                     <div>
-                                        <span className="text-xs font-medium tracking-wide text-slate-500 uppercase">Metode bayar</span>
-                                        <p className="mt-1 font-semibold text-slate-900">Tunai</p>
+                                        <span className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                            Metode bayar
+                                        </span>
+                                        <p className="mt-1 font-semibold text-slate-900">
+                                            Tunai
+                                        </p>
                                     </div>
                                     <div className="sm:text-right">
-                                        <span className="text-xs font-medium tracking-wide text-slate-500 uppercase">Total item</span>
-                                        <p className="mt-1 font-semibold text-slate-900">{sale.total_quantity} item</p>
+                                        <span className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                            Total item
+                                        </span>
+                                        <p className="mt-1 font-semibold text-slate-900">
+                                            {sale.total_quantity} item
+                                        </p>
                                     </div>
                                 </div>
                             </header>
@@ -137,27 +175,46 @@ export default function PicketReceipt({ sale }: Props) {
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-slate-50">
-                                            <TableHead className="px-4">Produk</TableHead>
-                                            <TableHead className="px-4 text-right">Qty</TableHead>
-                                            <TableHead className="px-4 text-right">Harga</TableHead>
-                                            <TableHead className="px-4 text-right">Subtotal</TableHead>
+                                            <TableHead className="px-4">
+                                                Produk
+                                            </TableHead>
+                                            <TableHead className="px-4 text-right">
+                                                Qty
+                                            </TableHead>
+                                            <TableHead className="px-4 text-right">
+                                                Harga
+                                            </TableHead>
+                                            <TableHead className="px-4 text-right">
+                                                Subtotal
+                                            </TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {sale.items.map((item) => (
-                                            <TableRow key={item.id} className="hover:bg-slate-50/70">
-                                                <TableCell className="whitespace-normal px-4">
-                                                    <p className="font-semibold text-slate-900">{item.product_name}</p>
+                                            <TableRow
+                                                key={item.id}
+                                                className="hover:bg-slate-50/70"
+                                            >
+                                                <TableCell className="px-4 whitespace-normal">
+                                                    <p className="font-semibold text-slate-900">
+                                                        {item.product_name}
+                                                    </p>
                                                     <Badge className="mt-1 rounded-full bg-slate-100 px-2 py-0 text-xs text-slate-600 ring-1 ring-slate-200">
                                                         {item.source}
                                                     </Badge>
                                                 </TableCell>
-                                                <TableCell className="px-4 text-right tabular-nums text-sm">{item.quantity}</TableCell>
-                                                <TableCell className="px-4 text-right tabular-nums text-sm text-slate-600">
-                                                    {formatRupiah(item.unit_price)}
+                                                <TableCell className="px-4 text-right text-sm tabular-nums">
+                                                    {item.quantity}
                                                 </TableCell>
-                                                <TableCell className="px-4 text-right font-bold tabular-nums text-slate-900">
-                                                    {formatRupiah(item.subtotal)}
+                                                <TableCell className="px-4 text-right text-sm text-slate-600 tabular-nums">
+                                                    {formatRupiah(
+                                                        item.unit_price,
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="px-4 text-right font-bold text-slate-900 tabular-nums">
+                                                    {formatRupiah(
+                                                        item.subtotal,
+                                                    )}
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -167,20 +224,36 @@ export default function PicketReceipt({ sale }: Props) {
 
                             <footer className="mt-6 rounded-xl bg-slate-900 p-5 text-white">
                                 <div className="flex items-center justify-between gap-4">
-                                    <span className="text-sm font-medium tracking-wide text-slate-300 uppercase">Total Bayar</span>
-                                    <span className="text-xl font-bold tabular-nums">{formatRupiah(sale.total_amount)}</span>
+                                    <span className="text-sm font-medium tracking-wide text-slate-300 uppercase">
+                                        Total Bayar
+                                    </span>
+                                    <span className="text-xl font-bold tabular-nums">
+                                        {formatRupiah(sale.total_amount)}
+                                    </span>
                                 </div>
-                                <p className="mt-1 text-xs text-slate-400">{sale.total_quantity} item • Tunai</p>
+                                <p className="mt-1 text-xs text-slate-400">
+                                    {sale.total_quantity} item • Tunai
+                                </p>
                             </footer>
                             <p className="mt-6 text-center text-xs leading-5 text-slate-500">
-                                Simpan nota ini sebagai bukti transaksi POS UP Jurusan. Tunjukkan ke admin jika perlu rekonsiliasi laporan.
+                                Simpan nota ini sebagai bukti transaksi POS UP
+                                Jurusan. Tunjukkan ke admin jika perlu
+                                rekonsiliasi laporan.
                             </p>
                             <div className="mt-4 flex justify-center gap-2 print:hidden">
-                                <Button asChild variant="outline" className="rounded-xl">
-                                    <Link href="/picket/reports">Lihat Laporan</Link>
+                                <Button
+                                    asChild
+                                    variant="outline"
+                                    className="rounded-xl"
+                                >
+                                    <Link href="/picket/reports">
+                                        Lihat Laporan
+                                    </Link>
                                 </Button>
                                 <Button asChild className="rounded-xl">
-                                    <Link href="/picket/pos">Transaksi Baru</Link>
+                                    <Link href="/picket/pos">
+                                        Transaksi Baru
+                                    </Link>
                                 </Button>
                             </div>
                         </CardContent>

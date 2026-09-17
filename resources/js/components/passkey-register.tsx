@@ -51,7 +51,8 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
     if (!isSupported) {
         return (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-800">
-                Browser ini belum mendukung passkey. Coba gunakan Chrome, Safari, atau Edge terbaru.
+                Browser ini belum mendukung passkey. Coba gunakan Chrome,
+                Safari, atau Edge terbaru.
             </div>
         );
     }
@@ -74,7 +75,10 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
             className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4"
         >
             <div className="grid gap-2">
-                <Label htmlFor="passkey-name" className="text-sm font-medium text-slate-700">
+                <Label
+                    htmlFor="passkey-name"
+                    className="text-sm font-medium text-slate-700"
+                >
                     Nama passkey
                 </Label>
                 <Input
@@ -94,10 +98,19 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
             {error && <InputError message={error} />}
 
             <div className="flex flex-wrap gap-2">
-                <Button type="submit" disabled={isLoading || !name.trim()} className="h-11 rounded-xl px-5 font-semibold">
+                <Button
+                    type="submit"
+                    disabled={isLoading || !name.trim()}
+                    className="h-11 rounded-xl px-5 font-semibold"
+                >
                     {isLoading ? 'Mendaftarkan...' : 'Daftar passkey'}
                 </Button>
-                <Button type="button" variant="ghost" onClick={handleCancel} className="h-11 rounded-xl">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={handleCancel}
+                    className="h-11 rounded-xl"
+                >
                     Batal
                 </Button>
             </div>

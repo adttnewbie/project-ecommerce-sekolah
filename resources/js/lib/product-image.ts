@@ -7,7 +7,9 @@
  * path mentah dari backend (mis. `products/abc.jpg`) bukan URL yang bisa
  * diakses browser.
  */
-export function productImageUrl(image: string | null | undefined): string | null {
+export function productImageUrl(
+    image: string | null | undefined,
+): string | null {
     if (!image) {
         return null;
     }

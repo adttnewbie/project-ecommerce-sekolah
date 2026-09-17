@@ -23,17 +23,25 @@ export function SellerEmptyState({
 }: Props) {
     return (
         <div className="grid place-items-center px-6 py-12 text-center">
-            <span className="grid size-12 place-items-center rounded-[14px] bg-[#EFF8FF] text-[#0080FF] ring-1 ring-[#BCE0FF]" aria-hidden="true">
+            <span
+                className="grid size-12 place-items-center rounded-[14px] bg-[#EFF8FF] text-[#0080FF] ring-1 ring-[#BCE0FF]"
+                aria-hidden="true"
+            >
                 <Icon className="size-6" aria-hidden="true" />
             </span>
-            <h3 className="mt-4 text-sm font-semibold text-slate-900">{title}</h3>
-            <p className="mt-1 max-w-sm text-sm leading-6 text-slate-500">{description}</p>
-            {(actionHref && actionLabel) || (secondaryActionHref && secondaryActionLabel) ? (
+            <h3 className="mt-4 text-sm font-semibold text-slate-900">
+                {title}
+            </h3>
+            <p className="mt-1 max-w-sm text-sm leading-6 text-slate-500">
+                {description}
+            </p>
+            {(actionHref && actionLabel) ||
+            (secondaryActionHref && secondaryActionLabel) ? (
                 <div className="mt-4 flex flex-wrap justify-center gap-2">
                     {actionHref && actionLabel && (
                         <Button
                             asChild
-                            className="h-11 min-h-11 rounded-[12px] px-5 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                            className="h-11 min-h-11 rounded-[12px] px-5 font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                         >
                             <Link href={actionHref} aria-label={actionLabel}>
                                 {actionLabel}
@@ -44,7 +52,7 @@ export function SellerEmptyState({
                         <Button
                             asChild
                             variant="outline"
-                            className="h-11 min-h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                            className="h-11 min-h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                         >
                             <Link
                                 href={secondaryActionHref}

@@ -1,5 +1,12 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Inbox, Loader2, PackageCheck, ShoppingCart, Store } from 'lucide-react';
+import {
+    ArrowLeft,
+    Inbox,
+    Loader2,
+    PackageCheck,
+    ShoppingCart,
+    Store,
+} from 'lucide-react';
 import { EmptyState } from '@/components/admin-jurusan/empty-state';
 import { PageHeader } from '@/components/admin-jurusan/page-header';
 import { FlashAlert } from '@/components/picket/flash-alert';
@@ -31,9 +38,9 @@ export default function PicketReceiving({ up_jurusan, consignments }: Props) {
             consignment.status.code === 'approved' &&
             consignment.received_quantity < consignment.requested_quantity,
     );
-    const history = consignments.filter(
-        (c) => c.received_quantity > 0 || c.status.code !== 'approved',
-    ).slice(0, 6);
+    const history = consignments
+        .filter((c) => c.received_quantity > 0 || c.status.code !== 'approved')
+        .slice(0, 6);
 
     return (
         <>
@@ -46,7 +53,11 @@ export default function PicketReceiving({ up_jurusan, consignments }: Props) {
                     description="Catat barang fisik yang sudah datang setelah request disetujui admin jurusan. Cek jumlah, lalu simpan agar stok masuk POS."
                     actions={
                         <>
-                            <Button asChild variant="outline" className="rounded-xl">
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="rounded-xl"
+                            >
                                 <Link href="/picket/dashboard">
                                     <ArrowLeft className="size-4" />
                                     Dashboard
@@ -74,10 +85,14 @@ export default function PicketReceiving({ up_jurusan, consignments }: Props) {
                                 Barang Menunggu Diterima
                             </CardTitle>
                             <p className="mt-1 text-sm leading-6 text-slate-500">
-                                {awaitingReceive.length} request siap dicatat • Hanya yang approved dan belum penuh yang tampil
+                                {awaitingReceive.length} request siap dicatat •
+                                Hanya yang approved dan belum penuh yang tampil
                             </p>
                         </div>
-                        <Badge variant="secondary" className="w-fit rounded-full bg-[#EFF8FF] px-3 py-1.5 text-[#0080FF] ring-1 ring-blue-200">
+                        <Badge
+                            variant="secondary"
+                            className="w-fit rounded-full bg-[#EFF8FF] px-3 py-1.5 text-[#0080FF] ring-1 ring-blue-200"
+                        >
                             {awaitingReceive.length} antrian
                         </Badge>
                     </CardHeader>
@@ -93,8 +108,14 @@ export default function PicketReceiving({ up_jurusan, consignments }: Props) {
                         ) : (
                             <div className="grid gap-4">
                                 {awaitingReceive.map((consignment) => {
-                                    const remaining = consignment.requested_quantity - consignment.received_quantity;
-                                    const progressPct = Math.round((consignment.received_quantity / consignment.requested_quantity) * 100);
+                                    const remaining =
+                                        consignment.requested_quantity -
+                                        consignment.received_quantity;
+                                    const progressPct = Math.round(
+                                        (consignment.received_quantity /
+                                            consignment.requested_quantity) *
+                                            100,
+                                    );
 
                                     return (
                                         <Form
@@ -108,53 +129,97 @@ export default function PicketReceiving({ up_jurusan, consignments }: Props) {
                                                 <>
                                                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                                                         <div className="min-w-0 flex-1">
-                                                            <p className="truncate text-sm font-semibold leading-6 text-slate-900">{consignment.product_name}</p>
+                                                            <p className="truncate text-sm leading-6 font-semibold text-slate-900">
+                                                                {
+                                                                    consignment.product_name
+                                                                }
+                                                            </p>
                                                             <p className="mt-1 truncate text-sm text-slate-500">
-                                                                {consignment.seller_name} • diterima{' '}
-                                                                <span className="font-semibold tabular-nums text-slate-700">
-                                                                    {consignment.received_quantity}
+                                                                {
+                                                                    consignment.seller_name
+                                                                }{' '}
+                                                                • diterima{' '}
+                                                                <span className="font-semibold text-slate-700 tabular-nums">
+                                                                    {
+                                                                        consignment.received_quantity
+                                                                    }
                                                                 </span>
-                                                                /{consignment.requested_quantity} item
+                                                                /
+                                                                {
+                                                                    consignment.requested_quantity
+                                                                }{' '}
+                                                                item
                                                             </p>
                                                             <div className="mt-3 h-2 w-full max-w-[260px] overflow-hidden rounded-full bg-slate-100">
                                                                 <div
                                                                     className="h-full rounded-full bg-[#0080FF] transition-all duration-500"
-                                                                    style={{ width: `${progressPct}%` }}
+                                                                    style={{
+                                                                        width: `${progressPct}%`,
+                                                                    }}
                                                                 />
                                                             </div>
-                                                            <p className="mt-1 text-xs text-slate-500">{progressPct}% diterima • Sisa {remaining} item</p>
+                                                            <p className="mt-1 text-xs text-slate-500">
+                                                                {progressPct}%
+                                                                diterima • Sisa{' '}
+                                                                {remaining} item
+                                                            </p>
                                                         </div>
                                                         <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-end lg:w-auto">
                                                             <label className="flex-1 space-y-1.5 lg:w-44">
-                                                                <span className="text-xs font-medium text-slate-600">Jumlah diterima</span>
+                                                                <span className="text-xs font-medium text-slate-600">
+                                                                    Jumlah
+                                                                    diterima
+                                                                </span>
                                                                 <Input
                                                                     name="quantity"
                                                                     type="number"
                                                                     inputMode="numeric"
                                                                     min={1}
-                                                                    max={remaining}
-                                                                    defaultValue={remaining}
+                                                                    max={
+                                                                        remaining
+                                                                    }
+                                                                    defaultValue={
+                                                                        remaining
+                                                                    }
                                                                     required
                                                                     aria-label={`Jumlah terima ${consignment.product_name}`}
                                                                     className="h-11 rounded-xl border-slate-200 bg-white"
-                                                                    aria-invalid={Boolean(errors.quantity)}
+                                                                    aria-invalid={Boolean(
+                                                                        errors.quantity,
+                                                                    )}
                                                                 />
                                                                 {errors.quantity && (
-                                                                    <p className="text-xs text-rose-600">{errors.quantity}</p>
+                                                                    <p className="text-xs text-rose-600">
+                                                                        {
+                                                                            errors.quantity
+                                                                        }
+                                                                    </p>
                                                                 )}
                                                             </label>
                                                             <Button
                                                                 type="submit"
-                                                                disabled={processing}
+                                                                disabled={
+                                                                    processing
+                                                                }
                                                                 className="h-11 shrink-0 rounded-xl px-6 font-semibold"
                                                             >
-                                                                {processing ? <Loader2 className="size-4 animate-spin" /> : <PackageCheck className="size-4" />}
-                                                                {processing ? 'Menyimpan...' : 'Terima Barang'}
+                                                                {processing ? (
+                                                                    <Loader2 className="size-4 animate-spin" />
+                                                                ) : (
+                                                                    <PackageCheck className="size-4" />
+                                                                )}
+                                                                {processing
+                                                                    ? 'Menyimpan...'
+                                                                    : 'Terima Barang'}
                                                             </Button>
                                                         </div>
                                                     </div>
                                                     <p className="mt-3 text-xs leading-5 text-slate-500">
-                                                        Pastikan jumlah fisik sesuai sebelum simpan. Setelah diterima, stok otomatis tersedia di POS.
+                                                        Pastikan jumlah fisik
+                                                        sesuai sebelum simpan.
+                                                        Setelah diterima, stok
+                                                        otomatis tersedia di
+                                                        POS.
                                                     </p>
                                                 </>
                                             )}
@@ -169,20 +234,35 @@ export default function PicketReceiving({ up_jurusan, consignments }: Props) {
                 {history.length > 0 && (
                     <Card className="rounded-xl border-slate-200 shadow-sm">
                         <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
-                            <CardTitle className="text-base">Riwayat Penerimaan</CardTitle>
-                            <p className="text-sm leading-6 text-slate-500">6 data terbaru untuk konteks — bukan daftar lengkap.</p>
+                            <CardTitle className="text-base">
+                                Riwayat Penerimaan
+                            </CardTitle>
+                            <p className="text-sm leading-6 text-slate-500">
+                                6 data terbaru untuk konteks — bukan daftar
+                                lengkap.
+                            </p>
                         </CardHeader>
                         <CardContent className="p-5 sm:p-6">
                             <div className="grid gap-3 sm:grid-cols-2">
                                 {history.map((item) => (
-                                    <div key={`h-${item.id}`} className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
-                                        <p className="truncate text-sm font-semibold text-slate-900">{item.product_name}</p>
-                                        <p className="mt-1 truncate text-xs text-slate-500">{item.seller_name}</p>
+                                    <div
+                                        key={`h-${item.id}`}
+                                        className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3"
+                                    >
+                                        <p className="truncate text-sm font-semibold text-slate-900">
+                                            {item.product_name}
+                                        </p>
+                                        <p className="mt-1 truncate text-xs text-slate-500">
+                                            {item.seller_name}
+                                        </p>
                                         <div className="mt-2 flex items-center justify-between gap-2">
-                                            <span className="text-xs tabular-nums text-slate-600">
-                                                {item.received_quantity}/{item.requested_quantity} item
+                                            <span className="text-xs text-slate-600 tabular-nums">
+                                                {item.received_quantity}/
+                                                {item.requested_quantity} item
                                             </span>
-                                            <Badge className="rounded-full bg-white px-2 py-0 text-xs ring-1 ring-slate-200">{item.status.label}</Badge>
+                                            <Badge className="rounded-full bg-white px-2 py-0 text-xs ring-1 ring-slate-200">
+                                                {item.status.label}
+                                            </Badge>
                                         </div>
                                     </div>
                                 ))}

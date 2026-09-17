@@ -122,7 +122,9 @@ const formatRupiah = (value: number) =>
     }).format(value);
 
 export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
-    const { flash } = usePage().props as { flash: { success?: string; error?: string } };
+    const { flash } = usePage().props as {
+        flash: { success?: string; error?: string };
+    };
     const [processing, setProcessing] = useState(false);
     const [paymentProcessing, setPaymentProcessing] = useState(false);
     const [paymentError, setPaymentError] = useState<string>();
@@ -154,7 +156,8 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                 preserveScroll: true,
                 onStart: () => setProcessing(true),
                 onFinish: () => setProcessing(false),
-                onError: (errors) => setStatusError((errors as Record<string, string>).status),
+                onError: (errors) =>
+                    setStatusError((errors as Record<string, string>).status),
             },
         );
     };
@@ -177,7 +180,8 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                 preserveScroll: true,
                 onStart: () => setPaymentProcessing(true),
                 onFinish: () => setPaymentProcessing(false),
-                onError: (errors) => setPaymentError((errors as Record<string, string>).payment),
+                onError: (errors) =>
+                    setPaymentError((errors as Record<string, string>).payment),
             },
         );
     };
@@ -249,7 +253,10 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                     <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                         <div>
                             <Badge className="mb-2 rounded-[6px] border border-[#BCE0FF] bg-[#EFF8FF] text-[#0080FF]">
-                                <ShoppingCart className="size-3.5" aria-hidden="true" />{' '}
+                                <ShoppingCart
+                                    className="size-3.5"
+                                    aria-hidden="true"
+                                />{' '}
                                 {isOffline
                                     ? 'Detail transaksi offline'
                                     : 'Detail fulfillment'}
@@ -261,10 +268,14 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                         <Button
                             asChild
                             variant="outline"
-                            className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                            className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold text-slate-700 transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                         >
                             <Link href={ordersIndex()}>
-                                <ArrowLeft className="size-4" aria-hidden="true" /> Kembali
+                                <ArrowLeft
+                                    className="size-4"
+                                    aria-hidden="true"
+                                />{' '}
+                                Kembali
                             </Link>
                         </Button>
                     </section>
@@ -356,13 +367,19 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                                                             paymentProcessing
                                                         }
                                                         onClick={approvePayment}
-                                                        className="h-11 rounded-[12px] border-[#BBF7D0] bg-white font-semibold text-[#16A34A] hover:bg-[#ECFDF3] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#16A34A] focus-visible:ring-offset-2"
+                                                        className="h-11 rounded-[12px] border-[#BBF7D0] bg-white font-semibold text-[#16A34A] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[#ECFDF3] focus-visible:ring-2 focus-visible:ring-[#16A34A] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                                         aria-label="Tandai lunas"
                                                     >
                                                         {paymentProcessing ? (
-                                                            <Spinner className="size-4" aria-hidden="true" />
+                                                            <Spinner
+                                                                className="size-4"
+                                                                aria-hidden="true"
+                                                            />
                                                         ) : (
-                                                            <CheckCircle2 className="size-4" aria-hidden="true" />
+                                                            <CheckCircle2
+                                                                className="size-4"
+                                                                aria-hidden="true"
+                                                            />
                                                         )}
                                                         {paymentProcessing
                                                             ? 'Memproses...'
@@ -381,7 +398,10 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                                 ) : orderItem.cancelled_at ? (
                                     <div className="rounded-[14px] border border-[#FECACA] bg-[#FEF2F2] p-4 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none">
                                         <p className="flex items-center gap-2 text-sm font-semibold text-[#DC2626]">
-                                            <XCircle className="size-4 shrink-0" aria-hidden="true" />
+                                            <XCircle
+                                                className="size-4 shrink-0"
+                                                aria-hidden="true"
+                                            />
                                             Pesanan telah dibatalkan
                                         </p>
                                         <time
@@ -391,11 +411,18 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                                             {new Intl.DateTimeFormat('id-ID', {
                                                 dateStyle: 'medium',
                                                 timeStyle: 'short',
-                                            }).format(new Date(orderItem.cancelled_at))}
+                                            }).format(
+                                                new Date(
+                                                    orderItem.cancelled_at,
+                                                ),
+                                            )}
                                         </time>
                                         {orderItem.cancel_reason && (
                                             <p className="mt-2 flex gap-2 text-sm text-[#DC2626]">
-                                                <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                                                <AlertCircle
+                                                    className="mt-0.5 size-4 shrink-0"
+                                                    aria-hidden="true"
+                                                />
                                                 <span>
                                                     <span className="font-semibold">
                                                         Alasan:
@@ -413,12 +440,18 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                                     </p>
                                 ) : orderItem.status.code === 'completed' ? (
                                     <p className="flex items-center gap-2 text-sm font-medium text-[#16A34A]">
-                                        <PackageCheck className="size-4" aria-hidden="true" />{' '}
+                                        <PackageCheck
+                                            className="size-4"
+                                            aria-hidden="true"
+                                        />{' '}
                                         Fulfillment selesai.
                                     </p>
                                 ) : orderItem.status.code === 'sent' ? (
                                     <p className="flex items-center gap-2 text-sm font-medium text-indigo-700">
-                                        <CheckCircle2 className="size-4" aria-hidden="true" />
+                                        <CheckCircle2
+                                            className="size-4"
+                                            aria-hidden="true"
+                                        />
                                         Pesanan sudah dikirim. Menunggu buyer
                                         mengonfirmasi barang diterima.
                                     </p>
@@ -428,9 +461,14 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                                         type="button"
                                         disabled={processing}
                                         onClick={advanceStatus}
-                                        className="h-11 rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                        className="h-11 rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                     >
-                                        {processing && <Spinner className="size-4" aria-hidden="true" />}
+                                        {processing && (
+                                            <Spinner
+                                                className="size-4"
+                                                aria-hidden="true"
+                                            />
+                                        )}
                                         {processing
                                             ? 'Memproses...'
                                             : 'Tandai sudah dikirim'}
@@ -440,10 +478,17 @@ export default function SellerOrdersShow({ orderItem }: OrderDetailProps) {
                                         type="button"
                                         disabled={processing}
                                         onClick={advanceStatus}
-                                        className="h-11 rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
-                                        aria-label={nextActionFor(orderItem)?.action}
+                                        className="h-11 rounded-[12px] font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
+                                        aria-label={
+                                            nextActionFor(orderItem)?.action
+                                        }
                                     >
-                                        {processing && <Spinner className="size-4" aria-hidden="true" />}
+                                        {processing && (
+                                            <Spinner
+                                                className="size-4"
+                                                aria-hidden="true"
+                                            />
+                                        )}
                                         {processing
                                             ? 'Memproses...'
                                             : nextActionFor(orderItem)?.action}

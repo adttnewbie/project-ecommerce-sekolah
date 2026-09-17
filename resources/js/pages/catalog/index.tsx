@@ -1,8 +1,8 @@
 import type { PageProps as SharedPageProps } from '@inertiajs/core';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Package, Search, Tags } from 'lucide-react';
-import { ProductCard  } from '@/components/product/product-card';
-import type {ProductCardProduct} from '@/components/product/product-card';
+import { ProductCard } from '@/components/product/product-card';
+import type { ProductCardProduct } from '@/components/product/product-card';
 import { ProductGrid } from '@/components/product/product-grid';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -97,7 +97,7 @@ export default function CatalogIndex({
                                 </Badge>
                             )}
                         </div>
-                        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 scrollbar-hide">
+                        <div className="scrollbar-hide -mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
                             <Button
                                 asChild
                                 variant={
@@ -157,7 +157,7 @@ export default function CatalogIndex({
 
                     <section className="flex items-end justify-between gap-4">
                         <div className="max-w-3xl">
-                            <h2 className="text-[20px] font-semibold leading-7 text-slate-900">
+                            <h2 className="text-[20px] leading-7 font-semibold text-slate-900">
                                 Produk pilihan
                             </h2>
                             <p className="mt-1 text-sm text-slate-500">
@@ -181,7 +181,10 @@ export default function CatalogIndex({
                                 Coba gunakan kata kunci lain atau pilih semua
                                 kategori untuk melihat produk yang tersedia.
                             </p>
-                            <Button asChild className="mt-6 h-11 rounded-[12px] px-6">
+                            <Button
+                                asChild
+                                className="mt-6 h-11 rounded-[12px] px-6"
+                            >
                                 <Link href={home()}>Mulai Belanja</Link>
                             </Button>
                         </section>
@@ -189,7 +192,10 @@ export default function CatalogIndex({
                         <section>
                             <ProductGrid>
                                 {products.data.map((product) => (
-                                    <ProductCard key={product.id} product={product} />
+                                    <ProductCard
+                                        key={product.id}
+                                        product={product}
+                                    />
                                 ))}
                             </ProductGrid>
                         </section>

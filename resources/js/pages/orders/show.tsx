@@ -165,7 +165,9 @@ export default function BuyerOrdersShow({ order }: Props) {
 
                     <Card className="rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
                         <CardHeader>
-                            <CardTitle className="font-bold text-slate-900">Ringkasan</CardTitle>
+                            <CardTitle className="font-bold text-slate-900">
+                                Ringkasan
+                            </CardTitle>
                             <CardDescription>
                                 Status order dan total transaksi.
                             </CardDescription>
@@ -260,7 +262,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                         <Button
                                             type="submit"
                                             disabled={processing}
-                                            className="h-11 rounded-[12px] w-fit bg-emerald-600 shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-emerald-700"
+                                            className="h-11 w-fit rounded-[12px] bg-emerald-600 shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:bg-emerald-700"
                                         >
                                             <CheckCircle2 className="size-4" />
                                             {processing
@@ -281,7 +283,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                     <DialogTrigger asChild>
                                         <Button
                                             variant="destructive"
-                                            className="h-11 rounded-[12px] w-fit"
+                                            className="h-11 w-fit rounded-[12px]"
                                         >
                                             <XCircle className="size-4" />
                                             Batalkan Pesanan
@@ -347,7 +349,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                                                         <span className="text-slate-400">
                                                                             •
                                                                         </span>
-                                                                            <span className="tabular-nums">
+                                                                        <span className="tabular-nums">
                                                                             x
                                                                             {
                                                                                 item.quantity
@@ -393,7 +395,9 @@ export default function BuyerOrdersShow({ order }: Props) {
 
                     <Card className="gap-0 rounded-[14px] border border-slate-200 bg-white py-0 shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
                         <CardHeader className="border-b border-slate-100 p-6">
-                            <CardTitle className="font-bold text-slate-900">Item Order</CardTitle>
+                            <CardTitle className="font-bold text-slate-900">
+                                Item Order
+                            </CardTitle>
                             <CardDescription>
                                 Produk yang dibeli dalam order ini.
                             </CardDescription>
@@ -577,7 +581,9 @@ BuyerOrdersShow.layout = {
 
 const paymentStatusClass: Record<string, string> = {
     unpaid: 'mt-2 rounded-[6px] bg-slate-100 text-slate-700 ring-1 ring-slate-200',
-    pending_confirmation: 'mt-2 rounded-[6px] bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+    pending_confirmation:
+        'mt-2 rounded-[6px] bg-amber-50 text-amber-700 ring-1 ring-amber-200',
     paid: 'mt-2 rounded-[6px] bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
-    rejected: 'mt-2 rounded-[6px] bg-[#FEF2F2] text-[#DC2626] ring-1 ring-red-200',
+    rejected:
+        'mt-2 rounded-[6px] bg-[#FEF2F2] text-[#DC2626] ring-1 ring-red-200',
 };

@@ -90,8 +90,11 @@ export default function SellerProductCreate({
                 <div className="mx-auto max-w-4xl space-y-8">
                     <section className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                         <div>
-                            <div className="mb-2 inline-flex items-center gap-2 rounded-[6px] bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 border border-blue-100">
-                                <PackagePlus className="size-3.5" aria-hidden="true" />
+                            <div className="mb-2 inline-flex items-center gap-2 rounded-[6px] border border-blue-100 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+                                <PackagePlus
+                                    className="size-3.5"
+                                    aria-hidden="true"
+                                />
                                 Seller Center
                             </div>
                             <h1 className="text-2xl font-semibold text-slate-950">
@@ -105,10 +108,13 @@ export default function SellerProductCreate({
                         <Button
                             asChild
                             variant="outline"
-                            className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                            className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                         >
                             <Link href={sellerProductsIndex()}>
-                                <ArrowLeft className="size-4" aria-hidden="true" />
+                                <ArrowLeft
+                                    className="size-4"
+                                    aria-hidden="true"
+                                />
                                 Kembali
                             </Link>
                         </Button>
@@ -123,22 +129,27 @@ export default function SellerProductCreate({
                             <>
                                 {/* Skeleton fallback for form loading (hidden when not loading) */}
                                 {processing && (
-                                    <div className="space-y-8" aria-hidden="true">
-                                        {Array.from({ length: 3 }).map((_, idx) => (
-                                            <Card
-                                                key={`skeleton-${idx}`}
-                                                className={cardClassName}
-                                            >
-                                                <CardHeader className="p-6">
-                                                    <Skeleton className="h-5 w-40 rounded-[6px] motion-reduce:animate-none" />
-                                                    <Skeleton className="mt-1 h-4 w-64 rounded-[6px] motion-reduce:animate-none" />
-                                                </CardHeader>
-                                                <CardContent className="space-y-4 p-6">
-                                                    <Skeleton className="h-11 w-full rounded-[10px] motion-reduce:animate-none" />
-                                                    <Skeleton className="h-24 w-full rounded-[10px] motion-reduce:animate-none" />
-                                                </CardContent>
-                                            </Card>
-                                        ))}
+                                    <div
+                                        className="space-y-8"
+                                        aria-hidden="true"
+                                    >
+                                        {Array.from({ length: 3 }).map(
+                                            (_, idx) => (
+                                                <Card
+                                                    key={`skeleton-${idx}`}
+                                                    className={cardClassName}
+                                                >
+                                                    <CardHeader className="p-6">
+                                                        <Skeleton className="h-5 w-40 rounded-[6px] motion-reduce:animate-none" />
+                                                        <Skeleton className="mt-1 h-4 w-64 rounded-[6px] motion-reduce:animate-none" />
+                                                    </CardHeader>
+                                                    <CardContent className="space-y-4 p-6">
+                                                        <Skeleton className="h-11 w-full rounded-[10px] motion-reduce:animate-none" />
+                                                        <Skeleton className="h-24 w-full rounded-[10px] motion-reduce:animate-none" />
+                                                    </CardContent>
+                                                </Card>
+                                            ),
+                                        )}
                                     </div>
                                 )}
 
@@ -147,18 +158,31 @@ export default function SellerProductCreate({
                                     <CardHeader className="flex-row items-center border-b border-slate-100 p-6">
                                         <div className="space-y-1">
                                             <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-950">
-                                                <span className="grid size-8 place-items-center rounded-[10px] bg-[#EFF8FF] text-[#0080FF] ring-1 ring-[#BCE0FF]" aria-hidden="true">
-                                                    <Tags className="size-4" aria-hidden="true" />
+                                                <span
+                                                    className="grid size-8 place-items-center rounded-[10px] bg-[#EFF8FF] text-[#0080FF] ring-1 ring-[#BCE0FF]"
+                                                    aria-hidden="true"
+                                                >
+                                                    <Tags
+                                                        className="size-4"
+                                                        aria-hidden="true"
+                                                    />
                                                 </span>
                                                 Informasi Dasar
                                             </CardTitle>
                                             <CardDescription>
-                                                Nama, kategori, dan deskripsi produk.
+                                                Nama, kategori, dan deskripsi
+                                                produk.
                                             </CardDescription>
                                         </div>
                                         <CardAction>
-                                            <div className="hidden size-10 items-center justify-center rounded-[10px] bg-slate-100 text-slate-600 sm:flex" aria-hidden="true">
-                                                <FileText className="size-5" aria-hidden="true" />
+                                            <div
+                                                className="hidden size-10 items-center justify-center rounded-[10px] bg-slate-100 text-slate-600 sm:flex"
+                                                aria-hidden="true"
+                                            >
+                                                <FileText
+                                                    className="size-5"
+                                                    aria-hidden="true"
+                                                />
                                             </div>
                                         </CardAction>
                                     </CardHeader>
@@ -179,8 +203,14 @@ export default function SellerProductCreate({
                                                     maxLength={120}
                                                     placeholder="Contoh: Pulpen Gel Hitam"
                                                     className={inputClassName}
-                                                    aria-invalid={Boolean(errors.name)}
-                                                    aria-describedby={errors.name ? 'name-error' : undefined}
+                                                    aria-invalid={Boolean(
+                                                        errors.name,
+                                                    )}
+                                                    aria-describedby={
+                                                        errors.name
+                                                            ? 'name-error'
+                                                            : undefined
+                                                    }
                                                 />
                                                 <InputError
                                                     id="name-error"
@@ -198,19 +228,31 @@ export default function SellerProductCreate({
                                                 <Select
                                                     name="category_id"
                                                     value={categoryId}
-                                                    onValueChange={setCategoryId}
+                                                    onValueChange={
+                                                        setCategoryId
+                                                    }
                                                     required
                                                 >
                                                     <SelectTrigger
                                                         id="category_id"
-                                                        className={selectTriggerClassName}
-                                                        aria-invalid={Boolean(errors.category_id)}
-                                                        aria-describedby={errors.category_id ? 'category_id-error' : undefined}
+                                                        className={
+                                                            selectTriggerClassName
+                                                        }
+                                                        aria-invalid={Boolean(
+                                                            errors.category_id,
+                                                        )}
+                                                        aria-describedby={
+                                                            errors.category_id
+                                                                ? 'category_id-error'
+                                                                : undefined
+                                                        }
                                                     >
                                                         <SelectValue placeholder="Pilih kategori" />
                                                     </SelectTrigger>
                                                     <SelectContent
-                                                        style={selectPortalTheme}
+                                                        style={
+                                                            selectPortalTheme
+                                                        }
                                                         className="rounded-[10px] shadow-lg"
                                                     >
                                                         <SelectGroup>
@@ -257,9 +299,15 @@ export default function SellerProductCreate({
                                                 minLength={10}
                                                 maxLength={5000}
                                                 placeholder="Jelaskan kondisi, ukuran, varian, atau catatan penting produk."
-                                                aria-invalid={Boolean(errors.description)}
-                                                aria-describedby={errors.description ? 'description-error' : undefined}
-                                                className="min-h-24 rounded-[10px] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20"
+                                                aria-invalid={Boolean(
+                                                    errors.description,
+                                                )}
+                                                aria-describedby={
+                                                    errors.description
+                                                        ? 'description-error'
+                                                        : undefined
+                                                }
+                                                className="min-h-24 rounded-[10px] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 motion-reduce:transition-none"
                                             />
                                             <InputError
                                                 id="description-error"
@@ -274,18 +322,31 @@ export default function SellerProductCreate({
                                     <CardHeader className="flex-row items-center border-b border-slate-100 p-6">
                                         <div className="space-y-1">
                                             <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-950">
-                                                <span className="grid size-8 place-items-center rounded-[10px] bg-[#ECFDF3] text-[#16A34A] ring-1 ring-[#BBF7D0]" aria-hidden="true">
-                                                    <Wallet className="size-4" aria-hidden="true" />
+                                                <span
+                                                    className="grid size-8 place-items-center rounded-[10px] bg-[#ECFDF3] text-[#16A34A] ring-1 ring-[#BBF7D0]"
+                                                    aria-hidden="true"
+                                                >
+                                                    <Wallet
+                                                        className="size-4"
+                                                        aria-hidden="true"
+                                                    />
                                                 </span>
                                                 Harga & Stok
                                             </CardTitle>
                                             <CardDescription>
-                                                Metode penjualan, harga, dan ketersediaan.
+                                                Metode penjualan, harga, dan
+                                                ketersediaan.
                                             </CardDescription>
                                         </div>
                                         <CardAction>
-                                            <div className="hidden size-10 items-center justify-center rounded-[10px] bg-slate-100 text-slate-600 sm:flex" aria-hidden="true">
-                                                <CircleDollarSign className="size-5" aria-hidden="true" />
+                                            <div
+                                                className="hidden size-10 items-center justify-center rounded-[10px] bg-slate-100 text-slate-600 sm:flex"
+                                                aria-hidden="true"
+                                            >
+                                                <CircleDollarSign
+                                                    className="size-5"
+                                                    aria-hidden="true"
+                                                />
                                             </div>
                                         </CardAction>
                                     </CardHeader>
@@ -305,9 +366,17 @@ export default function SellerProductCreate({
                                             >
                                                 <SelectTrigger
                                                     id="sales_method"
-                                                    className={selectTriggerClassName}
-                                                    aria-invalid={Boolean(errors.sales_method)}
-                                                    aria-describedby={errors.sales_method ? 'sales_method-error' : undefined}
+                                                    className={
+                                                        selectTriggerClassName
+                                                    }
+                                                    aria-invalid={Boolean(
+                                                        errors.sales_method,
+                                                    )}
+                                                    aria-describedby={
+                                                        errors.sales_method
+                                                            ? 'sales_method-error'
+                                                            : undefined
+                                                    }
                                                 >
                                                     <SelectValue placeholder="Pilih metode penjualan" />
                                                 </SelectTrigger>
@@ -368,14 +437,24 @@ export default function SellerProductCreate({
                                                 >
                                                     <SelectTrigger
                                                         id="status"
-                                                        className={selectTriggerClassName}
-                                                        aria-invalid={Boolean(errors.status)}
-                                                        aria-describedby={errors.status ? 'status-error' : undefined}
+                                                        className={
+                                                            selectTriggerClassName
+                                                        }
+                                                        aria-invalid={Boolean(
+                                                            errors.status,
+                                                        )}
+                                                        aria-describedby={
+                                                            errors.status
+                                                                ? 'status-error'
+                                                                : undefined
+                                                        }
                                                     >
                                                         <SelectValue placeholder="Pilih status produk" />
                                                     </SelectTrigger>
                                                     <SelectContent
-                                                        style={selectPortalTheme}
+                                                        style={
+                                                            selectPortalTheme
+                                                        }
                                                         className="rounded-[10px] shadow-lg"
                                                     >
                                                         <SelectGroup>
@@ -409,21 +488,31 @@ export default function SellerProductCreate({
                                                 <Select
                                                     name="fulfillment_type"
                                                     value={fulfillmentType}
-                                                    onValueChange={setFulfillmentType}
+                                                    onValueChange={
+                                                        setFulfillmentType
+                                                    }
                                                     required
                                                 >
                                                     <SelectTrigger
                                                         id="fulfillment_type"
-                                                        className={selectTriggerClassName}
+                                                        className={
+                                                            selectTriggerClassName
+                                                        }
                                                         aria-invalid={Boolean(
                                                             errors.fulfillment_type,
                                                         )}
-                                                        aria-describedby={errors.fulfillment_type ? 'fulfillment_type-error' : undefined}
+                                                        aria-describedby={
+                                                            errors.fulfillment_type
+                                                                ? 'fulfillment_type-error'
+                                                                : undefined
+                                                        }
                                                     >
                                                         <SelectValue placeholder="Pilih sistem pemesanan" />
                                                     </SelectTrigger>
                                                     <SelectContent
-                                                        style={selectPortalTheme}
+                                                        style={
+                                                            selectPortalTheme
+                                                        }
                                                         className="rounded-[10px] shadow-lg"
                                                     >
                                                         <SelectGroup>
@@ -441,7 +530,9 @@ export default function SellerProductCreate({
                                                 </Select>
                                                 <InputError
                                                     id="fulfillment_type-error"
-                                                    message={errors.fulfillment_type}
+                                                    message={
+                                                        errors.fulfillment_type
+                                                    }
                                                 />
                                             </div>
 
@@ -453,7 +544,10 @@ export default function SellerProductCreate({
                                                     Harga
                                                 </Label>
                                                 <div className="relative">
-                                                    <CircleDollarSign className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                                                    <CircleDollarSign
+                                                        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
+                                                        aria-hidden="true"
+                                                    />
                                                     <Input
                                                         id="price"
                                                         name="price"
@@ -465,8 +559,14 @@ export default function SellerProductCreate({
                                                         inputMode="numeric"
                                                         placeholder="5000"
                                                         className={`${inputClassName} pl-9`}
-                                                        aria-invalid={Boolean(errors.price)}
-                                                        aria-describedby={errors.price ? 'price-error' : undefined}
+                                                        aria-invalid={Boolean(
+                                                            errors.price,
+                                                        )}
+                                                        aria-describedby={
+                                                            errors.price
+                                                                ? 'price-error'
+                                                                : undefined
+                                                        }
                                                     />
                                                 </div>
                                                 <InputError
@@ -483,7 +583,10 @@ export default function SellerProductCreate({
                                                     Harga sebelum diskon (Rp)
                                                 </Label>
                                                 <div className="relative">
-                                                    <CircleDollarSign className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                                                    <CircleDollarSign
+                                                        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
+                                                        aria-hidden="true"
+                                                    />
                                                     <Input
                                                         id="original_price"
                                                         name="original_price"
@@ -494,8 +597,14 @@ export default function SellerProductCreate({
                                                         inputMode="numeric"
                                                         placeholder="10000"
                                                         className={`${inputClassName} pl-9`}
-                                                        aria-invalid={Boolean(errors.original_price)}
-                                                        aria-describedby={errors.original_price ? 'original_price-error' : undefined}
+                                                        aria-invalid={Boolean(
+                                                            errors.original_price,
+                                                        )}
+                                                        aria-describedby={
+                                                            errors.original_price
+                                                                ? 'original_price-error'
+                                                                : undefined
+                                                        }
                                                     />
                                                 </div>
                                                 <p className="text-xs text-slate-500">
@@ -504,7 +613,9 @@ export default function SellerProductCreate({
                                                 </p>
                                                 <InputError
                                                     id="original_price-error"
-                                                    message={errors.original_price}
+                                                    message={
+                                                        errors.original_price
+                                                    }
                                                 />
                                             </div>
 
@@ -537,12 +648,20 @@ export default function SellerProductCreate({
                                                             className={
                                                                 inputClassName
                                                             }
-                                                            aria-invalid={Boolean(errors.stock)}
-                                                            aria-describedby={errors.stock ? 'stock-error' : undefined}
+                                                            aria-invalid={Boolean(
+                                                                errors.stock,
+                                                            )}
+                                                            aria-describedby={
+                                                                errors.stock
+                                                                    ? 'stock-error'
+                                                                    : undefined
+                                                            }
                                                         />
                                                         <InputError
                                                             id="stock-error"
-                                                            message={errors.stock}
+                                                            message={
+                                                                errors.stock
+                                                            }
                                                         />
                                                     </div>
                                                 )}
@@ -576,8 +695,14 @@ export default function SellerProductCreate({
                                                             className={
                                                                 inputClassName
                                                             }
-                                                            aria-invalid={Boolean(errors.requested_quantity)}
-                                                            aria-describedby={errors.requested_quantity ? 'requested_quantity-error' : undefined}
+                                                            aria-invalid={Boolean(
+                                                                errors.requested_quantity,
+                                                            )}
+                                                            aria-describedby={
+                                                                errors.requested_quantity
+                                                                    ? 'requested_quantity-error'
+                                                                    : undefined
+                                                            }
                                                         />
                                                         <InputError
                                                             id="requested_quantity-error"
@@ -596,18 +721,31 @@ export default function SellerProductCreate({
                                     <CardHeader className="flex-row items-center border-b border-slate-100 p-6">
                                         <div className="space-y-1">
                                             <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-950">
-                                                <span className="grid size-8 place-items-center rounded-[10px] bg-[#FFF7ED] text-[#EA580C] ring-1 ring-[#FFEDD5]" aria-hidden="true">
-                                                    <ImagePlus className="size-4" aria-hidden="true" />
+                                                <span
+                                                    className="grid size-8 place-items-center rounded-[10px] bg-[#FFF7ED] text-[#EA580C] ring-1 ring-[#FFEDD5]"
+                                                    aria-hidden="true"
+                                                >
+                                                    <ImagePlus
+                                                        className="size-4"
+                                                        aria-hidden="true"
+                                                    />
                                                 </span>
                                                 Media & Pengaturan
                                             </CardTitle>
                                             <CardDescription>
-                                                Gambar, UP Jurusan, dan opsi pre-order.
+                                                Gambar, UP Jurusan, dan opsi
+                                                pre-order.
                                             </CardDescription>
                                         </div>
                                         <CardAction>
-                                            <div className="hidden size-10 items-center justify-center rounded-[10px] bg-slate-100 text-slate-600 sm:flex" aria-hidden="true">
-                                                <Clock3 className="size-5" aria-hidden="true" />
+                                            <div
+                                                className="hidden size-10 items-center justify-center rounded-[10px] bg-slate-100 text-slate-600 sm:flex"
+                                                aria-hidden="true"
+                                            >
+                                                <Clock3
+                                                    className="size-5"
+                                                    aria-hidden="true"
+                                                />
                                             </div>
                                         </CardAction>
                                     </CardHeader>
@@ -620,15 +758,24 @@ export default function SellerProductCreate({
                                                 Gambar Produk
                                             </Label>
                                             <div className="relative">
-                                                <ImagePlus className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                                                <ImagePlus
+                                                    className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
+                                                    aria-hidden="true"
+                                                />
                                                 <Input
                                                     id="image"
                                                     name="image"
                                                     type="file"
                                                     accept="image/jpeg,image/png,image/webp"
                                                     className={`${inputClassName} h-11 pl-9 file:mr-3 file:rounded-[6px] file:border-0 file:bg-slate-100 file:px-2 file:text-sm file:font-medium file:text-slate-700`}
-                                                    aria-invalid={Boolean(errors.image)}
-                                                    aria-describedby={errors.image ? 'image-error' : undefined}
+                                                    aria-invalid={Boolean(
+                                                        errors.image,
+                                                    )}
+                                                    aria-describedby={
+                                                        errors.image
+                                                            ? 'image-error'
+                                                            : undefined
+                                                    }
                                                 />
                                             </div>
                                             <InputError
@@ -648,19 +795,31 @@ export default function SellerProductCreate({
                                                 <Select
                                                     name="up_jurusan_id"
                                                     value={upJurusanId}
-                                                    onValueChange={setUpJurusanId}
+                                                    onValueChange={
+                                                        setUpJurusanId
+                                                    }
                                                     required
                                                 >
                                                     <SelectTrigger
                                                         id="up_jurusan_id"
-                                                        className={selectTriggerClassName}
-                                                        aria-invalid={Boolean(errors.up_jurusan_id)}
-                                                        aria-describedby={errors.up_jurusan_id ? 'up_jurusan_id-error' : undefined}
+                                                        className={
+                                                            selectTriggerClassName
+                                                        }
+                                                        aria-invalid={Boolean(
+                                                            errors.up_jurusan_id,
+                                                        )}
+                                                        aria-describedby={
+                                                            errors.up_jurusan_id
+                                                                ? 'up_jurusan_id-error'
+                                                                : undefined
+                                                        }
                                                     >
                                                         <SelectValue placeholder="Pilih UP Jurusan" />
                                                     </SelectTrigger>
                                                     <SelectContent
-                                                        style={selectPortalTheme}
+                                                        style={
+                                                            selectPortalTheme
+                                                        }
                                                         className="rounded-[10px] shadow-lg"
                                                     >
                                                         <SelectGroup>
@@ -688,7 +847,9 @@ export default function SellerProductCreate({
                                                 </Select>
                                                 <InputError
                                                     id="up_jurusan_id-error"
-                                                    message={errors.up_jurusan_id}
+                                                    message={
+                                                        errors.up_jurusan_id
+                                                    }
                                                 />
                                             </div>
                                         )}
@@ -705,7 +866,10 @@ export default function SellerProductCreate({
                                                         Estimasi PO
                                                     </Label>
                                                     <div className="relative">
-                                                        <Clock3 className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                                                        <Clock3
+                                                            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
+                                                            aria-hidden="true"
+                                                        />
                                                         <Input
                                                             id="pre_order_estimate_days"
                                                             name="pre_order_estimate_days"
@@ -717,8 +881,14 @@ export default function SellerProductCreate({
                                                             inputMode="numeric"
                                                             placeholder="7"
                                                             className={`${inputClassName} pl-9`}
-                                                            aria-invalid={Boolean(errors.pre_order_estimate_days)}
-                                                            aria-describedby={errors.pre_order_estimate_days ? 'pre_order_estimate_days-error' : undefined}
+                                                            aria-invalid={Boolean(
+                                                                errors.pre_order_estimate_days,
+                                                            )}
+                                                            aria-describedby={
+                                                                errors.pre_order_estimate_days
+                                                                    ? 'pre_order_estimate_days-error'
+                                                                    : undefined
+                                                            }
                                                         />
                                                     </div>
                                                     <InputError
@@ -746,8 +916,14 @@ export default function SellerProductCreate({
                                                         className={
                                                             inputClassName
                                                         }
-                                                        aria-invalid={Boolean(errors.pre_order_note)}
-                                                        aria-describedby={errors.pre_order_note ? 'pre_order_note-error' : undefined}
+                                                        aria-invalid={Boolean(
+                                                            errors.pre_order_note,
+                                                        )}
+                                                        aria-describedby={
+                                                            errors.pre_order_note
+                                                                ? 'pre_order_note-error'
+                                                                : undefined
+                                                        }
                                                     />
                                                     <InputError
                                                         id="pre_order_note-error"
@@ -772,8 +948,14 @@ export default function SellerProductCreate({
                                                         className={
                                                             inputClassName
                                                         }
-                                                        aria-invalid={Boolean(errors.pre_order_deadline)}
-                                                        aria-describedby={errors.pre_order_deadline ? 'pre_order_deadline-error' : undefined}
+                                                        aria-invalid={Boolean(
+                                                            errors.pre_order_deadline,
+                                                        )}
+                                                        aria-describedby={
+                                                            errors.pre_order_deadline
+                                                                ? 'pre_order_deadline-error'
+                                                                : undefined
+                                                        }
                                                     />
                                                     <InputError
                                                         id="pre_order_deadline-error"
@@ -803,8 +985,14 @@ export default function SellerProductCreate({
                                                         className={
                                                             inputClassName
                                                         }
-                                                        aria-invalid={Boolean(errors.pre_order_min_quantity)}
-                                                        aria-describedby={errors.pre_order_min_quantity ? 'pre_order_min_quantity-error' : undefined}
+                                                        aria-invalid={Boolean(
+                                                            errors.pre_order_min_quantity,
+                                                        )}
+                                                        aria-describedby={
+                                                            errors.pre_order_min_quantity
+                                                                ? 'pre_order_min_quantity-error'
+                                                                : undefined
+                                                        }
                                                     />
                                                     <InputError
                                                         id="pre_order_min_quantity-error"
@@ -819,12 +1007,12 @@ export default function SellerProductCreate({
                                 </Card>
 
                                 {/* Sticky bottom action bar */}
-                                <div className="sticky bottom-0 bg-white/95 backdrop-blur border-t border-slate-200 p-4 flex justify-end gap-3 shadow-lg z-10 rounded-[14px]">
+                                <div className="sticky bottom-0 z-10 flex justify-end gap-3 rounded-[14px] border-t border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur">
                                     <Button
                                         asChild
                                         type="button"
                                         variant="outline"
-                                        className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                        className="h-11 rounded-[12px] border-slate-200 bg-white font-semibold transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 motion-reduce:transition-none"
                                     >
                                         <Link href={sellerProductsIndex()}>
                                             Batal
@@ -832,12 +1020,20 @@ export default function SellerProductCreate({
                                     </Button>
                                     <Button
                                         type="submit"
-                                        className="h-11 rounded-[12px] bg-[#0080FF] px-6 font-semibold text-white hover:bg-[#006FE0] active:bg-[#0059B8] transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2"
+                                        className="h-11 rounded-[12px] bg-[#0080FF] px-6 font-semibold text-white transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-[#006FE0] focus-visible:ring-2 focus-visible:ring-[#0080FF] focus-visible:ring-offset-2 active:bg-[#0059B8] motion-reduce:transition-none"
                                         disabled={processing}
                                         aria-busy={processing}
                                     >
-                                        {processing && <Spinner className="size-4" aria-hidden="true" />}
-                                        <Save className="size-4" aria-hidden="true" />
+                                        {processing && (
+                                            <Spinner
+                                                className="size-4"
+                                                aria-hidden="true"
+                                            />
+                                        )}
+                                        <Save
+                                            className="size-4"
+                                            aria-hidden="true"
+                                        />
                                         Simpan Produk
                                     </Button>
                                 </div>

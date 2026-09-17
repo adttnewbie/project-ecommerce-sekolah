@@ -1,5 +1,13 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, CheckCircle2, ClipboardList, Loader2, ReceiptText, Search, X } from 'lucide-react';
+import {
+    ArrowLeft,
+    CheckCircle2,
+    ClipboardList,
+    Loader2,
+    ReceiptText,
+    Search,
+    X,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { EmptyState } from '@/components/admin-jurusan/empty-state';
 import { PageHeader } from '@/components/admin-jurusan/page-header';
@@ -64,7 +72,10 @@ const paymentStatusStyles: Record<PaymentStatus, string> = {
     rejected: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
 };
 
-const nextStatus: Record<Exclude<OrderStatus, 'sent' | 'completed' | 'cancelled'>, { code: OrderStatus; action: string }> = {
+const nextStatus: Record<
+    Exclude<OrderStatus, 'sent' | 'completed' | 'cancelled'>,
+    { code: OrderStatus; action: string }
+> = {
     pending: { code: 'packed', action: 'Tandai dikemas' },
     packed: { code: 'sent', action: 'Tandai dikirim' },
 };
@@ -98,7 +109,8 @@ export default function PicketOrders({ daily_report, order_items }: Props) {
 
     const filtered = useMemo(() => {
         return order_items.filter((item) => {
-            const matchStatus = statusFilter === 'all' || item.status.code === statusFilter;
+            const matchStatus =
+                statusFilter === 'all' || item.status.code === statusFilter;
             const keyword = q.trim().toLowerCase();
             const matchSearch =
                 !keyword ||
@@ -121,9 +133,13 @@ export default function PicketOrders({ daily_report, order_items }: Props) {
     }, [order_items]);
 
     const advanceStatus = (item: PicketOrderItem) => {
-        if (item.status.code === 'sent' || item.status.code === 'completed' || item.status.code === 'cancelled') {
-return;
-}
+        if (
+            item.status.code === 'sent' ||
+            item.status.code === 'completed' ||
+            item.status.code === 'cancelled'
+        ) {
+            return;
+        }
 
         setStatusError(undefined);
         router.put(
@@ -140,8 +156,8 @@ return;
 
     const approvePayment = (item: PicketOrderItem) => {
         if (item.payment.status.code === 'paid') {
-return;
-}
+            return;
+        }
 
         setPaymentError(undefined);
         router.post(
@@ -166,7 +182,11 @@ return;
                     title="Orders Titipan UP"
                     description="Kelola status pengiriman dan konfirmasi pelunasan tunai untuk produk titipan. Bayar diverifikasi picket, bukan seller."
                     actions={
-                        <Button asChild variant="outline" className="rounded-xl">
+                        <Button
+                            asChild
+                            variant="outline"
+                            className="rounded-xl"
+                        >
                             <Link href="/picket/pos">
                                 <ArrowLeft className="size-4" />
                                 Kembali ke POS
@@ -188,7 +208,7 @@ return;
                                     <button
                                         key={f.value}
                                         onClick={() => setStatusFilter(f.value)}
-                                        className={`rounded-full border px-3.5 py-2 text-xs font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF]/30 ${
+                                        className={`rounded-full border px-3.5 py-2 text-xs font-semibold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[#0080FF]/30 focus-visible:outline-none ${
                                             statusFilter === f.value
                                                 ? 'border-[#0080FF] bg-[#0080FF] text-white shadow-sm'
                                                 : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -228,8 +248,14 @@ return;
                         </div>
                         {(q || statusFilter !== 'all') && (
                             <p className="text-xs text-slate-500">
-                                Menampilkan {filtered.length} dari {order_items.length} item
-                                {q && <> untuk “{q}”</>} • Status: {statusFilters.find((f) => f.value === statusFilter)?.label}
+                                Menampilkan {filtered.length} dari{' '}
+                                {order_items.length} item
+                                {q && <> untuk “{q}”</>} • Status:{' '}
+                                {
+                                    statusFilters.find(
+                                        (f) => f.value === statusFilter,
+                                    )?.label
+                                }
                             </p>
                         )}
                     </CardContent>
@@ -239,12 +265,20 @@ return;
                     <CardContent className="p-0">
                         <div className="grid gap-0 border-b border-slate-100 bg-slate-50/60 p-5 sm:grid-cols-2">
                             <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200">
-                                <p className="text-xs font-medium text-slate-500">Total item POS hari ini</p>
-                                <p className="mt-1 text-xl font-bold tabular-nums text-slate-900">{daily_report.total_sold}</p>
+                                <p className="text-xs font-medium text-slate-500">
+                                    Total item POS hari ini
+                                </p>
+                                <p className="mt-1 text-xl font-bold text-slate-900 tabular-nums">
+                                    {daily_report.total_sold}
+                                </p>
                             </div>
                             <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200">
-                                <p className="text-xs font-medium text-slate-500">Total omzet POS</p>
-                                <p className="mt-1 text-xl font-bold tabular-nums text-slate-900">{formatRupiah(daily_report.total_revenue)}</p>
+                                <p className="text-xs font-medium text-slate-500">
+                                    Total omzet POS
+                                </p>
+                                <p className="mt-1 text-xl font-bold text-slate-900 tabular-nums">
+                                    {formatRupiah(daily_report.total_revenue)}
+                                </p>
                             </div>
                         </div>
 
@@ -270,85 +304,187 @@ return;
                                                 <TableHead>Transaksi</TableHead>
                                                 <TableHead>Produk</TableHead>
                                                 <TableHead>Pembeli</TableHead>
-                                                <TableHead className="text-right">Qty</TableHead>
-                                                <TableHead className="text-right">Subtotal</TableHead>
+                                                <TableHead className="text-right">
+                                                    Qty
+                                                </TableHead>
+                                                <TableHead className="text-right">
+                                                    Subtotal
+                                                </TableHead>
                                                 <TableHead>Status</TableHead>
-                                                <TableHead>Pembayaran</TableHead>
-                                                <TableHead className="text-right">Aksi</TableHead>
+                                                <TableHead>
+                                                    Pembayaran
+                                                </TableHead>
+                                                <TableHead className="text-right">
+                                                    Aksi
+                                                </TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {filtered.map((item) => (
-                                                <TableRow key={item.id} className="hover:bg-[#EFF8FF]/50">
-                                                    <TableCell className="font-semibold text-slate-900">{item.code}</TableCell>
-                                                    <TableCell className="min-w-64 whitespace-normal">
-                                                        <p className="font-semibold leading-5 text-slate-900">{item.product_name}</p>
-                                                        <p className="mt-1 text-xs text-slate-500">Seller {item.seller_name}</p>
+                                                <TableRow
+                                                    key={item.id}
+                                                    className="hover:bg-[#EFF8FF]/50"
+                                                >
+                                                    <TableCell className="font-semibold text-slate-900">
+                                                        {item.code}
                                                     </TableCell>
-                                                    <TableCell className="min-w-40 whitespace-normal text-sm text-slate-700">{item.buyer_name}</TableCell>
-                                                    <TableCell className="text-right tabular-nums text-sm">{item.quantity} item</TableCell>
-                                                    <TableCell className="text-right font-bold tabular-nums text-slate-900">{formatRupiah(item.subtotal)}</TableCell>
+                                                    <TableCell className="min-w-64 whitespace-normal">
+                                                        <p className="leading-5 font-semibold text-slate-900">
+                                                            {item.product_name}
+                                                        </p>
+                                                        <p className="mt-1 text-xs text-slate-500">
+                                                            Seller{' '}
+                                                            {item.seller_name}
+                                                        </p>
+                                                    </TableCell>
+                                                    <TableCell className="min-w-40 text-sm whitespace-normal text-slate-700">
+                                                        {item.buyer_name}
+                                                    </TableCell>
+                                                    <TableCell className="text-right text-sm tabular-nums">
+                                                        {item.quantity} item
+                                                    </TableCell>
+                                                    <TableCell className="text-right font-bold text-slate-900 tabular-nums">
+                                                        {formatRupiah(
+                                                            item.subtotal,
+                                                        )}
+                                                    </TableCell>
                                                     <TableCell>
-                                                        <Badge className={cn('rounded-full px-2.5 py-1 text-xs', statusStyles[item.status.code])}>
+                                                        <Badge
+                                                            className={cn(
+                                                                'rounded-full px-2.5 py-1 text-xs',
+                                                                statusStyles[
+                                                                    item.status
+                                                                        .code
+                                                                ],
+                                                            )}
+                                                        >
                                                             {item.status.label}
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="space-y-1">
-                                                            <Badge className={cn('rounded-full px-2.5 py-1 text-xs', paymentStatusStyles[item.payment.status.code])}>
-                                                                {item.payment.status.label}
+                                                            <Badge
+                                                                className={cn(
+                                                                    'rounded-full px-2.5 py-1 text-xs',
+                                                                    paymentStatusStyles[
+                                                                        item
+                                                                            .payment
+                                                                            .status
+                                                                            .code
+                                                                    ],
+                                                                )}
+                                                            >
+                                                                {
+                                                                    item.payment
+                                                                        .status
+                                                                        .label
+                                                                }
                                                             </Badge>
-                                                            <p className="text-xs text-slate-500">{item.payment.method.label}</p>
+                                                            <p className="text-xs text-slate-500">
+                                                                {
+                                                                    item.payment
+                                                                        .method
+                                                                        .label
+                                                                }
+                                                            </p>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         <div className="flex justify-end gap-2">
-                                                            {item.payment.status.code !== 'paid' &&
-                                                                item.status.code !== 'cancelled' &&
-                                                                item.status.code !== 'completed' && (
+                                                            {item.payment.status
+                                                                .code !==
+                                                                'paid' &&
+                                                                item.status
+                                                                    .code !==
+                                                                    'cancelled' &&
+                                                                item.status
+                                                                    .code !==
+                                                                    'completed' && (
                                                                     <Button
                                                                         type="button"
                                                                         size="sm"
                                                                         variant="outline"
-                                                                        disabled={paymentProcessingId === item.id}
-                                                                        onClick={() => approvePayment(item)}
+                                                                        disabled={
+                                                                            paymentProcessingId ===
+                                                                            item.id
+                                                                        }
+                                                                        onClick={() =>
+                                                                            approvePayment(
+                                                                                item,
+                                                                            )
+                                                                        }
                                                                         className="h-9 rounded-full border-emerald-200 bg-white px-3 text-emerald-700 hover:bg-emerald-50"
                                                                     >
-                                                                        {paymentProcessingId === item.id ? (
+                                                                        {paymentProcessingId ===
+                                                                        item.id ? (
                                                                             <Loader2 className="size-3.5 animate-spin" />
                                                                         ) : (
                                                                             <CheckCircle2 className="size-3.5" />
                                                                         )}
-                                                                        {paymentProcessingId === item.id ? 'Memproses...' : 'Tandai lunas'}
+                                                                        {paymentProcessingId ===
+                                                                        item.id
+                                                                            ? 'Memproses...'
+                                                                            : 'Tandai lunas'}
                                                                     </Button>
                                                                 )}
-                                                            {item.status.code === 'pending' || item.status.code === 'packed' ? (
+                                                            {item.status
+                                                                .code ===
+                                                                'pending' ||
+                                                            item.status.code ===
+                                                                'packed' ? (
                                                                 <Button
                                                                     type="button"
                                                                     size="sm"
-                                                                    disabled={processingId === item.id}
-                                                                    onClick={() => advanceStatus(item)}
+                                                                    disabled={
+                                                                        processingId ===
+                                                                        item.id
+                                                                    }
+                                                                    onClick={() =>
+                                                                        advanceStatus(
+                                                                            item,
+                                                                        )
+                                                                    }
                                                                     className="h-9 rounded-full px-4 font-semibold"
                                                                 >
-                                                                    {processingId === item.id ? (
+                                                                    {processingId ===
+                                                                    item.id ? (
                                                                         <Loader2 className="size-3.5 animate-spin" />
                                                                     ) : null}
-                                                                    {processingId === item.id ? 'Memproses...' : nextStatus[item.status.code].action}
+                                                                    {processingId ===
+                                                                    item.id
+                                                                        ? 'Memproses...'
+                                                                        : nextStatus[
+                                                                              item
+                                                                                  .status
+                                                                                  .code
+                                                                          ]
+                                                                              .action}
                                                                 </Button>
                                                             ) : (
                                                                 <span
                                                                     className={cn(
                                                                         'inline-flex h-9 items-center rounded-full px-3 text-xs font-semibold ring-1',
-                                                                        item.status.code === 'completed'
+                                                                        item
+                                                                            .status
+                                                                            .code ===
+                                                                            'completed'
                                                                             ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-                                                                            : item.status.code === 'cancelled'
+                                                                            : item
+                                                                                    .status
+                                                                                    .code ===
+                                                                                'cancelled'
                                                                               ? 'bg-rose-50 text-rose-700 ring-rose-200'
                                                                               : 'bg-indigo-50 text-indigo-700 ring-indigo-200',
                                                                     )}
                                                                 >
-                                                                    {item.status.code === 'completed'
+                                                                    {item.status
+                                                                        .code ===
+                                                                    'completed'
                                                                         ? 'Selesai'
-                                                                        : item.status.code === 'cancelled'
+                                                                        : item
+                                                                                .status
+                                                                                .code ===
+                                                                            'cancelled'
                                                                           ? 'Batal'
                                                                           : 'Menunggu buyer'}
                                                                 </span>
@@ -364,57 +500,128 @@ return;
                                 {/* Mobile cards */}
                                 <div className="divide-y divide-slate-100 md:hidden">
                                     {filtered.map((item) => (
-                                        <div key={item.id} className="space-y-3 p-4">
+                                        <div
+                                            key={item.id}
+                                            className="space-y-3 p-4"
+                                        >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="min-w-0">
-                                                    <p className="truncate text-sm font-bold text-slate-900">{item.code}</p>
-                                                    <p className="truncate text-sm font-semibold leading-5 text-slate-900">{item.product_name}</p>
-                                                    <p className="truncate text-xs text-slate-500">Seller {item.seller_name} • {item.buyer_name}</p>
+                                                    <p className="truncate text-sm font-bold text-slate-900">
+                                                        {item.code}
+                                                    </p>
+                                                    <p className="truncate text-sm leading-5 font-semibold text-slate-900">
+                                                        {item.product_name}
+                                                    </p>
+                                                    <p className="truncate text-xs text-slate-500">
+                                                        Seller{' '}
+                                                        {item.seller_name} •{' '}
+                                                        {item.buyer_name}
+                                                    </p>
                                                 </div>
-                                                <Badge className={cn('shrink-0 rounded-full px-2.5 py-1 text-xs', statusStyles[item.status.code])}>
+                                                <Badge
+                                                    className={cn(
+                                                        'shrink-0 rounded-full px-2.5 py-1 text-xs',
+                                                        statusStyles[
+                                                            item.status.code
+                                                        ],
+                                                    )}
+                                                >
                                                     {item.status.label}
                                                 </Badge>
                                             </div>
                                             <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5 text-sm">
-                                                <span className="text-slate-500">{item.quantity} item</span>
-                                                <span className="font-bold tabular-nums text-slate-900">{formatRupiah(item.subtotal)}</span>
+                                                <span className="text-slate-500">
+                                                    {item.quantity} item
+                                                </span>
+                                                <span className="font-bold text-slate-900 tabular-nums">
+                                                    {formatRupiah(
+                                                        item.subtotal,
+                                                    )}
+                                                </span>
                                             </div>
                                             <div className="flex items-center justify-between gap-2">
-                                                <Badge className={cn('rounded-full px-2.5 py-1 text-xs', paymentStatusStyles[item.payment.status.code])}>
+                                                <Badge
+                                                    className={cn(
+                                                        'rounded-full px-2.5 py-1 text-xs',
+                                                        paymentStatusStyles[
+                                                            item.payment.status
+                                                                .code
+                                                        ],
+                                                    )}
+                                                >
                                                     {item.payment.status.label}
                                                 </Badge>
-                                                <span className="text-xs text-slate-500">{item.payment.method.label}</span>
+                                                <span className="text-xs text-slate-500">
+                                                    {item.payment.method.label}
+                                                </span>
                                             </div>
                                             <div className="grid grid-cols-2 gap-2">
-                                                {item.payment.status.code !== 'paid' &&
-                                                    item.status.code !== 'cancelled' &&
-                                                    item.status.code !== 'completed' && (
+                                                {item.payment.status.code !==
+                                                    'paid' &&
+                                                    item.status.code !==
+                                                        'cancelled' &&
+                                                    item.status.code !==
+                                                        'completed' && (
                                                         <Button
                                                             type="button"
                                                             variant="outline"
                                                             size="sm"
-                                                            disabled={paymentProcessingId === item.id}
-                                                            onClick={() => approvePayment(item)}
+                                                            disabled={
+                                                                paymentProcessingId ===
+                                                                item.id
+                                                            }
+                                                            onClick={() =>
+                                                                approvePayment(
+                                                                    item,
+                                                                )
+                                                            }
                                                             className="h-11 rounded-xl border-emerald-200 text-emerald-700 hover:bg-emerald-50"
                                                         >
                                                             <CheckCircle2 className="size-4" />
-                                                            {paymentProcessingId === item.id ? '...' : 'Tandai lunas'}
+                                                            {paymentProcessingId ===
+                                                            item.id
+                                                                ? '...'
+                                                                : 'Tandai lunas'}
                                                         </Button>
                                                     )}
-                                                {item.status.code === 'pending' || item.status.code === 'packed' ? (
+                                                {item.status.code ===
+                                                    'pending' ||
+                                                item.status.code ===
+                                                    'packed' ? (
                                                     <Button
                                                         type="button"
                                                         size="sm"
-                                                        disabled={processingId === item.id}
-                                                        onClick={() => advanceStatus(item)}
+                                                        disabled={
+                                                            processingId ===
+                                                            item.id
+                                                        }
+                                                        onClick={() =>
+                                                            advanceStatus(item)
+                                                        }
                                                         className="h-11 rounded-xl font-semibold"
                                                     >
-                                                        {processingId === item.id ? <Loader2 className="size-4 animate-spin" /> : null}
-                                                        {processingId === item.id ? '...' : nextStatus[item.status.code].action}
+                                                        {processingId ===
+                                                        item.id ? (
+                                                            <Loader2 className="size-4 animate-spin" />
+                                                        ) : null}
+                                                        {processingId ===
+                                                        item.id
+                                                            ? '...'
+                                                            : nextStatus[
+                                                                  item.status
+                                                                      .code
+                                                              ].action}
                                                     </Button>
                                                 ) : (
                                                     <div className="col-span-2 grid place-items-center rounded-xl bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
-                                                        {item.status.code === 'completed' ? 'Selesai' : item.status.code === 'cancelled' ? 'Batal' : 'Menunggu buyer'}
+                                                        {item.status.code ===
+                                                        'completed'
+                                                            ? 'Selesai'
+                                                            : item.status
+                                                                    .code ===
+                                                                'cancelled'
+                                                              ? 'Batal'
+                                                              : 'Menunggu buyer'}
                                                     </div>
                                                 )}
                                             </div>

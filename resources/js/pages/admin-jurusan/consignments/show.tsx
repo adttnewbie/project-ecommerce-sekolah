@@ -80,12 +80,12 @@ function stepperIndex(code: string) {
     const idx = steps.findIndex((s) => s.code === code);
 
     if (idx !== -1) {
-return idx;
-}
+        return idx;
+    }
 
     if (code === 'rejected' || code === 'cancelled') {
-return 0;
-}
+        return 0;
+    }
 
     return 0;
 }
@@ -106,8 +106,8 @@ export default function AdminJurusanConsignmentShow({ consignment }: Props) {
 
     const estimatedSellerPerItem = useMemo(() => {
         if (commission === null) {
-return consignment.product.price;
-}
+            return consignment.product.price;
+        }
 
         return Math.round(consignment.product.price * (1 - commission / 100));
     }, [commission, consignment.product.price]);

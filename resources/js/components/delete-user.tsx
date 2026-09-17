@@ -34,9 +34,12 @@ export default function DeleteUser() {
                         <TriangleAlert className="size-5 text-rose-600" />
                     </span>
                     <div>
-                        <CardTitle className="text-base font-semibold text-slate-900">Hapus akun</CardTitle>
+                        <CardTitle className="text-base font-semibold text-slate-900">
+                            Hapus akun
+                        </CardTitle>
                         <CardDescription className="mt-1 text-sm leading-5 text-slate-500">
-                            Hapus akun dan semua data terkait secara permanen. Tindakan ini tidak bisa dibatalkan.
+                            Hapus akun dan semua data terkait secara permanen.
+                            Tindakan ini tidak bisa dibatalkan.
                         </CardDescription>
                     </div>
                 </div>
@@ -45,9 +48,13 @@ export default function DeleteUser() {
                 <div className="flex gap-3 rounded-xl border border-rose-200 bg-[#FEF2F2] p-4">
                     <TriangleAlert className="mt-0.5 size-4 shrink-0 text-rose-600" />
                     <div className="space-y-1">
-                        <p className="text-sm font-semibold text-rose-800">Peringatan</p>
+                        <p className="text-sm font-semibold text-rose-800">
+                            Peringatan
+                        </p>
                         <p className="text-sm leading-5 text-rose-700">
-                            Akun, pesanan, dan data terkait akan dihapus permanen. Kamu akan keluar dan harus mendaftar ulang untuk kembali.
+                            Akun, pesanan, dan data terkait akan dihapus
+                            permanen. Kamu akan keluar dan harus mendaftar ulang
+                            untuk kembali.
                         </p>
                     </div>
                 </div>
@@ -65,7 +72,9 @@ export default function DeleteUser() {
                     <DialogContent className="sm:max-w-md">
                         <DialogTitle>Hapus akun ini?</DialogTitle>
                         <DialogDescription className="text-sm leading-6 text-slate-600">
-                            Tindakan ini akan menghapus akun secara permanen dan tidak dapat dibatalkan. Masukkan password untuk melanjutkan.
+                            Tindakan ini akan menghapus akun secara permanen dan
+                            tidak dapat dibatalkan. Masukkan password untuk
+                            melanjutkan.
                         </DialogDescription>
 
                         <Form
@@ -98,7 +107,8 @@ export default function DeleteUser() {
 
                                         <InputError message={errors.password} />
                                         <p className="text-xs text-slate-500">
-                                            Kami meminta password untuk memastikan ini benar-benar kamu.
+                                            Kami meminta password untuk
+                                            memastikan ini benar-benar kamu.
                                         </p>
                                     </div>
 
@@ -125,7 +135,9 @@ export default function DeleteUser() {
                                                 type="submit"
                                                 data-test="confirm-delete-user-button"
                                             >
-                                                {processing ? 'Menghapus...' : 'Ya, hapus akun'}
+                                                {processing
+                                                    ? 'Menghapus...'
+                                                    : 'Ya, hapus akun'}
                                             </button>
                                         </Button>
                                     </DialogFooter>

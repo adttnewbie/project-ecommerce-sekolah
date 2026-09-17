@@ -117,7 +117,11 @@ export function HeaderNotificationItem({
                 )}
                 style={
                     !notification.is_read
-                        ? { backgroundColor: iconBg, color: iconColor, borderColor: style?.border }
+                        ? {
+                              backgroundColor: iconBg,
+                              color: iconColor,
+                              borderColor: style?.border,
+                          }
                         : undefined
                 }
                 aria-hidden="true"
@@ -163,7 +167,7 @@ export function HeaderNotificationItem({
                         {notification.title}
                     </span>
                     {!notification.is_read && (
-                        <span className="ml-1.5 inline-flex items-center rounded-[6px] bg-[#EFF8FF] px-1.5 py-0.5 text-[11px] font-medium leading-none text-[#006FE0]">
+                        <span className="ml-1.5 inline-flex items-center rounded-[6px] bg-[#EFF8FF] px-1.5 py-0.5 text-[11px] leading-none font-medium text-[#006FE0]">
                             Baru
                         </span>
                     )}
@@ -176,7 +180,7 @@ export function HeaderNotificationItem({
                 <span className="flex w-full items-center gap-1.5 pt-0.5 text-xs leading-none">
                     <span
                         className={cn(
-                            'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium leading-none',
+                            'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] leading-none font-medium',
                             !notification.is_read
                                 ? 'bg-[#EFF8FF] text-[#006FE0]'
                                 : 'bg-slate-100 text-slate-500',

@@ -120,7 +120,11 @@ export default function PicketDashboard({
                                         Buka POS
                                     </Link>
                                 </Button>
-                                <Button asChild variant="outline" className="rounded-xl">
+                                <Button
+                                    asChild
+                                    variant="outline"
+                                    className="rounded-xl"
+                                >
                                     <Link href="/picket/reports">
                                         <FileText className="size-4" />
                                         Kirim Laporan
@@ -140,8 +144,10 @@ export default function PicketDashboard({
                             Laporan sudah dikirim
                         </AlertTitle>
                         <AlertDescription className="text-emerald-700">
-                            Dikirim pukul {formatTime(daily_report.submitted_at)}.
-                            Transaksi POS baru untuk hari ini sudah ditutup. Lihat ringkasan di halaman laporan.
+                            Dikirim pukul{' '}
+                            {formatTime(daily_report.submitted_at)}. Transaksi
+                            POS baru untuk hari ini sudah ditutup. Lihat
+                            ringkasan di halaman laporan.
                         </AlertDescription>
                     </Alert>
                 )}
@@ -193,7 +199,8 @@ export default function PicketDashboard({
                                     Semua barang sudah diterima
                                 </p>
                                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                                    Tidak ada request approved yang menunggu penerimaan fisik.
+                                    Tidak ada request approved yang menunggu
+                                    penerimaan fisik.
                                 </p>
                             </div>
                         ) : (
@@ -241,7 +248,11 @@ export default function PicketDashboard({
                         )}
                     </Panel>
 
-                    <Panel title="Nota Terbaru" icon={<ReceiptText />} count={daily_report.items.length}>
+                    <Panel
+                        title="Nota Terbaru"
+                        icon={<ReceiptText />}
+                        count={daily_report.items.length}
+                    >
                         {daily_report.items.length === 0 ? (
                             <EmptyState
                                 icon={ReceiptText}
@@ -266,9 +277,12 @@ export default function PicketDashboard({
 
                 <Card className="gap-0 overflow-hidden rounded-xl border-slate-200 py-0 shadow-sm">
                     <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
-                        <CardTitle className="text-lg">Ringkasan Setoran Hari Ini</CardTitle>
+                        <CardTitle className="text-lg">
+                            Ringkasan Setoran Hari Ini
+                        </CardTitle>
                         <CardDescription>
-                            Rincian transaksi yang masuk ke laporan picket. Nilai dihitung otomatis dari POS.
+                            Rincian transaksi yang masuk ke laporan picket.
+                            Nilai dihitung otomatis dari POS.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-4">
@@ -344,7 +358,12 @@ function Panel({
                         )}
                     </h2>
                     {actionHref && actionLabel && (
-                        <Button asChild variant="ghost" size="sm" className="h-8 rounded-full px-3 text-xs">
+                        <Button
+                            asChild
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 rounded-full px-3 text-xs"
+                        >
                             <Link href={actionHref}>{actionLabel}</Link>
                         </Button>
                     )}
@@ -370,7 +389,9 @@ function Row({
 }) {
     const content = (
         <>
-            <span className="line-clamp-1 font-medium text-slate-900">{label}</span>
+            <span className="line-clamp-1 font-medium text-slate-900">
+                {label}
+            </span>
             <Badge
                 variant="secondary"
                 className={
@@ -399,7 +420,9 @@ function Metric({ label, value }: { label: string; value: string }) {
     return (
         <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
             <p className="text-sm font-medium text-slate-500">{label}</p>
-            <p className="mt-2 break-words text-lg font-bold tabular-nums text-slate-900">{value}</p>
+            <p className="mt-2 text-lg font-bold break-words text-slate-900 tabular-nums">
+                {value}
+            </p>
         </div>
     );
 }

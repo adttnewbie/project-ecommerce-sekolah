@@ -25,8 +25,10 @@ export default function PicketUnassigned() {
                             Akun belum ditugaskan ke UP Jurusan
                         </h1>
                         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                            Dashboard picket, POS, penerimaan barang, order, dan laporan baru bisa digunakan setelah akun ini terhubung
-                            dengan satu UP Jurusan. Hubungi admin jurusan untuk assignment.
+                            Dashboard picket, POS, penerimaan barang, order, dan
+                            laporan baru bisa digunakan setelah akun ini
+                            terhubung dengan satu UP Jurusan. Hubungi admin
+                            jurusan untuk assignment.
                         </p>
                     </section>
 
@@ -41,8 +43,11 @@ export default function PicketUnassigned() {
                                         Hubungi admin jurusan
                                     </CardTitle>
                                     <CardDescription className="mt-1.5 text-sm leading-6 text-slate-600">
-                                        Admin jurusan perlu membuat atau menghubungkan akun picket ini ke UP Jurusan yang dikelola. Setelah
-                                        assigned, akses picket akan terbuka otomatis tanpa perlu buat akun baru.
+                                        Admin jurusan perlu membuat atau
+                                        menghubungkan akun picket ini ke UP
+                                        Jurusan yang dikelola. Setelah assigned,
+                                        akses picket akan terbuka otomatis tanpa
+                                        perlu buat akun baru.
                                     </CardDescription>
                                 </div>
                             </div>
@@ -50,13 +55,18 @@ export default function PicketUnassigned() {
                         <CardContent className="grid gap-4 p-6 text-sm leading-6 text-slate-600">
                             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5">
                                 Status akun:{' '}
-                                <span className="font-semibold text-slate-900">Menunggu assignment UP Jurusan</span>
+                                <span className="font-semibold text-slate-900">
+                                    Menunggu assignment UP Jurusan
+                                </span>
                                 <span className="mx-2 text-slate-300">•</span>
-                                <span className="text-slate-500">Role: Picket Officer</span>
+                                <span className="text-slate-500">
+                                    Role: Picket Officer
+                                </span>
                             </div>
                             <p className="text-slate-600">
-                                Jika assignment baru saja dilakukan, keluar lalu masuk kembali atau refresh halaman ini untuk memuat hak akses
-                                terbaru.
+                                Jika assignment baru saja dilakukan, keluar lalu
+                                masuk kembali atau refresh halaman ini untuk
+                                memuat hak akses terbaru.
                             </p>
                             <div className="flex flex-wrap gap-3 pt-2">
                                 <Button
@@ -67,8 +77,16 @@ export default function PicketUnassigned() {
                                     <RefreshCw className="size-4" />
                                     Refresh halaman
                                 </Button>
-                                <Button asChild variant="outline" className="h-11 rounded-xl">
-                                    <Link href="/logout" method="post" as="button">
+                                <Button
+                                    asChild
+                                    variant="outline"
+                                    className="h-11 rounded-xl"
+                                >
+                                    <Link
+                                        href="/logout"
+                                        method="post"
+                                        as="button"
+                                    >
                                         <LogOut className="size-4" />
                                         Keluar
                                     </Link>
@@ -79,11 +97,23 @@ export default function PicketUnassigned() {
 
                     <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
                         <CardContent className="p-6">
-                            <h2 className="text-sm font-semibold text-slate-900">Kenapa saya melihat ini?</h2>
+                            <h2 className="text-sm font-semibold text-slate-900">
+                                Kenapa saya melihat ini?
+                            </h2>
                             <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-6 text-slate-600">
-                                <li>Akun picket dibuat oleh admin jurusan tapi belum di-assign ke UP Jurusan tertentu.</li>
-                                <li>Satu UP Jurusan hanya bisa punya satu picket aktif (unique assignment) — cek apakah UP sudah punya picket.</li>
-                                <li>Setelah di-assign, kamu akan otomatis redirect ke Dashboard Picket.</li>
+                                <li>
+                                    Akun picket dibuat oleh admin jurusan tapi
+                                    belum di-assign ke UP Jurusan tertentu.
+                                </li>
+                                <li>
+                                    Satu UP Jurusan hanya bisa punya satu picket
+                                    aktif (unique assignment) — cek apakah UP
+                                    sudah punya picket.
+                                </li>
+                                <li>
+                                    Setelah di-assign, kamu akan otomatis
+                                    redirect ke Dashboard Picket.
+                                </li>
                             </ul>
                         </CardContent>
                     </Card>

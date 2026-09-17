@@ -1,5 +1,12 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { CheckCircle2, FileText, Loader2, ReceiptText, Search, X } from 'lucide-react';
+import {
+    CheckCircle2,
+    FileText,
+    Loader2,
+    ReceiptText,
+    Search,
+    X,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { EmptyState } from '@/components/admin-jurusan/empty-state';
 import { PageHeader } from '@/components/admin-jurusan/page-header';
@@ -75,13 +82,15 @@ export default function PicketReports({ errors, daily_report }: Props) {
         const kw = q.trim().toLowerCase();
 
         if (!kw) {
-return daily_report.items;
-}
+            return daily_report.items;
+        }
 
         return daily_report.items.filter(
             (it) =>
                 it.code.toLowerCase().includes(kw) ||
-                it.products.some((p) => p.product_name.toLowerCase().includes(kw)),
+                it.products.some((p) =>
+                    p.product_name.toLowerCase().includes(kw),
+                ),
         );
     }, [daily_report.items, q]);
 
@@ -103,7 +112,11 @@ return daily_report.items;
                                 Laporan dikirim
                             </Badge>
                         ) : daily_report.items.length === 0 ? (
-                            <Button type="button" disabled className="h-11 rounded-xl opacity-60">
+                            <Button
+                                type="button"
+                                disabled
+                                className="h-11 rounded-xl opacity-60"
+                            >
                                 <ReceiptText className="size-4" />
                                 Belum ada transaksi
                             </Button>
@@ -117,24 +130,57 @@ return daily_report.items;
                                 </AlertDialogTrigger>
                                 <AlertDialogContent className="rounded-2xl bg-white">
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>Kirim laporan harian?</AlertDialogTitle>
+                                        <AlertDialogTitle>
+                                            Kirim laporan harian?
+                                        </AlertDialogTitle>
                                         <AlertDialogDescription className="leading-6">
-                                            Laporan untuk <span className="font-semibold text-slate-900">{daily_report.date}</span> akan dikunci.
-                                            Total <span className="font-semibold">{daily_report.items.length} transaksi • {formatRupiah(daily_report.total_revenue)}</span> akan
-                                            disnapshot. Setelah dikirim, POS hari ini tidak bisa mencatat penjualan baru.
+                                            Laporan untuk{' '}
+                                            <span className="font-semibold text-slate-900">
+                                                {daily_report.date}
+                                            </span>{' '}
+                                            akan dikunci. Total{' '}
+                                            <span className="font-semibold">
+                                                {daily_report.items.length}{' '}
+                                                transaksi •{' '}
+                                                {formatRupiah(
+                                                    daily_report.total_revenue,
+                                                )}
+                                            </span>{' '}
+                                            akan disnapshot. Setelah dikirim,
+                                            POS hari ini tidak bisa mencatat
+                                            penjualan baru.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
-                                    <Form action="/picket/up-jurusan/report" method="post" disableWhileProcessing>
+                                    <Form
+                                        action="/picket/up-jurusan/report"
+                                        method="post"
+                                        disableWhileProcessing
+                                    >
                                         {({ processing }) => (
                                             <AlertDialogFooter className="gap-2 sm:gap-3">
                                                 <AlertDialogCancel asChild>
-                                                    <Button type="button" variant="outline" className="rounded-xl" disabled={processing}>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        className="rounded-xl"
+                                                        disabled={processing}
+                                                    >
                                                         Batal
                                                     </Button>
                                                 </AlertDialogCancel>
-                                                <Button type="submit" disabled={processing} className="rounded-xl">
-                                                    {processing ? <Loader2 className="size-4 animate-spin" /> : <ReceiptText className="size-4" />}
-                                                    {processing ? 'Mengirim...' : 'Ya, kirim laporan'}
+                                                <Button
+                                                    type="submit"
+                                                    disabled={processing}
+                                                    className="rounded-xl"
+                                                >
+                                                    {processing ? (
+                                                        <Loader2 className="size-4 animate-spin" />
+                                                    ) : (
+                                                        <ReceiptText className="size-4" />
+                                                    )}
+                                                    {processing
+                                                        ? 'Mengirim...'
+                                                        : 'Ya, kirim laporan'}
                                                 </Button>
                                             </AlertDialogFooter>
                                         )}
@@ -154,15 +200,25 @@ return daily_report.items;
                 {isSubmitted && (
                     <Alert className="rounded-xl border-emerald-200 bg-emerald-50 text-emerald-800">
                         <CheckCircle2 className="size-4" />
-                        <AlertTitle className="text-emerald-900">Laporan sudah dikunci</AlertTitle>
+                        <AlertTitle className="text-emerald-900">
+                            Laporan sudah dikunci
+                        </AlertTitle>
                         <AlertDescription className="text-emerald-700">
-                            Dikirim {formatDateTime(daily_report.submitted_at)} • {daily_report.items.length} transaksi • Omzet {formatRupiah(daily_report.total_revenue)}
+                            Dikirim {formatDateTime(daily_report.submitted_at)}{' '}
+                            • {daily_report.items.length} transaksi • Omzet{' '}
+                            {formatRupiah(daily_report.total_revenue)}
                         </AlertDescription>
                     </Alert>
                 )}
 
                 <section className="grid gap-4 sm:grid-cols-2">
-                    <StatCard label="Total item terjual" value={daily_report.total_sold} hint="Quantity keluar POS" icon={FileText} tone="blue" />
+                    <StatCard
+                        label="Total item terjual"
+                        value={daily_report.total_sold}
+                        hint="Quantity keluar POS"
+                        icon={FileText}
+                        tone="blue"
+                    />
                     <StatCard
                         label="Total omzet"
                         value={formatRupiah(daily_report.total_revenue)}
@@ -175,9 +231,12 @@ return daily_report.items;
                 <Card className="overflow-hidden rounded-xl border-slate-200 shadow-sm">
                     <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h2 className="font-semibold tracking-tight text-slate-900">Transaksi laporan</h2>
+                            <h2 className="font-semibold tracking-tight text-slate-900">
+                                Transaksi laporan
+                            </h2>
                             <p className="text-sm leading-6 text-slate-500">
-                                {filtered.length} dari {daily_report.items.length} transaksi
+                                {filtered.length} dari{' '}
+                                {daily_report.items.length} transaksi
                                 {q && <> untuk “{q}”</>}
                             </p>
                         </div>
@@ -226,49 +285,110 @@ return daily_report.items;
                                             <TableRow className="bg-slate-50">
                                                 <TableHead>Transaksi</TableHead>
                                                 <TableHead>Produk</TableHead>
-                                                <TableHead className="text-right">Item</TableHead>
-                                                <TableHead className="text-right">Omzet</TableHead>
-                                                <TableHead className="text-right">Komisi UP</TableHead>
-                                                <TableHead className="text-right">Hak Seller</TableHead>
-                                                <TableHead className="text-right">Nota</TableHead>
+                                                <TableHead className="text-right">
+                                                    Item
+                                                </TableHead>
+                                                <TableHead className="text-right">
+                                                    Omzet
+                                                </TableHead>
+                                                <TableHead className="text-right">
+                                                    Komisi UP
+                                                </TableHead>
+                                                <TableHead className="text-right">
+                                                    Hak Seller
+                                                </TableHead>
+                                                <TableHead className="text-right">
+                                                    Nota
+                                                </TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {filtered.map((item) => (
-                                                <TableRow key={item.code} className="hover:bg-[#EFF8FF]/50">
+                                                <TableRow
+                                                    key={item.code}
+                                                    className="hover:bg-[#EFF8FF]/50"
+                                                >
                                                     <TableCell className="min-w-52 whitespace-normal">
-                                                        <p className="font-bold text-slate-900">{item.code}</p>
-                                                        <p className="text-xs text-slate-500">{formatDateTime(item.sold_at)}</p>
+                                                        <p className="font-bold text-slate-900">
+                                                            {item.code}
+                                                        </p>
+                                                        <p className="text-xs text-slate-500">
+                                                            {formatDateTime(
+                                                                item.sold_at,
+                                                            )}
+                                                        </p>
                                                     </TableCell>
                                                     <TableCell className="min-w-72">
                                                         <div className="space-y-2">
-                                                            {item.products.map((product) => (
-                                                                <div
-                                                                    key={`${item.code}-${product.product_name}-${product.source}`}
-                                                                    className="rounded-xl border border-slate-200 bg-white p-2.5"
-                                                                >
-                                                                    <div className="flex flex-wrap items-center gap-2">
-                                                                        <p className="text-sm font-semibold text-slate-900">{product.product_name}</p>
-                                                                        <Badge
-                                                                            className={`rounded-full px-2 py-0 text-xs ring-1 ${product.source === 'Produk UP' ? 'bg-[#EFF8FF] text-[#0080FF] ring-blue-200' : 'bg-emerald-50 text-emerald-700 ring-emerald-200'}`}
-                                                                        >
-                                                                            {product.source}
-                                                                        </Badge>
+                                                            {item.products.map(
+                                                                (product) => (
+                                                                    <div
+                                                                        key={`${item.code}-${product.product_name}-${product.source}`}
+                                                                        className="rounded-xl border border-slate-200 bg-white p-2.5"
+                                                                    >
+                                                                        <div className="flex flex-wrap items-center gap-2">
+                                                                            <p className="text-sm font-semibold text-slate-900">
+                                                                                {
+                                                                                    product.product_name
+                                                                                }
+                                                                            </p>
+                                                                            <Badge
+                                                                                className={`rounded-full px-2 py-0 text-xs ring-1 ${product.source === 'Produk UP' ? 'bg-[#EFF8FF] text-[#0080FF] ring-blue-200' : 'bg-emerald-50 text-emerald-700 ring-emerald-200'}`}
+                                                                            >
+                                                                                {
+                                                                                    product.source
+                                                                                }
+                                                                            </Badge>
+                                                                        </div>
+                                                                        <p className="mt-1 text-xs text-slate-500 tabular-nums">
+                                                                            {
+                                                                                product.quantity
+                                                                            }{' '}
+                                                                            x{' '}
+                                                                            {formatRupiah(
+                                                                                product.unit_price,
+                                                                            )}{' '}
+                                                                            ={' '}
+                                                                            {formatRupiah(
+                                                                                product.subtotal,
+                                                                            )}
+                                                                        </p>
                                                                     </div>
-                                                                    <p className="mt-1 text-xs tabular-nums text-slate-500">
-                                                                        {product.quantity} x {formatRupiah(product.unit_price)} = {formatRupiah(product.subtotal)}
-                                                                    </p>
-                                                                </div>
-                                                            ))}
+                                                                ),
+                                                            )}
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-right tabular-nums text-sm">{item.total_quantity} item</TableCell>
-                                                    <TableCell className="text-right font-bold tabular-nums text-slate-900">{formatRupiah(item.total_amount)}</TableCell>
-                                                    <TableCell className="text-right font-semibold tabular-nums text-[#0080FF]">{formatRupiah(item.commission_amount)}</TableCell>
-                                                    <TableCell className="text-right font-semibold tabular-nums text-emerald-700">{formatRupiah(item.seller_amount)}</TableCell>
+                                                    <TableCell className="text-right text-sm tabular-nums">
+                                                        {item.total_quantity}{' '}
+                                                        item
+                                                    </TableCell>
+                                                    <TableCell className="text-right font-bold text-slate-900 tabular-nums">
+                                                        {formatRupiah(
+                                                            item.total_amount,
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-right font-semibold text-[#0080FF] tabular-nums">
+                                                        {formatRupiah(
+                                                            item.commission_amount,
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-right font-semibold text-emerald-700 tabular-nums">
+                                                        {formatRupiah(
+                                                            item.seller_amount,
+                                                        )}
+                                                    </TableCell>
                                                     <TableCell className="text-right">
-                                                        <Button asChild size="sm" variant="outline" className="h-9 rounded-full">
-                                                            <Link href={item.receipt_url}>
+                                                        <Button
+                                                            asChild
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-9 rounded-full"
+                                                        >
+                                                            <Link
+                                                                href={
+                                                                    item.receipt_url
+                                                                }
+                                                            >
                                                                 <ReceiptText className="size-4" />
                                                                 Detail
                                                             </Link>
@@ -283,46 +403,97 @@ return daily_report.items;
                                 {/* Mobile */}
                                 <div className="divide-y divide-slate-100 md:hidden">
                                     {filtered.map((item) => (
-                                        <div key={item.code} className="space-y-3 p-4">
+                                        <div
+                                            key={item.code}
+                                            className="space-y-3 p-4"
+                                        >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
-                                                    <p className="font-bold text-slate-900">{item.code}</p>
-                                                    <p className="text-xs text-slate-500">{formatDateTime(item.sold_at)}</p>
+                                                    <p className="font-bold text-slate-900">
+                                                        {item.code}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500">
+                                                        {formatDateTime(
+                                                            item.sold_at,
+                                                        )}
+                                                    </p>
                                                 </div>
-                                                <Badge variant="secondary" className="rounded-full bg-slate-100 px-2.5 py-1 text-xs">
+                                                <Badge
+                                                    variant="secondary"
+                                                    className="rounded-full bg-slate-100 px-2.5 py-1 text-xs"
+                                                >
                                                     {item.total_quantity} item
                                                 </Badge>
                                             </div>
                                             <div className="space-y-2">
                                                 {item.products.map((p) => (
-                                                    <div key={p.product_name + p.source} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                                                    <div
+                                                        key={
+                                                            p.product_name +
+                                                            p.source
+                                                        }
+                                                        className="rounded-xl border border-slate-200 bg-slate-50/60 p-3"
+                                                    >
                                                         <div className="flex items-center gap-2">
-                                                            <p className="truncate text-sm font-semibold text-slate-900">{p.product_name}</p>
-                                                            <Badge className={`shrink-0 rounded-full px-2 py-0 text-xs ring-1 ${p.source === 'Produk UP' ? 'bg-[#EFF8FF] text-[#0080FF]' : 'bg-emerald-50 text-emerald-700'}`}>
+                                                            <p className="truncate text-sm font-semibold text-slate-900">
+                                                                {p.product_name}
+                                                            </p>
+                                                            <Badge
+                                                                className={`shrink-0 rounded-full px-2 py-0 text-xs ring-1 ${p.source === 'Produk UP' ? 'bg-[#EFF8FF] text-[#0080FF]' : 'bg-emerald-50 text-emerald-700'}`}
+                                                            >
                                                                 {p.source}
                                                             </Badge>
                                                         </div>
-                                                        <p className="mt-1 text-xs tabular-nums text-slate-500">
-                                                            {p.quantity} x {formatRupiah(p.unit_price)} = {formatRupiah(p.subtotal)}
+                                                        <p className="mt-1 text-xs text-slate-500 tabular-nums">
+                                                            {p.quantity} x{' '}
+                                                            {formatRupiah(
+                                                                p.unit_price,
+                                                            )}{' '}
+                                                            ={' '}
+                                                            {formatRupiah(
+                                                                p.subtotal,
+                                                            )}
                                                         </p>
                                                     </div>
                                                 ))}
                                             </div>
                                             <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-3 text-center">
                                                 <div>
-                                                    <p className="text-xs text-slate-500">Omzet</p>
-                                                    <p className="mt-1 text-sm font-bold tabular-nums">{formatRupiah(item.total_amount)}</p>
+                                                    <p className="text-xs text-slate-500">
+                                                        Omzet
+                                                    </p>
+                                                    <p className="mt-1 text-sm font-bold tabular-nums">
+                                                        {formatRupiah(
+                                                            item.total_amount,
+                                                        )}
+                                                    </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-slate-500">Komisi UP</p>
-                                                    <p className="mt-1 text-sm font-bold tabular-nums text-[#0080FF]">{formatRupiah(item.commission_amount)}</p>
+                                                    <p className="text-xs text-slate-500">
+                                                        Komisi UP
+                                                    </p>
+                                                    <p className="mt-1 text-sm font-bold text-[#0080FF] tabular-nums">
+                                                        {formatRupiah(
+                                                            item.commission_amount,
+                                                        )}
+                                                    </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-slate-500">Seller</p>
-                                                    <p className="mt-1 text-sm font-bold tabular-nums text-emerald-700">{formatRupiah(item.seller_amount)}</p>
+                                                    <p className="text-xs text-slate-500">
+                                                        Seller
+                                                    </p>
+                                                    <p className="mt-1 text-sm font-bold text-emerald-700 tabular-nums">
+                                                        {formatRupiah(
+                                                            item.seller_amount,
+                                                        )}
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <Button asChild variant="outline" className="h-11 w-full rounded-xl">
+                                            <Button
+                                                asChild
+                                                variant="outline"
+                                                className="h-11 w-full rounded-xl"
+                                            >
                                                 <Link href={item.receipt_url}>
                                                     <ReceiptText className="size-4" />
                                                     Lihat Nota

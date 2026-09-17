@@ -88,7 +88,10 @@ function TwoFactorSetupStep({
                     </div>
 
                     <div className="flex w-full">
-                        <Button className="h-11 w-full rounded-xl font-semibold" onClick={onNextStep}>
+                        <Button
+                            className="h-11 w-full rounded-xl font-semibold"
+                            onClick={onNextStep}
+                        >
                             {buttonText}
                         </Button>
                     </div>
@@ -112,7 +115,7 @@ function TwoFactorSetupStep({
                                         type="text"
                                         readOnly
                                         value={manualSetupKey}
-                                        className="h-full w-full bg-white p-3 text-sm font-mono text-slate-800 outline-none"
+                                        className="h-full w-full bg-white p-3 font-mono text-sm text-slate-800 outline-none"
                                         aria-label="Kunci pengaturan manual"
                                     />
                                     <button
@@ -267,8 +270,7 @@ export default function TwoFactorSetupModal({
         if (showVerificationStep) {
             return {
                 title: 'Verifikasi kode autentikator',
-                description:
-                    'Masukkan 6 digit kode dari aplikasi autentikator',
+                description: 'Masukkan 6 digit kode dari aplikasi autentikator',
                 buttonText: 'Lanjutkan',
             };
         }
