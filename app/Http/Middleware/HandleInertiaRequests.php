@@ -209,36 +209,9 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
-        $notifications = Notification::query()
-            ->where('user_id', $adminJurusan->id)
-            ->active()
-            ->orderBy('created_at', 'desc')
-            ->limit(self::HEADER_NOTIFICATION_LIMIT)
-            ->get([
-                'key',
-                'type',
-                'title',
-                'description',
-                'href',
-                'read_at',
-                'created_at',
-            ]);
-
-        $supportEmail = config('mail.from.address');
-
         return [
-            'notifications' => $notifications->map(function ($notification) {
-                return [
-                    'key' => $notification->key,
-                    'type' => $notification->type,
-                    'title' => $notification->title,
-                    'description' => $notification->description,
-                    'href' => $notification->href,
-                    'is_read' => $notification->read_at !== null,
-                    'created_at' => $notification->created_at->toISOString(),
-                ];
-            })->values()->all(),
-            'supportEmail' => $supportEmail,
+            'notifications' => $this->persistedNotificationsFor($adminJurusan),
+            'supportEmail' => config('mail.from.address'),
         ];
     }
 
@@ -254,36 +227,9 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
-        $notifications = Notification::query()
-            ->where('user_id', $picket->id)
-            ->active()
-            ->orderBy('created_at', 'desc')
-            ->limit(self::HEADER_NOTIFICATION_LIMIT)
-            ->get([
-                'key',
-                'type',
-                'title',
-                'description',
-                'href',
-                'read_at',
-                'created_at',
-            ]);
-
-        $supportEmail = config('mail.from.address');
-
         return [
-            'notifications' => $notifications->map(function ($notification) {
-                return [
-                    'key' => $notification->key,
-                    'type' => $notification->type,
-                    'title' => $notification->title,
-                    'description' => $notification->description,
-                    'href' => $notification->href,
-                    'is_read' => $notification->read_at !== null,
-                    'created_at' => $notification->created_at->toISOString(),
-                ];
-            })->values()->all(),
-            'supportEmail' => $supportEmail,
+            'notifications' => $this->persistedNotificationsFor($picket),
+            'supportEmail' => config('mail.from.address'),
         ];
     }
 
