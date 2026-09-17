@@ -6,6 +6,7 @@ use App\Enums\OrderItemStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Events\OrderItemStatusChanged;
+use App\Events\OrderPaymentApproved;
 use App\Http\Requests\Seller\UpdateOrderItemStatusRequest;
 use App\Models\OrderItem;
 use App\Models\UpJurusanStockMovement;
@@ -281,6 +282,16 @@ class SellerOrderController extends Controller
 
         PaymentTransitionService::approve($orderItem, $seller);
 
+        $orderItem->loadMissing('order:id,code');
+
+        OrderPaymentApproved::dispatch(
+            orderItemId: $orderItem->id,
+            orderNumber: $orderItem->order->code ?? "TRX-{$orderItem->order_id}",
+            amount: (int) $orderItem->subtotal,
+            status: 'approved',
+            processedBy: $seller->id,
+        );
+
         return back()->with('success', 'Pelunasan item berhasil dikonfirmasi.');
     }
 
@@ -309,6 +320,17 @@ class SellerOrderController extends Controller
             $orderItem,
             $seller,
             $validated['payment_rejection_reason'] ?? null,
+        );
+
+        $orderItem->loadMissing('order:id,code');
+
+        OrderPaymentApproved::dispatch(
+            orderItemId: $orderItem->id,
+            orderNumber: $orderItem->order->code ?? "TRX-{$orderItem->order_id}",
+            amount: (int) $orderItem->subtotal,
+            status: 'rejected',
+            processedBy: $seller->id,
+            rejectionReason: $orderItem->fresh()->payment_rejection_reason,
         );
 
         return back()->with('success', 'Pembayaran item ditolak.');

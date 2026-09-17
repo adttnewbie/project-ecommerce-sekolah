@@ -17,12 +17,14 @@ class SellerPaymentPaidNotify
      */
     public function handle(OrderPaymentApproved $event): void
     {
-        if ($event->status !== 'approved') {
+        $isRejected = $event->status === 'rejected';
+
+        if ($event->status !== 'approved' && ! $isRejected) {
             return;
         }
 
         $item = OrderItem::query()
-            ->with('product:id,seller_id')
+            ->with('product:id,seller_id,sales_method')
             ->find($event->orderItemId);
 
         $sellerId = $item?->product?->seller_id;
@@ -31,6 +33,37 @@ class SellerPaymentPaidNotify
             Log::warning('No seller found for payment-paid notification', [
                 'order_item_id' => $event->orderItemId,
             ]);
+
+            return;
+        }
+
+        if ($isRejected) {
+            // Seller konsinyasi diblokir menolak sendiri (SellerOrderController),
+            // sehingga rejection selalu berasal dari picket dan wajib diteruskan
+            // ke seller. Item non-konsinyasi: seller adalah aktornya sendiri.
+            if (! $item->product->usesConsignmentStock()) {
+                return;
+            }
+
+            if ($sellerId === $event->processedBy) {
+                return;
+            }
+
+            NotificationDispatch::toUser(
+                $sellerId,
+                NotificationType::Payment->value,
+                "seller-payment-rejected:{$event->orderItemId}",
+                [
+                    'href' => route('seller.orders.show', $event->orderItemId, false),
+                    'title' => "Pembayaran {$event->orderNumber} ditolak",
+                    'description' => 'Pembayaran sebesar Rp '.number_format($event->amount, 0, ',', '.').' ditolak picket. Alasan: '.($event->rejectionReason ?? 'tidak valid.'),
+                    'data' => [
+                        'order_item_id' => $event->orderItemId,
+                        'amount' => $event->amount,
+                        'source' => 'payment_rejected',
+                    ],
+                ],
+            );
 
             return;
         }

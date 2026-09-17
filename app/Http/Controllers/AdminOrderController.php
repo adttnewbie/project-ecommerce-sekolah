@@ -7,6 +7,7 @@ use App\Events\BuyerOrderStateChanged;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
+use App\Support\NotificationDispatch;
 use App\Support\OrderLivenessService;
 use App\Support\OrderSettlementService;
 use App\Traits\OwnerPayloadHelper;
@@ -107,10 +108,58 @@ class AdminOrderController extends Controller
             'reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $reason = $validated['reason'] ?? null;
+
         OrderLivenessService::markRequiresManualReview(
             $order,
             $admin,
-            $validated['reason'] ?? null,
+            $reason,
+        );
+
+        $order->loadMissing([
+            'items.product:id,seller_id',
+            'user:id,name',
+        ]);
+
+        foreach ($order->items as $item) {
+            $sellerId = $item->product->seller_id;
+
+            if ($sellerId === null) {
+                continue;
+            }
+
+            NotificationDispatch::toUser(
+                (int) $sellerId,
+                'order',
+                "seller-manual-review:{$item->id}",
+                [
+                    'href' => route('seller.orders.show', $item->id, false),
+                    'title' => "Pesanan {$item->product_name} butuh peninjauan manual",
+                    'description' => 'Ditandai admin butuh peninjauan manual.'.(($reason !== null && $reason !== '') ? " Alasan: {$reason}" : ''),
+                    'data' => [
+                        'order_id' => $order->id,
+                        'order_item_id' => $item->id,
+                        'reason' => $reason,
+                        'source' => 'manual_review',
+                    ],
+                ],
+            );
+        }
+
+        NotificationDispatch::toUser(
+            (int) $order->user_id,
+            'order',
+            "buyer-manual-review:{$order->id}",
+            [
+                'href' => route('orders.show', $order->id, false),
+                'title' => "Pesanan #{$order->id} butuh peninjauan manual",
+                'description' => 'Pesananmu ditandai admin butuh peninjauan manual.'.(($reason !== null && $reason !== '') ? " Alasan: {$reason}" : ''),
+                'data' => [
+                    'order_id' => $order->id,
+                    'reason' => $reason,
+                    'source' => 'manual_review',
+                ],
+            ],
         );
 
         return back()->with('success', 'Pesanan ditandai butuh peninjauan manual.');

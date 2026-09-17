@@ -538,7 +538,7 @@ class OrderLivenessService
         DB::transaction(function () use ($order, $reason) {
             /** @var Order $current */
             $current = Order::query()
-                ->with('items')
+                ->with(['items.product:id,seller_id'])
                 ->lockForUpdate()
                 ->findOrFail($order->id);
 
@@ -560,6 +560,8 @@ class OrderLivenessService
                 ]);
             }
 
+            $completedItems = $completable->values();
+
             BuyerSanctionService::recordViolation(
                 (int) $current->user_id,
                 BuyerViolationType::UnconfirmedReceipt,
@@ -577,6 +579,31 @@ class OrderLivenessService
                 'stuck_detected_at' => null,
                 'stuck_reasons' => null,
             ]);
+
+            foreach ($completedItems as $item) {
+                $sellerId = $item->product->seller_id;
+
+                if ($sellerId === null) {
+                    continue;
+                }
+
+                NotificationDispatch::toUser(
+                    (int) $sellerId,
+                    'order',
+                    "seller-force-completed:{$item->id}",
+                    [
+                        'href' => route('seller.orders.show', $item->id, false),
+                        'title' => "Pesanan {$item->product_name} diselesaikan admin",
+                        'description' => 'Diselesaikan paksa oleh admin.'.(($reason !== null && $reason !== '') ? " Alasan: {$reason}" : ''),
+                        'data' => [
+                            'order_id' => $current->id,
+                            'order_item_id' => $item->id,
+                            'reason' => $reason,
+                            'source' => 'force_completed',
+                        ],
+                    ],
+                );
+            }
         });
     }
 

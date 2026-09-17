@@ -282,6 +282,22 @@ class PicketUpJurusanConsignmentController extends Controller
                 (int) $validated['quantity'],
                 $picket,
             );
+
+            $consignment->refresh();
+            $consignment->loadMissing(['product:id,name', 'seller:id,name']);
+
+            OrderItemStatusChanged::dispatch(
+                orderItemId: null,
+                orderId: null,
+                productId: $consignment->product_id,
+                consignmentId: $consignment->id,
+                productName: $consignment->product->name,
+                sellerName: $consignment->seller->name,
+                buyerName: $picket->name,
+                action: "diterima sebanyak {$validated['quantity']} pcs oleh {$picket->name}",
+                picketId: null,
+                consignmentStatus: $consignment->status->value,
+            );
         });
 
         return to_route('picket.dashboard')
@@ -322,6 +338,22 @@ class PicketUpJurusanConsignmentController extends Controller
             $totalAmount = $this->recordSale($picket, $locked, $quantity, $sale);
 
             $sale->update(['total_amount' => $totalAmount]);
+
+            $locked->refresh();
+            $locked->load(['product:id,name', 'seller:id,name']);
+
+            OrderItemStatusChanged::dispatch(
+                orderItemId: null,
+                orderId: null,
+                productId: $locked->product_id,
+                consignmentId: $locked->id,
+                productName: $locked->product->name,
+                sellerName: $locked->seller->name,
+                buyerName: $picket->name,
+                action: "terjual {$quantity} pcs via POS ({$saleCode})",
+                picketId: null,
+                consignmentStatus: $locked->status->value,
+            );
         });
 
         return to_route('picket.pos')
@@ -377,6 +409,22 @@ class PicketUpJurusanConsignmentController extends Controller
                     $this->authorizePicket($picket, $consignment);
                     $totalAmount += $this->recordSale($picket, $consignment, (int) $item['quantity'], $sale);
                     $totalQuantity += (int) $item['quantity'];
+
+                    $consignment->refresh();
+                    $consignment->load(['product:id,name', 'seller:id,name']);
+
+                    OrderItemStatusChanged::dispatch(
+                        orderItemId: null,
+                        orderId: null,
+                        productId: $consignment->product_id,
+                        consignmentId: $consignment->id,
+                        productName: $consignment->product->name,
+                        sellerName: $consignment->seller->name,
+                        buyerName: $picket->name,
+                        action: "terjual {$item['quantity']} pcs via POS ({$sale->code})",
+                        picketId: null,
+                        consignmentStatus: $consignment->status->value,
+                    );
                 }
 
                 $sale->update([

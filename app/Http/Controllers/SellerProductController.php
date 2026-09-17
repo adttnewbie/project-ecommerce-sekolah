@@ -6,6 +6,7 @@ use App\Enums\ProductFulfillmentType;
 use App\Enums\ProductSalesMethod;
 use App\Enums\ProductStatus;
 use App\Enums\UpJurusanConsignmentStatus;
+use App\Events\OrderItemStatusChanged;
 use App\Events\ProductPendingModeration;
 use App\Http\Requests\Seller\StoreProductRequest;
 use App\Http\Requests\Seller\UpdateProductRequest;
@@ -142,8 +143,10 @@ class SellerProductController extends Controller
             ? ProductStatus::Pending
             : ProductStatus::from($request->input('status', ProductStatus::Pending->value));
 
+        $createdProductId = null;
+
         try {
-            DB::transaction(function () use ($request, $seller, $imagePath, $salesMethod, $fulfillmentType, $requestedStatus) {
+            DB::transaction(function () use ($request, $seller, $imagePath, $salesMethod, $fulfillmentType, $requestedStatus, &$createdProductId) {
                 $product = Product::query()->create([
                     'seller_id' => $seller->id,
                     'category_id' => $request->integer('category_id'),
@@ -173,18 +176,33 @@ class SellerProductController extends Controller
                     'image' => $imagePath,
                 ]);
 
+                $createdProductId = $product->id;
+
                 if (
                     $salesMethod === ProductSalesMethod::UpJurusan
                     && $fulfillmentType === ProductFulfillmentType::ReadyStock
                     && $requestedStatus === ProductStatus::Pending
                 ) {
-                    UpJurusanConsignment::query()->create([
+                    $consignment = UpJurusanConsignment::query()->create([
                         'seller_id' => $seller->id,
                         'product_id' => $product->id,
                         'up_jurusan_id' => $request->integer('up_jurusan_id'),
                         'requested_quantity' => $request->integer('requested_quantity'),
                         'status' => UpJurusanConsignmentStatus::PendingApproval,
                     ]);
+
+                    OrderItemStatusChanged::dispatch(
+                        orderItemId: null,
+                        orderId: null,
+                        productId: $product->id,
+                        consignmentId: $consignment->id,
+                        productName: $request->string('name')->toString(),
+                        sellerName: $seller->name,
+                        buyerName: $seller->name,
+                        action: 'pengajuan titip barang baru menunggu persetujuan',
+                        picketId: null,
+                        consignmentStatus: UpJurusanConsignmentStatus::PendingApproval->value,
+                    );
                 }
 
                 if ($salesMethod === ProductSalesMethod::UpJurusan && $fulfillmentType === ProductFulfillmentType::ReadyStock && $requestedStatus === ProductStatus::Pending) {
@@ -204,6 +222,24 @@ class SellerProductController extends Controller
             }
 
             throw $exception;
+        }
+
+        // Dispatch SETELAH transaksi sukses: setiap produk yang berakhir
+        // Pending wajib masuk antrean moderasi (SelfManaged + UpJurusan).
+        // Blok consignment milik Tugas 4 di atas tidak diubah. Dispatch di
+        // dalam transaksi di atas dipertahankan untuk UpJurusan, sehingga
+        // di sini hanya SelfManaged yang di-dispatch agar tidak dobel.
+        if (
+            $requestedStatus === ProductStatus::Pending
+            && $createdProductId !== null
+            && $salesMethod === ProductSalesMethod::SelfManaged
+        ) {
+            ProductPendingModeration::dispatch(
+                productId: $createdProductId,
+                productName: $request->string('name')->toString(),
+                sellerId: $seller->id,
+                sellerName: $seller->name
+            );
         }
 
         return to_route('seller.products.index');
@@ -261,6 +297,8 @@ class SellerProductController extends Controller
         $requestedStatus = ProductStatus::from(
             $request->input('status', $product->status->value),
         );
+        $oldStatus = $product->status;
+        $newStatus = $this->nextStatusAfterSellerUpdate($product, $requestedStatus);
 
         try {
             $product->update([
@@ -285,7 +323,7 @@ class SellerProductController extends Controller
                 'pre_order_note' => $request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value) === ProductFulfillmentType::PreOrder->value
                     ? $request->string('pre_order_note')->trim()->toString() ?: null
                     : null,
-                'status' => $this->nextStatusAfterSellerUpdate($product, $requestedStatus),
+                'status' => $newStatus,
                 'image' => $imagePath,
             ]);
         } catch (\Throwable $exception) {
@@ -299,6 +337,22 @@ class SellerProductController extends Controller
 
         if ($oldImagePath && $imagePath !== $oldImagePath) {
             $this->deleteProductImage($oldImagePath);
+        }
+
+        // Dispatch SETELAH update sukses: hanya saat transisi ke Pending
+        // (lama != Pending, baru == Pending). Key format dijaga
+        // listener/event: admin-product-moderation:{id} (admin) dan
+        // admin-product-pending:{id} (seller).
+        if ($oldStatus !== ProductStatus::Pending && $newStatus === ProductStatus::Pending) {
+            /** @var User $seller */
+            $seller = $request->user();
+
+            ProductPendingModeration::dispatch(
+                productId: $product->id,
+                productName: $product->name,
+                sellerId: $seller->id,
+                sellerName: $seller->name
+            );
         }
 
         return to_route('seller.products.index');

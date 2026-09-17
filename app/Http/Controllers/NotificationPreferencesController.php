@@ -23,8 +23,10 @@ class NotificationPreferencesController extends Controller
             ->get()
             ->keyBy('type');
 
-        // Fill in missing types with defaults
-        $allTypes = ['order', 'stock', 'product', 'payment', 'system', 'promotion'];
+        // Fill in missing types with defaults.
+        // In-app only (MVP): tidak ada sistem email notifikasi, jadi
+        // email_enabled selalu false dan tidak diekspos sebagai opsi.
+        $allTypes = ['order', 'stock', 'product', 'review', 'payment', 'system', 'promotion'];
         foreach ($allTypes as $type) {
             if (! $preferences->has($type)) {
                 $preferences[$type] = new NotificationPreference([
@@ -41,13 +43,12 @@ class NotificationPreferencesController extends Controller
     }
 
     /**
-     * Update notification preferences.
+     * Update notification preferences (in-app only; email tidak didukung MVP).
      */
     public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'preferences.*.in_app_enabled' => 'boolean',
-            'preferences.*.email_enabled' => 'boolean',
         ]);
 
         /** @var User $user */
@@ -64,7 +65,9 @@ class NotificationPreferencesController extends Controller
                 ],
                 [
                     'in_app_enabled' => (bool) ($prefData['in_app_enabled'] ?? true),
-                    'email_enabled' => (bool) ($prefData['email_enabled'] ?? false),
+                    // Kolom email_enabled dipertahankan di schema (non-destruktif)
+                    // tapi selalu false: tidak ada pengiriman email notifikasi.
+                    'email_enabled' => false,
                 ]
             );
         });

@@ -146,20 +146,4 @@ class Notification extends Model
             ->active()
             ->count();
     }
-
-    /**
-     * Create or retrieve by key (idempotent).
-     */
-    public static function createOrGetByKey(string $key, ?int &$notificationId): ?self
-    {
-        $notification = static::where('key', $key)->first();
-
-        if ($notification) {
-            $notificationId = $notification->id;
-
-            return $notification;
-        }
-
-        return null;
-    }
 }

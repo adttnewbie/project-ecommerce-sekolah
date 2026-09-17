@@ -14,7 +14,7 @@ class AdminSellerApplicationNotify
     {
         NotificationDispatch::toRole(
             'admin',
-            'product',
+            'system',
             "admin-seller-app:{$event->applicationId}",
             [
                 'title' => "Pengajuan Seller {$event->storeName} menunggu",

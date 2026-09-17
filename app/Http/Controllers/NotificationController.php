@@ -39,7 +39,7 @@ class NotificationController extends Controller
         };
 
         // Filter by type if specified
-        if (in_array($filter, ['order', 'stock', 'product', 'payment', 'system', 'promotion'])) {
+        if (in_array($filter, ['order', 'stock', 'product', 'review', 'payment', 'system', 'promotion'])) {
             $query->where('type', $filter);
         }
 
@@ -210,6 +210,7 @@ class NotificationController extends Controller
         return collect($notifications)->map(function (Notification $notification) {
             return [
                 'id' => $notification->id,
+                'key' => $notification->key,
                 'type' => $notification->type,
                 'title' => $notification->title,
                 'description' => $notification->description,

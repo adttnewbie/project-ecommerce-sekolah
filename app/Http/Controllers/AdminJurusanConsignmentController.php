@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Support\ConsignmentPayoutService;
 use App\Support\ConsignmentTransitionService;
 use App\Support\MoneyCalculationService;
+use App\Support\NotificationDispatch;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -203,11 +204,29 @@ class AdminJurusanConsignmentController extends Controller
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        ConsignmentPayoutService::execute(
+        $payout = ConsignmentPayoutService::execute(
             $consignment,
             $adminJurusan,
             (int) $validated['amount'],
             $validated['note'] ?? null,
+        );
+
+        NotificationDispatch::toUser(
+            $consignment->seller_id,
+            'payment',
+            "seller-payout:{$payout->id}",
+            [
+                'title' => "Pencairan titipan {$consignment->product->name} Rp ".number_format($payout->amount, 0, ',', '.'),
+                'description' => 'Pencairan sebesar Rp '.number_format($payout->amount, 0, ',', '.')
+                    .($payout->note ? " — {$payout->note}" : ''),
+                'href' => route('seller.consignments.index', absolute: false),
+                'data' => [
+                    'payout_id' => $payout->id,
+                    'amount' => $payout->amount,
+                    'consignment_id' => $consignment->id,
+                    'source' => 'consignment_payout',
+                ],
+            ],
         );
 
         return to_route('admin-jurusan.consignments.show', $consignment)

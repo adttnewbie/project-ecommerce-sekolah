@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
+use App\Events\SellerApplicationDecided;
 use App\Events\SellerApplicationPending;
 use App\Models\SellerApplication;
 use App\Models\User;
@@ -95,7 +96,9 @@ class SellerApplicationController extends Controller
 
     public function approve(Request $request, SellerApplication $application): RedirectResponse
     {
-        DB::transaction(function () use ($request, $application) {
+        $decided = null;
+
+        DB::transaction(function () use ($request, $application, &$decided) {
             $claimed = SellerApplication::query()
                 ->whereKey($application->id)
                 ->where('status', SellerApplication::PENDING)
@@ -128,7 +131,22 @@ class SellerApplicationController extends Controller
             $claimed->user()->update([
                 'role' => UserRole::Seller,
             ]);
+
+            $decided = [
+                'applicationId' => $claimed->id,
+                'userId' => $claimed->user_id,
+                'storeName' => $claimed->store_name,
+            ];
         });
+
+        if ($decided !== null) {
+            SellerApplicationDecided::dispatch(
+                applicationId: $decided['applicationId'],
+                userId: $decided['userId'],
+                decision: 'approved',
+                storeName: $decided['storeName'],
+            );
+        }
 
         return to_route('admin.seller-applications.index')
             ->with('success', 'Pengajuan seller disetujui.');
@@ -140,7 +158,9 @@ class SellerApplicationController extends Controller
             'rejection_reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        DB::transaction(function () use ($request, $application, $validated) {
+        $decided = null;
+
+        DB::transaction(function () use ($request, $application, $validated, &$decided) {
             $claimed = SellerApplication::query()
                 ->whereKey($application->id)
                 ->where('status', SellerApplication::PENDING)
@@ -164,7 +184,24 @@ class SellerApplicationController extends Controller
             if ($updated !== 1) {
                 abort(403);
             }
+
+            $decided = [
+                'applicationId' => $claimed->id,
+                'userId' => $claimed->user_id,
+                'storeName' => $claimed->store_name,
+                'rejectionReason' => $validated['rejection_reason'] ?? null,
+            ];
         });
+
+        if ($decided !== null) {
+            SellerApplicationDecided::dispatch(
+                applicationId: $decided['applicationId'],
+                userId: $decided['userId'],
+                decision: 'rejected',
+                storeName: $decided['storeName'],
+                rejectionReason: $decided['rejectionReason'],
+            );
+        }
 
         return to_route('admin.seller-applications.index')
             ->with('success', 'Pengajuan seller ditolak.');

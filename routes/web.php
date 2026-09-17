@@ -22,6 +22,7 @@ use App\Http\Controllers\BuyerReviewController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NotificationPreferencesController;
 use App\Http\Controllers\PicketUpJurusanConsignmentController;
 use App\Http\Controllers\ProductImageController;
 use App\Http\Controllers\SellerApplicationController;
@@ -56,6 +57,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/recent', [NotificationController::class, 'getRecent'])->name('notifications.recent');
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::get('/notifications/preferences', [NotificationPreferencesController::class, 'index'])->name('notifications.preferences.index');
+    Route::match(['put', 'patch'], '/notifications/preferences', [NotificationPreferencesController::class, 'update'])->name('notifications.preferences.update');
     Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
     Route::post('/notifications/batch-read', [NotificationController::class, 'batchMarkAsRead']);
     Route::post('/notifications/{key}/read', [NotificationController::class, 'markAsRead']);

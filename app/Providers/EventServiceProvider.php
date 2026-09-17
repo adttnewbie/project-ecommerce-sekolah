@@ -17,6 +17,7 @@ use App\Events\ReviewModerationDecided;
 use App\Events\ReviewPendingModeration;
 use App\Events\SanctionIssued;
 use App\Events\SanctionLifted;
+use App\Events\SellerApplicationDecided;
 use App\Events\SellerApplicationPending;
 use App\Listeners\AdminJurusanConsignmentNotify;
 use App\Listeners\AdminJurusanDailyReportNotify;
@@ -38,7 +39,10 @@ use App\Listeners\PicketOfficerOrderNotify;
 use App\Listeners\PicketVerificationNotify;
 use App\Listeners\SanctionIssuedNotify;
 use App\Listeners\SanctionLiftedNotify;
+use App\Listeners\SellerApplicationDecidedNotify;
 use App\Listeners\SellerCancelledOrderNotify;
+use App\Listeners\SellerConsignmentDecidedNotify;
+use App\Listeners\SellerConsignmentStockNotify;
 use App\Listeners\SellerPaymentPaidNotify;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
@@ -75,8 +79,14 @@ class EventServiceProvider extends ServiceProvider
             AdminSellerApplicationNotify::class,
         ],
 
+        SellerApplicationDecided::class => [
+            SellerApplicationDecidedNotify::class,
+        ],
+
         OrderItemStatusChanged::class => [
             AdminJurusanConsignmentNotify::class,
+            SellerConsignmentDecidedNotify::class,
+            SellerConsignmentStockNotify::class,
             PicketOfficerOrderNotify::class,
             BuyerOrderStatusNotify::class,
         ],
