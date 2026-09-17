@@ -26,7 +26,9 @@ class NotificationPreferencesController extends Controller
         // Fill in missing types with defaults.
         // In-app only (MVP): tidak ada sistem email notifikasi, jadi
         // email_enabled selalu false dan tidak diekspos sebagai opsi.
-        $allTypes = ['order', 'stock', 'product', 'review', 'payment', 'system', 'promotion'];
+        // 'promotion' sengaja tidak didaftarkan: tidak ada listener yang
+        // mengirim type itu (enum case dipertahankan untuk kompatibilitas DB).
+        $allTypes = ['order', 'stock', 'product', 'review', 'payment', 'system'];
         foreach ($allTypes as $type) {
             if (! $preferences->has($type)) {
                 $preferences[$type] = new NotificationPreference([

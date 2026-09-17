@@ -121,30 +121,22 @@ class AdminOrderController extends Controller
             'user:id,name',
         ]);
 
-        foreach ($order->items as $item) {
-            $sellerId = $item->product->seller_id;
-
-            if ($sellerId === null) {
-                continue;
-            }
-
-            NotificationDispatch::toUser(
-                (int) $sellerId,
-                'order',
-                "seller-manual-review:{$item->id}",
-                [
-                    'href' => route('seller.orders.show', $item->id, false),
-                    'title' => "Pesanan {$item->product_name} butuh peninjauan manual",
-                    'description' => 'Ditandai admin butuh peninjauan manual.'.(($reason !== null && $reason !== '') ? " Alasan: {$reason}" : ''),
-                    'data' => [
-                        'order_id' => $order->id,
-                        'order_item_id' => $item->id,
-                        'reason' => $reason,
-                        'source' => 'manual_review',
-                    ],
+        NotificationDispatch::notifyItemSellers(
+            $order->items,
+            'order',
+            fn (OrderItem $item) => "seller-manual-review:{$item->id}",
+            fn (OrderItem $item) => [
+                'href' => route('seller.orders.show', $item->id, false),
+                'title' => "Pesanan {$item->product_name} butuh peninjauan manual",
+                'description' => 'Ditandai admin butuh peninjauan manual.'.(($reason !== null && $reason !== '') ? " Alasan: {$reason}" : ''),
+                'data' => [
+                    'order_id' => $order->id,
+                    'order_item_id' => $item->id,
+                    'reason' => $reason,
+                    'source' => 'manual_review',
                 ],
-            );
-        }
+            ],
+        );
 
         NotificationDispatch::toUser(
             (int) $order->user_id,

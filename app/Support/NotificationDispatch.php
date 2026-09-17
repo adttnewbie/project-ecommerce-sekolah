@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Notification;
 use App\Models\NotificationPreference;
+use App\Models\OrderItem;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
@@ -35,6 +36,33 @@ class NotificationDispatch
         );
 
         return true;
+    }
+
+    /**
+     * Notify the owning seller of each item, skipping items without a
+     * seller (UP-managed products). Delivery goes through toUser so the
+     * recipient's preference gate and per-user key idempotency apply.
+     *
+     * @param  iterable<int, OrderItem>  $items
+     * @param  callable(OrderItem): string  $keyFor
+     * @param  callable(OrderItem): array<string, mixed>  $payloadFor  title/description/href/data payload
+     */
+    public static function notifyItemSellers(iterable $items, string $type, callable $keyFor, callable $payloadFor): void
+    {
+        foreach ($items as $item) {
+            $sellerId = $item->product->seller_id;
+
+            if ($sellerId === null) {
+                continue;
+            }
+
+            self::toUser(
+                (int) $sellerId,
+                $type,
+                $keyFor($item),
+                $payloadFor($item),
+            );
+        }
     }
 
     /**

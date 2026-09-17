@@ -144,9 +144,10 @@ class SellerProductController extends Controller
             : ProductStatus::from($request->input('status', ProductStatus::Pending->value));
 
         $createdProductId = null;
+        $moderationDispatched = false;
 
         try {
-            DB::transaction(function () use ($request, $seller, $imagePath, $salesMethod, $fulfillmentType, $requestedStatus, &$createdProductId) {
+            DB::transaction(function () use ($request, $seller, $imagePath, $salesMethod, $fulfillmentType, $requestedStatus, &$createdProductId, &$moderationDispatched) {
                 $product = Product::query()->create([
                     'seller_id' => $seller->id,
                     'category_id' => $request->integer('category_id'),
@@ -212,6 +213,7 @@ class SellerProductController extends Controller
                         sellerId: $seller->id,
                         sellerName: $seller->name
                     );
+                    $moderationDispatched = true;
                 }
             });
         } catch (\Throwable $exception) {
@@ -224,15 +226,17 @@ class SellerProductController extends Controller
             throw $exception;
         }
 
-        // Dispatch SETELAH transaksi sukses: setiap produk yang berakhir
-        // Pending wajib masuk antrean moderasi (SelfManaged + UpJurusan).
-        // Blok consignment milik Tugas 4 di atas tidak diubah. Dispatch di
-        // dalam transaksi di atas dipertahankan untuk UpJurusan, sehingga
-        // di sini hanya SelfManaged yang di-dispatch agar tidak dobel.
+        // Dispatch SETELAH transaksi sukses untuk setiap produk yang berakhir
+        // Pending dan belum di-dispatch di dalam transaksi. Aturan per
+        // kombinasi: SelfManaged + Pending (ReadyStock maupun PreOrder)
+        // di-dispatch di sini; UpJurusan + ReadyStock + Pending sudah
+        // di-dispatch di dalam transaksi (flag di atas mencegah dobel);
+        // UpJurusan + PreOrder + Pending tidak dicakup blok konsinyasi
+        // maupun blok moderasi in-tx sehingga di-dispatch di sini.
         if (
             $requestedStatus === ProductStatus::Pending
             && $createdProductId !== null
-            && $salesMethod === ProductSalesMethod::SelfManaged
+            && ! $moderationDispatched
         ) {
             ProductPendingModeration::dispatch(
                 productId: $createdProductId,

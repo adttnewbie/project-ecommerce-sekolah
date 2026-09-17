@@ -58,3 +58,24 @@ export interface HeaderNotificationData {
     notifications: NotificationForDropdown[];
     supportEmail: string | null;
 }
+
+// Notification preference types (NotificationPreferencesController:
+// keyBy('type'), in-app only — email_enabled selalu false di MVP)
+export type NotificationPreferenceType =
+    | 'order'
+    | 'stock'
+    | 'product'
+    | 'review'
+    | 'payment'
+    | 'system'
+    | 'promotion';
+
+export interface NotificationPreferenceItem {
+    type: string;
+    in_app_enabled: boolean | number;
+    email_enabled: boolean | number;
+}
+
+export interface NotificationPreferencesPageProps {
+    preferences: Record<string, NotificationPreferenceItem>;
+}

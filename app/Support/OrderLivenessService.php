@@ -11,6 +11,7 @@ use App\Enums\UserRole;
 use App\Events\BuyerOrderStateChanged;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\UpJurusan;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -538,7 +539,7 @@ class OrderLivenessService
         DB::transaction(function () use ($order, $reason) {
             /** @var Order $current */
             $current = Order::query()
-                ->with(['items.product:id,seller_id'])
+                ->with(['items.product:id,seller_id,up_jurusan_id'])
                 ->lockForUpdate()
                 ->findOrFail($order->id);
 
@@ -580,31 +581,111 @@ class OrderLivenessService
                 'stuck_reasons' => null,
             ]);
 
-            foreach ($completedItems as $item) {
-                $sellerId = $item->product->seller_id;
+            NotificationDispatch::notifyItemSellers(
+                $completedItems,
+                'order',
+                fn (OrderItem $item) => "seller-force-completed:{$item->id}",
+                fn (OrderItem $item) => [
+                    'href' => route('seller.orders.show', $item->id, false),
+                    'title' => "Pesanan {$item->product_name} diselesaikan admin",
+                    'description' => 'Diselesaikan paksa oleh admin.'.(($reason !== null && $reason !== '') ? " Alasan: {$reason}" : ''),
+                    'data' => [
+                        'order_id' => $current->id,
+                        'order_item_id' => $item->id,
+                        'reason' => $reason,
+                        'source' => 'force_completed',
+                    ],
+                ],
+            );
 
-                if ($sellerId === null) {
-                    continue;
-                }
+            self::notifyUpSideOfForceCompleted($completedItems, $current->id, $reason);
+        });
+    }
 
+    /**
+     * Items without a seller are UP-managed: tell the UP side instead of
+     * staying silent. Recipients follow the PicketVerificationNotify
+     * pattern (every picket serving the UP) plus the owning admin jurusan,
+     * keyed per item so retries stay idempotent. The buyer still learns
+     * about the completion through the existing BuyerOrderStateChanged
+     * flow, never from here.
+     *
+     * @param  iterable<int, OrderItem>  $items
+     */
+    private static function notifyUpSideOfForceCompleted(iterable $items, int $orderId, ?string $reason): void
+    {
+        $suffix = ($reason !== null && $reason !== '') ? " Alasan: {$reason}" : '';
+
+        foreach ($items as $item) {
+            if ($item->product->seller_id !== null) {
+                continue;
+            }
+
+            $upJurusanId = $item->product->up_jurusan_id;
+
+            if ($upJurusanId === null) {
+                Log::warning('No UP owner found for force-completed item', [
+                    'order_item_id' => $item->id,
+                ]);
+
+                continue;
+            }
+
+            $picketIds = User::query()
+                ->where('role', UserRole::PicketOfficer->value)
+                ->where('up_jurusan_id', $upJurusanId)
+                ->orderBy('id')
+                ->pluck('id');
+
+            foreach ($picketIds as $picketId) {
                 NotificationDispatch::toUser(
-                    (int) $sellerId,
+                    (int) $picketId,
                     'order',
-                    "seller-force-completed:{$item->id}",
+                    "up-force-completed:{$item->id}",
                     [
-                        'href' => route('seller.orders.show', $item->id, false),
+                        'href' => route('picket.orders', absolute: false),
                         'title' => "Pesanan {$item->product_name} diselesaikan admin",
-                        'description' => 'Diselesaikan paksa oleh admin.'.(($reason !== null && $reason !== '') ? " Alasan: {$reason}" : ''),
+                        'description' => 'Diselesaikan paksa oleh admin.'.$suffix,
                         'data' => [
-                            'order_id' => $current->id,
+                            'order_id' => $orderId,
                             'order_item_id' => $item->id,
+                            'up_jurusan_id' => $upJurusanId,
                             'reason' => $reason,
                             'source' => 'force_completed',
                         ],
                     ],
                 );
             }
-        });
+
+            $ownerId = UpJurusan::query()->whereKey($upJurusanId)->value('admin_jurusan_id');
+
+            if ($ownerId === null) {
+                Log::warning('No admin jurusan owner found for force-completed item', [
+                    'order_item_id' => $item->id,
+                    'up_jurusan_id' => $upJurusanId,
+                ]);
+
+                continue;
+            }
+
+            NotificationDispatch::toUser(
+                (int) $ownerId,
+                'order',
+                "up-force-completed:{$item->id}",
+                [
+                    'href' => route('admin-jurusan.dashboard', absolute: false),
+                    'title' => "Pesanan {$item->product_name} diselesaikan admin",
+                    'description' => 'Diselesaikan paksa oleh admin.'.$suffix,
+                    'data' => [
+                        'order_id' => $orderId,
+                        'order_item_id' => $item->id,
+                        'up_jurusan_id' => $upJurusanId,
+                        'reason' => $reason,
+                        'source' => 'force_completed',
+                    ],
+                ],
+            );
+        }
     }
 
     public static function forceCancel(Order $order, User $actor, ?string $reason = null): void

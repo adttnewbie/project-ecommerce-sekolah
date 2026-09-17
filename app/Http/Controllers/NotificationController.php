@@ -25,7 +25,7 @@ class NotificationController extends Controller
         }
 
         $page = $request->get('page', 1);
-        $filter = $request->get('filter', 'all'); // all, unread, order, stock, product, payment, system, promotion
+        $filter = $request->get('filter', 'all'); // all, unread, read, order, stock, product, review, payment, system
 
         $query = Notification::query()
             ->where('user_id', $user->id)
@@ -38,8 +38,8 @@ class NotificationController extends Controller
             default => $query->active(),
         };
 
-        // Filter by type if specified
-        if (in_array($filter, ['order', 'stock', 'product', 'review', 'payment', 'system', 'promotion'])) {
+        // Filter by type if specified ('promotion' tidak ada: tak ada pengirimnya).
+        if (in_array($filter, ['order', 'stock', 'product', 'review', 'payment', 'system'])) {
             $query->where('type', $filter);
         }
 

@@ -1,6 +1,6 @@
 import type { PageProps as SharedPageProps } from '@inertiajs/core';
-import { router, usePage } from '@inertiajs/react';
-import { CheckCircle2 } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { CheckCircle2, Settings2 } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 import { NotificationEmptyState } from '@/components/notifications/NotificationEmptyState';
 import { NotificationFilterBar } from '@/components/notifications/NotificationFilterBar';
@@ -127,6 +127,20 @@ export default function NotificationsPage() {
 
                         {/* Action buttons */}
                         <div className="flex items-center gap-2">
+                            <Button
+                                asChild
+                                variant="ghost"
+                                size="icon"
+                                title="Pengaturan notifikasi"
+                                className="text-slate-500 hover:bg-slate-100 hover:text-[#0080FF]"
+                            >
+                                <Link
+                                    href="/notifications/preferences"
+                                    aria-label="Pengaturan notifikasi"
+                                >
+                                    <Settings2 className="size-5" />
+                                </Link>
+                            </Button>
                             {hasUnread && (
                                 <Button
                                     onClick={handleMarkAllAsRead}
