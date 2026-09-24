@@ -1,5 +1,17 @@
 import { Form, Head } from '@inertiajs/react';
 import { CheckCircle2, Store, XCircle } from 'lucide-react';
+import { useState } from 'react';
+import InputError from '@/components/input-error';
+import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +29,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 
 type SellerApplication = {
     id: number;
@@ -174,27 +187,11 @@ export default function AdminSellerApplicationsIndex({
                                                                     </Button>
                                                                 )}
                                                             </Form>
-                                                            <Form
-                                                                action={`/admin/seller-applications/${application.id}/reject`}
-                                                                method="post"
-                                                            >
-                                                                {({
-                                                                    processing,
-                                                                }) => (
-                                                                    <Button
-                                                                        type="submit"
-                                                                        size="sm"
-                                                                        variant="outline"
-                                                                        disabled={
-                                                                            processing
-                                                                        }
-                                                                        className="rounded-[8px] border-rose-200 text-rose-700 hover:bg-rose-50"
-                                                                    >
-                                                                        <XCircle className="size-4" />
-                                                                        Reject
-                                                                    </Button>
-                                                                )}
-                                                            </Form>
+                                                            <RejectApplicationDialog
+                                                                application={
+                                                                    application
+                                                                }
+                                                            />
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
@@ -216,3 +213,103 @@ AdminSellerApplicationsIndex.layout = {
         { title: 'Pengajuan Seller', href: '/admin/seller-applications' },
     ],
 };
+
+function RejectApplicationDialog({
+    application,
+}: {
+    application: SellerApplication;
+}) {
+    const [reason, setReason] = useState('');
+
+    return (
+        <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-[8px] border-rose-200 text-rose-700 hover:bg-rose-50"
+                >
+                    <XCircle className="size-4" />
+                    Reject
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="rounded-xl bg-white">
+                <AlertDialogHeader>
+                    <AlertDialogTitle>
+                        Tolak pengajuan seller?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        <span className="font-medium text-slate-900">
+                            {application.store_name}
+                        </span>{' '}
+                        dari {application.user.name} akan ditolak dan pemohon
+                        menerima notifikasi beserta alasan ini. Tulis alasan
+                        yang jelas agar buyer bisa perbaiki pengajuannya.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <Form
+                    action={`/admin/seller-applications/${application.id}/reject`}
+                    method="post"
+                    disableWhileProcessing
+                    className="space-y-4"
+                >
+                    {({ errors, processing }) => (
+                        <>
+                            <div className="space-y-2">
+                                <Textarea
+                                    name="rejection_reason"
+                                    required
+                                    maxLength={1000}
+                                    placeholder="Contoh: Data toko belum lengkap, rencana produk kurang jelas..."
+                                    value={reason}
+                                    onChange={(e) =>
+                                        setReason(e.target.value)
+                                    }
+                                    aria-invalid={Boolean(
+                                        errors.rejection_reason,
+                                    )}
+                                    className="min-h-28 rounded-lg"
+                                />
+                                <div className="flex items-center justify-between">
+                                    <InputError
+                                        message={errors.rejection_reason}
+                                    />
+                                    <span
+                                        className={`text-xs tabular-nums ${reason.length > 900 ? 'text-amber-600' : 'text-slate-400'}`}
+                                    >
+                                        {reason.length}/1000
+                                    </span>
+                                </div>
+                            </div>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel asChild>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="rounded-lg"
+                                        disabled={processing}
+                                    >
+                                        Batal
+                                    </Button>
+                                </AlertDialogCancel>
+                                <Button
+                                    type="submit"
+                                    variant="destructive"
+                                    className="rounded-lg"
+                                    disabled={
+                                        processing || !reason.trim()
+                                    }
+                                >
+                                    {processing
+                                        ? 'Memproses...'
+                                        : 'Tolak pengajuan'}
+                                </Button>
+                            </AlertDialogFooter>
+                        </>
+                    )}
+                </Form>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+}

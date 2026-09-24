@@ -155,12 +155,23 @@ class SellerApplicationController extends Controller
     public function reject(Request $request, SellerApplication $application): RedirectResponse
     {
         $validated = $request->validate([
-            'rejection_reason' => ['nullable', 'string', 'max:1000'],
+            'rejection_reason' => [
+                'required',
+                'string',
+                'max:1000',
+                static function (string $attribute, mixed $value, callable $fail): void {
+                    if (trim((string) $value) === '') {
+                        $fail('Alasan penolakan wajib diisi.');
+                    }
+                },
+            ],
         ]);
+
+        $rejectionReason = trim($validated['rejection_reason']);
 
         $decided = null;
 
-        DB::transaction(function () use ($request, $application, $validated, &$decided) {
+        DB::transaction(function () use ($request, $application, $rejectionReason, &$decided) {
             $claimed = SellerApplication::query()
                 ->whereKey($application->id)
                 ->where('status', SellerApplication::PENDING)
@@ -178,7 +189,7 @@ class SellerApplicationController extends Controller
                     'status' => SellerApplication::REJECTED,
                     'reviewed_by' => $request->user()->id,
                     'reviewed_at' => now(),
-                    'rejection_reason' => $validated['rejection_reason'] ?? null,
+                    'rejection_reason' => $rejectionReason,
                 ]);
 
             if ($updated !== 1) {
@@ -189,7 +200,7 @@ class SellerApplicationController extends Controller
                 'applicationId' => $claimed->id,
                 'userId' => $claimed->user_id,
                 'storeName' => $claimed->store_name,
-                'rejectionReason' => $validated['rejection_reason'] ?? null,
+                'rejectionReason' => $rejectionReason,
             ];
         });
 

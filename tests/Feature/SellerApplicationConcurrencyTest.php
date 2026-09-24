@@ -66,7 +66,9 @@ test('concurrent approve and reject produce a consistent final state', function 
             auth()->setUser($admin);
 
             $controller = new SellerApplicationController;
-            $request = Request::create('/transition', 'POST');
+            $request = Request::create('/transition', 'POST', $action === 'reject'
+                ? ['rejection_reason' => 'Data belum lengkap.']
+                : []);
             $request->setUserResolver(fn () => $admin);
 
             $application = SellerApplication::findOrFail($applicationId);

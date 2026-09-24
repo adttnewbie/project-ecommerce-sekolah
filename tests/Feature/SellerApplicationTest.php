@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Models\Notification;
 use App\Models\SellerApplication;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -106,6 +107,61 @@ test('admin can reject seller application', function () {
         'id' => $buyer->id,
         'role' => UserRole::Buyer->value,
     ]);
+});
+
+test('rejecting without a reason fails and leaves the application pending', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $application = SellerApplication::factory()->create([
+        'user_id' => $buyer->id,
+        'status' => SellerApplication::PENDING,
+    ]);
+
+    foreach ([[], ['rejection_reason' => ''], ['rejection_reason' => '   ']] as $payload) {
+        $this->actingAs($admin)
+            ->from(route('admin.seller-applications.index'))
+            ->post(route('admin.seller-applications.reject', $application), $payload)
+            ->assertRedirect(route('admin.seller-applications.index'))
+            ->assertSessionHasErrors('rejection_reason');
+    }
+
+    $this->assertDatabaseHas('seller_applications', [
+        'id' => $application->id,
+        'status' => SellerApplication::PENDING,
+        'rejection_reason' => null,
+    ]);
+    expect(
+        Notification::query()->where('user_id', $buyer->id)->exists(),
+    )->toBeFalse();
+});
+
+test('rejected buyer receives a notification containing the reason', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $buyer = User::factory()->create(['role' => UserRole::Buyer]);
+    $application = SellerApplication::factory()->create([
+        'user_id' => $buyer->id,
+        'store_name' => 'Toko ATK XI RPL',
+        'status' => SellerApplication::PENDING,
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.seller-applications.reject', $application), [
+            'rejection_reason' => '  Data belum lengkap.  ',
+        ])
+        ->assertRedirect(route('admin.seller-applications.index'));
+
+    $this->assertDatabaseHas('seller_applications', [
+        'id' => $application->id,
+        'status' => SellerApplication::REJECTED,
+        'rejection_reason' => 'Data belum lengkap.',
+    ]);
+
+    $notification = Notification::query()
+        ->where('user_id', $buyer->id)
+        ->where('key', "seller-application:{$application->id}:rejected")
+        ->firstOrFail();
+
+    expect($notification->description)->toContain('Data belum lengkap.');
 });
 
 test('approve fails when the application is not pending', function (string $initialStatus) {
