@@ -1,7 +1,16 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowRight, Lock, Mail } from 'lucide-react';
+import {
+    authErrorClassName,
+    authFieldClassName,
+    authIconClassName,
+    authInputClassName,
+    authLabelClassName,
+    authMutedLinkClassName,
+    authPrimaryButtonClassName,
+    authStatusSuccessClassName,
+} from '@/components/auth-ui';
 import InputError from '@/components/input-error';
-import PasskeyVerify from '@/components/passkey-verify';
 import PasswordInput from '@/components/password-input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,44 +26,37 @@ type Props = {
     canResetPassword: boolean;
 };
 
-const fieldClassName = 'flex flex-col gap-1';
-const labelClassName = 'text-xs leading-[1.4] font-medium text-[#334155]';
-const iconClassName =
-    'pointer-events-none absolute left-3 top-1/2 z-10 size-5 -translate-y-1/2 text-slate-400';
-const inputClassName =
-    'h-11 rounded-[8px] border-slate-200 bg-white pl-10 pr-4 text-base text-slate-900 shadow-none placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 md:text-base';
-const errorClassName = 'pt-1 text-xs';
-
 export default function Login({ status, canResetPassword }: Props) {
     return (
         <>
             <Head title="Masuk" />
 
-            <PasskeyVerify />
-
             <Form
                 {...store.form()}
                 resetOnSuccess={['password']}
-                className="flex flex-col gap-4"
+                className="flex flex-col gap-5"
             >
                 {({ processing, errors }) => (
                     <>
                         {status && (
-                            <div className="rounded-lg bg-[#ECFDF3] px-3 py-2 text-center text-sm font-medium text-[#16A34A]">
+                            <div
+                                role="status"
+                                className={authStatusSuccessClassName}
+                            >
                                 {status}
                             </div>
                         )}
 
                         <div className="flex flex-col gap-4">
-                            <div className={fieldClassName}>
+                            <div className={authFieldClassName}>
                                 <Label
                                     htmlFor="email"
-                                    className={labelClassName}
+                                    className={authLabelClassName}
                                 >
                                     Email
                                 </Label>
                                 <div className="relative">
-                                    <Mail className={iconClassName} />
+                                    <Mail className={authIconClassName} />
                                     <Input
                                         id="email"
                                         type="email"
@@ -64,28 +66,28 @@ export default function Login({ status, canResetPassword }: Props) {
                                         tabIndex={1}
                                         autoComplete="email"
                                         placeholder="contoh@email.com"
-                                        className={inputClassName}
+                                        className={authInputClassName}
                                         aria-invalid={Boolean(errors.email)}
                                     />
                                 </div>
                                 <InputError
                                     message={errors.email}
-                                    className={errorClassName}
+                                    className={authErrorClassName}
                                 />
                             </div>
 
-                            <div className={fieldClassName}>
+                            <div className={authFieldClassName}>
                                 <div className="flex items-center gap-3">
                                     <Label
                                         htmlFor="password"
-                                        className={labelClassName}
+                                        className={authLabelClassName}
                                     >
-                                        Kata Sandi
+                                        Kata sandi
                                     </Label>
                                     {canResetPassword && (
                                         <Link
                                             href={request()}
-                                            className="ml-auto text-xs font-semibold text-blue-700 transition-colors hover:text-blue-800"
+                                            className={`ml-auto text-[13px] ${authMutedLinkClassName}`}
                                             tabIndex={5}
                                         >
                                             Lupa kata sandi?
@@ -93,7 +95,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                     )}
                                 </div>
                                 <div className="relative">
-                                    <Lock className={iconClassName} />
+                                    <Lock className={authIconClassName} />
                                     <PasswordInput
                                         id="password"
                                         name="password"
@@ -101,34 +103,36 @@ export default function Login({ status, canResetPassword }: Props) {
                                         tabIndex={2}
                                         autoComplete="current-password"
                                         placeholder="Masukkan kata sandi"
-                                        className={inputClassName}
+                                        className={authInputClassName}
                                         aria-invalid={Boolean(errors.password)}
                                     />
                                 </div>
                                 <InputError
                                     message={errors.password}
-                                    className={errorClassName}
+                                    className={authErrorClassName}
                                 />
                             </div>
 
-                            <div className="flex items-center gap-3">
-                                <Checkbox
-                                    id="remember"
-                                    name="remember"
-                                    tabIndex={3}
-                                    className="border-slate-200 bg-white data-checked:border-blue-600 data-checked:bg-blue-600 data-checked:text-white"
-                                />
-                                <Label
-                                    htmlFor="remember"
-                                    className="text-sm font-medium text-[#475569]"
-                                >
-                                    Ingat saya
-                                </Label>
+                            <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5 ring-1 ring-slate-200/70 ring-inset">
+                                <div className="flex items-center gap-2.5">
+                                    <Checkbox
+                                        id="remember"
+                                        name="remember"
+                                        tabIndex={3}
+                                        className="size-[18px] border-slate-300 bg-white data-checked:border-[#0080FF] data-checked:bg-[#0080FF] data-checked:text-white"
+                                    />
+                                    <Label
+                                        htmlFor="remember"
+                                        className="cursor-pointer text-sm font-medium text-slate-600"
+                                    >
+                                        Ingat saya di perangkat ini
+                                    </Label>
+                                </div>
                             </div>
 
                             <Button
                                 type="submit"
-                                className="mt-2 h-11 w-full text-base font-semibold shadow-sm transition-colors active:scale-[0.98]"
+                                className={authPrimaryButtonClassName}
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
@@ -142,12 +146,12 @@ export default function Login({ status, canResetPassword }: Props) {
                             </Button>
                         </div>
 
-                        <div className="mt-2 text-center text-sm leading-6 text-[#475569]">
+                        <div className="border-t border-slate-100 pt-4 text-center text-sm leading-6 text-slate-500">
                             Belum punya akun?{' '}
                             <Link
                                 href={register()}
                                 tabIndex={6}
-                                className="font-semibold text-blue-700 transition-colors hover:text-blue-800"
+                                className={authMutedLinkClassName}
                             >
                                 Daftar di sini
                             </Link>

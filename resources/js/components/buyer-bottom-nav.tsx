@@ -3,7 +3,7 @@ import { Bell, Home as HomeIcon, UserRound } from 'lucide-react';
 import { NotificationDropdown } from '@/components/notifications/notification-dropdown';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
-import { home } from '@/routes';
+import { home, login } from '@/routes';
 import { edit as profileEdit } from '@/routes/profile';
 import type { NavItem } from '@/types';
 
@@ -13,10 +13,13 @@ type BottomTab = {
     icon: typeof HomeIcon;
 };
 
-const TABS: BottomTab[] = [
-    { title: 'Home', href: home(), icon: HomeIcon },
-    { title: 'Profile', href: profileEdit(), icon: UserRound },
-];
+const HOME_TAB: BottomTab = { title: 'Home', href: home(), icon: HomeIcon };
+const PROFILE_TAB: BottomTab = {
+    title: 'Profile',
+    href: profileEdit(),
+    icon: UserRound,
+};
+const LOGIN_TAB: BottomTab = { title: 'Login', href: login(), icon: UserRound };
 
 export function BuyerBottomNav() {
     const { auth, buyerHeader, notificationBadge, shoppingMode } =
@@ -26,10 +29,6 @@ export function BuyerBottomNav() {
         auth.user?.role === 'buyer' ||
         (auth.user?.role === 'seller' && shoppingMode === 'buyer');
 
-    if (!canShop) {
-        return null;
-    }
-
     const unreadCount = Number(notificationBadge?.count ?? 0);
 
     return (
@@ -38,36 +37,53 @@ export function BuyerBottomNav() {
             className="fixed inset-x-0 bottom-0 z-20 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:hidden"
         >
             <div className="mx-auto flex w-full max-w-7xl items-center rounded-2xl border border-slate-200/70 bg-white/95 px-1 py-1.5 shadow-[0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur supports-[backdrop-filter]:bg-white/90">
-                <BottomLink tab={TABS[0]} active={isCurrentUrl(TABS[0].href)} />
+                <BottomLink
+                    tab={HOME_TAB}
+                    active={isCurrentUrl(HOME_TAB.href)}
+                />
 
-                <NotificationDropdown
-                    notifications={buyerHeader?.notifications}
-                    unreadCount={unreadCount}
-                    ariaLabel="Notifikasi"
-                    emptyTitle="Tidak ada notifikasi baru"
-                    emptyText="Kabar terbaru soal pesanan Anda akan muncul di sini"
-                >
-                    <div
-                        aria-label={
-                            unreadCount > 0
-                                ? `Notifikasi (${unreadCount} belum dibaca)`
-                                : 'Notifikasi'
-                        }
-                        className="flex flex-1 cursor-pointer flex-col items-center gap-1 rounded-xl py-1.5 text-[11px] font-semibold text-slate-500 transition hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 focus-visible:outline-none active:scale-95"
-                    >
-                        <span className="relative rounded-full px-4 py-1">
-                            <Bell className="size-5" aria-hidden />
-                            {unreadCount > 0 && (
-                                <span className="absolute top-0 right-2 min-w-5 rounded-full bg-[#DC2626] px-1 text-center text-[10px] leading-4 font-semibold text-white ring-2 ring-white">
-                                    {unreadCount > 99 ? '99+' : unreadCount}
+                {canShop ? (
+                    <>
+                        <NotificationDropdown
+                            notifications={buyerHeader?.notifications}
+                            unreadCount={unreadCount}
+                            ariaLabel="Notifikasi"
+                            emptyTitle="Tidak ada notifikasi baru"
+                            emptyText="Kabar terbaru soal pesanan Anda akan muncul di sini"
+                        >
+                            <div
+                                aria-label={
+                                    unreadCount > 0
+                                        ? `Notifikasi (${unreadCount} belum dibaca)`
+                                        : 'Notifikasi'
+                                }
+                                className="flex flex-1 cursor-pointer flex-col items-center gap-1 rounded-xl py-1.5 text-[11px] font-semibold text-slate-500 transition hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 focus-visible:outline-none active:scale-95"
+                            >
+                                <span className="relative rounded-full px-4 py-1">
+                                    <Bell className="size-5" aria-hidden />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute top-0 right-2 min-w-5 rounded-full bg-[#DC2626] px-1 text-center text-[10px] leading-4 font-semibold text-white ring-2 ring-white">
+                                            {unreadCount > 99
+                                                ? '99+'
+                                                : unreadCount}
+                                        </span>
+                                    )}
                                 </span>
-                            )}
-                        </span>
-                        Notifikasi
-                    </div>
-                </NotificationDropdown>
+                                Notifikasi
+                            </div>
+                        </NotificationDropdown>
 
-                <BottomLink tab={TABS[1]} active={isCurrentUrl(TABS[1].href)} />
+                        <BottomLink
+                            tab={PROFILE_TAB}
+                            active={isCurrentUrl(PROFILE_TAB.href)}
+                        />
+                    </>
+                ) : (
+                    <BottomLink
+                        tab={LOGIN_TAB}
+                        active={isCurrentUrl(LOGIN_TAB.href)}
+                    />
+                )}
             </div>
         </nav>
     );

@@ -16,6 +16,17 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
+import {
+    authErrorClassName,
+    authFieldClassName,
+    authGhostButtonClassName,
+    authIconClassName,
+    authInputClassName,
+    authLabelClassName,
+    authMutedLinkClassName,
+    authPrimaryButtonClassName,
+    authSelectTriggerClassName,
+} from '@/components/auth-ui';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import { Button } from '@/components/ui/button';
@@ -67,16 +78,6 @@ const selectPortalTheme: RegisterTheme = {
     '--accent-foreground': '#0059B8',
     '--border': '#E2E8F0',
 };
-
-const fieldClassName = 'flex flex-col gap-1';
-const labelClassName = 'text-xs leading-[1.4] font-medium text-[#334155]';
-const iconClassName =
-    'pointer-events-none absolute left-3 top-1/2 z-10 size-5 -translate-y-1/2 text-slate-400';
-const inputClassName =
-    'h-11 rounded-[8px] border-slate-200 bg-white pl-10 pr-4 text-base text-slate-900 shadow-none placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 md:text-base';
-const selectTriggerClassName =
-    'h-11 w-full rounded-[8px] border-slate-200 bg-white pl-10 pr-4 text-base text-slate-900 shadow-none data-[placeholder]:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 data-[size=default]:h-11 md:text-base';
-const errorClassName = 'pt-1 text-xs';
 
 const steps = [
     { id: 'diri', label: 'Data diri', icon: UserRound },
@@ -247,24 +248,39 @@ export default function Register({ passwordRules, positions, classes }: Props) {
 
                             {/* Penunjuk langkah */}
                             <div>
+                                <p className="sr-only" aria-live="polite">
+                                    Langkah {step + 1} dari {steps.length}:{' '}
+                                    {steps[step].label}
+                                </p>
                                 <ol
-                                    className="flex items-start"
+                                    className="mx-auto flex max-w-xs items-start"
                                     aria-label="Langkah pendaftaran"
                                 >
                                     {steps.map((item, index) => {
                                         const done = index < step;
                                         const active = index === step;
                                         const Icon = item.icon;
+                                        const isFirst = index === 0;
+                                        const isLast =
+                                            index === steps.length - 1;
 
                                         return (
                                             <li
                                                 key={item.id}
-                                                className={cn(
-                                                    'flex flex-1 flex-col gap-1.5',
-                                                    index > 0 && '-ml-1',
-                                                )}
+                                                className="flex flex-1 flex-col items-center gap-1.5 text-center"
                                             >
-                                                <div className="flex items-center gap-1.5">
+                                                <div className="flex w-full items-center">
+                                                    <span
+                                                        aria-hidden
+                                                        className={cn(
+                                                            'mx-1 h-0.5 flex-1 rounded-full',
+                                                            isFirst
+                                                                ? 'bg-transparent'
+                                                                : index <= step
+                                                                  ? 'bg-[#0080FF]'
+                                                                  : 'bg-slate-200',
+                                                        )}
+                                                    />
                                                     <button
                                                         type="button"
                                                         onClick={() => {
@@ -309,18 +325,17 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                                             <Icon className="size-4" />
                                                         )}
                                                     </button>
-                                                    {index <
-                                                        steps.length - 1 && (
-                                                        <span
-                                                            aria-hidden
-                                                            className={cn(
-                                                                'h-0.5 flex-1 rounded-full',
-                                                                index < step
-                                                                    ? 'bg-[#0080FF]'
-                                                                    : 'bg-slate-200',
-                                                            )}
-                                                        />
-                                                    )}
+                                                    <span
+                                                        aria-hidden
+                                                        className={cn(
+                                                            'mx-1 h-0.5 flex-1 rounded-full',
+                                                            isLast
+                                                                ? 'bg-transparent'
+                                                                : index < step
+                                                                  ? 'bg-[#0080FF]'
+                                                                  : 'bg-slate-200',
+                                                        )}
+                                                    />
                                                 </div>
                                                 <span
                                                     className={cn(
@@ -338,17 +353,6 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                         );
                                     })}
                                 </ol>
-                                <p
-                                    className="mt-3 text-sm leading-6 text-[#475569]"
-                                    aria-live="polite"
-                                >
-                                    {step === 0 &&
-                                        'Kenalan dulu. Data ini dipakai untuk menghubungimu soal pesanan.'}
-                                    {step === 1 &&
-                                        'Pilih statusmu di sekolah supaya toko yang tampil sesuai.'}
-                                    {step === 2 &&
-                                        'Terakhir, kunci akunmu dengan kata sandi yang aman.'}
-                                </p>
                             </div>
 
                             <div
@@ -364,15 +368,17 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                     )}
                                     aria-hidden={step !== 0}
                                 >
-                                    <div className={fieldClassName}>
+                                    <div className={authFieldClassName}>
                                         <Label
                                             htmlFor="name"
-                                            className={labelClassName}
+                                            className={authLabelClassName}
                                         >
                                             Nama Lengkap
                                         </Label>
                                         <div className="relative">
-                                            <User className={iconClassName} />
+                                            <User
+                                                className={authIconClassName}
+                                            />
                                             <Input
                                                 id="name"
                                                 type="text"
@@ -390,7 +396,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                                     }));
                                                 }}
                                                 placeholder="Masukkan nama lengkap"
-                                                className={inputClassName}
+                                                className={authInputClassName}
                                                 aria-invalid={Boolean(
                                                     mergedErrors.name,
                                                 )}
@@ -398,19 +404,21 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                         </div>
                                         <InputError
                                             message={mergedErrors.name}
-                                            className={errorClassName}
+                                            className={authErrorClassName}
                                         />
                                     </div>
 
-                                    <div className={fieldClassName}>
+                                    <div className={authFieldClassName}>
                                         <Label
                                             htmlFor="email"
-                                            className={labelClassName}
+                                            className={authLabelClassName}
                                         >
                                             Email
                                         </Label>
                                         <div className="relative">
-                                            <Mail className={iconClassName} />
+                                            <Mail
+                                                className={authIconClassName}
+                                            />
                                             <Input
                                                 id="email"
                                                 type="email"
@@ -429,7 +437,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                                     }));
                                                 }}
                                                 placeholder="contoh@email.com"
-                                                className={inputClassName}
+                                                className={authInputClassName}
                                                 aria-invalid={Boolean(
                                                     mergedErrors.email,
                                                 )}
@@ -437,19 +445,21 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                         </div>
                                         <InputError
                                             message={mergedErrors.email}
-                                            className={errorClassName}
+                                            className={authErrorClassName}
                                         />
                                     </div>
 
-                                    <div className={fieldClassName}>
+                                    <div className={authFieldClassName}>
                                         <Label
                                             htmlFor="phone"
-                                            className={labelClassName}
+                                            className={authLabelClassName}
                                         >
                                             Nomor WhatsApp
                                         </Label>
                                         <div className="relative">
-                                            <Phone className={iconClassName} />
+                                            <Phone
+                                                className={authIconClassName}
+                                            />
                                             <Input
                                                 id="phone"
                                                 type="tel"
@@ -469,7 +479,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                                     }));
                                                 }}
                                                 placeholder="08xxxxxxxxxx"
-                                                className={inputClassName}
+                                                className={authInputClassName}
                                                 aria-invalid={Boolean(
                                                     mergedErrors.phone,
                                                 )}
@@ -477,7 +487,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                         </div>
                                         <InputError
                                             message={mergedErrors.phone}
-                                            className={errorClassName}
+                                            className={authErrorClassName}
                                         />
                                     </div>
                                 </div>
@@ -490,16 +500,16 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                     )}
                                     aria-hidden={step !== 1}
                                 >
-                                    <div className={fieldClassName}>
+                                    <div className={authFieldClassName}>
                                         <Label
                                             htmlFor="position_id"
-                                            className={labelClassName}
+                                            className={authLabelClassName}
                                         >
                                             Jabatan
                                         </Label>
                                         <div className="relative">
                                             <BriefcaseBusiness
-                                                className={iconClassName}
+                                                className={authIconClassName}
                                             />
                                             <Select
                                                 name="position_id"
@@ -512,7 +522,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                                 <SelectTrigger
                                                     id="position_id"
                                                     className={
-                                                        selectTriggerClassName
+                                                        authSelectTriggerClassName
                                                     }
                                                     tabIndex={4}
                                                     aria-invalid={Boolean(
@@ -566,23 +576,25 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                                 mergedErrors.position_id ||
                                                 mergedErrors.class_id
                                             }
-                                            className={errorClassName}
+                                            className={authErrorClassName}
                                         />
                                     </div>
 
                                     {isStudent && (
                                         <>
-                                            <div className={fieldClassName}>
+                                            <div className={authFieldClassName}>
                                                 <Label
                                                     htmlFor="grade_level"
-                                                    className={labelClassName}
+                                                    className={
+                                                        authLabelClassName
+                                                    }
                                                 >
                                                     Kelas
                                                 </Label>
                                                 <div className="relative">
                                                     <GraduationCap
                                                         className={
-                                                            iconClassName
+                                                            authIconClassName
                                                         }
                                                     />
                                                     <Select
@@ -595,7 +607,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                                         <SelectTrigger
                                                             id="grade_level"
                                                             className={
-                                                                selectTriggerClassName
+                                                                authSelectTriggerClassName
                                                             }
                                                             tabIndex={5}
                                                         >
@@ -635,17 +647,19 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                                 </div>
                                             </div>
 
-                                            <div className={fieldClassName}>
+                                            <div className={authFieldClassName}>
                                                 <Label
                                                     htmlFor="class_id"
-                                                    className={labelClassName}
+                                                    className={
+                                                        authLabelClassName
+                                                    }
                                                 >
                                                     Jurusan
                                                 </Label>
                                                 <div className="relative">
                                                     <School
                                                         className={
-                                                            iconClassName
+                                                            authIconClassName
                                                         }
                                                     />
                                                     <Select
@@ -669,7 +683,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                                         <SelectTrigger
                                                             id="class_id"
                                                             className={
-                                                                selectTriggerClassName
+                                                                authSelectTriggerClassName
                                                             }
                                                             tabIndex={6}
                                                             aria-invalid={Boolean(
@@ -763,15 +777,17 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                         </div>
                                     )}
 
-                                    <div className={fieldClassName}>
+                                    <div className={authFieldClassName}>
                                         <Label
                                             htmlFor="password"
-                                            className={labelClassName}
+                                            className={authLabelClassName}
                                         >
                                             Kata Sandi
                                         </Label>
                                         <div className="relative">
-                                            <Lock className={iconClassName} />
+                                            <Lock
+                                                className={authIconClassName}
+                                            />
                                             <PasswordInput
                                                 id="password"
                                                 required
@@ -792,7 +808,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                                 }}
                                                 placeholder="Minimal 8 karakter"
                                                 passwordrules={passwordRules}
-                                                className={inputClassName}
+                                                className={authInputClassName}
                                                 aria-invalid={Boolean(
                                                     mergedErrors.password,
                                                 )}
@@ -800,20 +816,20 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                         </div>
                                         <InputError
                                             message={mergedErrors.password}
-                                            className={errorClassName}
+                                            className={authErrorClassName}
                                         />
                                     </div>
 
-                                    <div className={fieldClassName}>
+                                    <div className={authFieldClassName}>
                                         <Label
                                             htmlFor="password_confirmation"
-                                            className={labelClassName}
+                                            className={authLabelClassName}
                                         >
                                             Konfirmasi Kata Sandi
                                         </Label>
                                         <div className="relative">
                                             <KeyRound
-                                                className={iconClassName}
+                                                className={authIconClassName}
                                             />
                                             <PasswordInput
                                                 id="password_confirmation"
@@ -834,7 +850,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                                 }}
                                                 placeholder="Ulangi kata sandi"
                                                 passwordrules={passwordRules}
-                                                className={inputClassName}
+                                                className={authInputClassName}
                                                 aria-invalid={Boolean(
                                                     mergedErrors.password_confirmation,
                                                 )}
@@ -844,7 +860,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                             message={
                                                 mergedErrors.password_confirmation
                                             }
-                                            className={errorClassName}
+                                            className={authErrorClassName}
                                         />
                                     </div>
                                 </div>
@@ -859,7 +875,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                             variant="outline"
                                             onClick={handleBack}
                                             disabled={processing}
-                                            className="h-11 shrink-0 border-slate-200 bg-white text-[#334155] hover:bg-slate-50"
+                                            className={authGhostButtonClassName}
                                             tabIndex={9}
                                         >
                                             <ArrowLeft className="size-4" />
@@ -871,7 +887,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                             type="button"
                                             onClick={handleNext}
                                             disabled={processing}
-                                            className="h-11 flex-1 text-base font-semibold shadow-sm transition-colors active:scale-[0.98]"
+                                            className={`${authPrimaryButtonClassName} flex-1`}
                                             tabIndex={10}
                                         >
                                             Lanjut
@@ -881,7 +897,7 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                         <Button
                                             type="submit"
                                             disabled={processing}
-                                            className="h-11 flex-1 text-base font-semibold shadow-sm transition-colors active:scale-[0.98]"
+                                            className={`${authPrimaryButtonClassName} flex-1`}
                                             tabIndex={10}
                                             data-test="register-user-button"
                                         >
@@ -891,17 +907,17 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                                         </Button>
                                     )}
                                 </div>
-                                <p className="text-center text-xs text-slate-400">
+                                <p className="text-center text-xs font-medium text-slate-400">
                                     Langkah {step + 1} dari {steps.length}
                                 </p>
                             </div>
 
-                            <div className="text-center text-sm leading-6 text-[#475569]">
+                            <div className="border-t border-slate-100 pt-4 text-center text-sm leading-6 text-slate-500">
                                 Sudah punya akun?{' '}
                                 <Link
                                     href={login()}
                                     tabIndex={11}
-                                    className="font-semibold text-blue-700 transition-colors hover:text-blue-800"
+                                    className={authMutedLinkClassName}
                                 >
                                     Masuk di sini
                                 </Link>
@@ -944,8 +960,8 @@ function StepJumpOnServerError({
 }
 
 Register.layout = {
-    title: 'Bergabung dengan EduCart',
-    description: 'Buat akun buyer untuk mulai belanja di lingkungan sekolah.',
+    title: 'Daftar ke EduCart',
+    description: 'Buat akun untuk mulai belanja di lingkungan sekolah.',
 };
 
 function matchGrade(value: number) {

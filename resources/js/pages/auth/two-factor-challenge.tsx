@@ -1,6 +1,14 @@
 import { Form, Head, setLayoutProps } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
+import { ShieldCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import {
+    authErrorClassName,
+    authFieldClassName,
+    authLabelClassName,
+    authMutedLinkClassName,
+    authPrimaryButtonClassName,
+} from '@/components/auth-ui';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +17,8 @@ import {
     InputOTPGroup,
     InputOTPSlot,
 } from '@/components/ui/input-otp';
+import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import { store } from '@/routes/two-factor/login';
 
@@ -23,18 +33,17 @@ export default function TwoFactorChallenge() {
     }>(() => {
         if (showRecoveryInput) {
             return {
-                title: 'Recovery code',
+                title: 'Kode pemulihan',
                 description:
-                    'Please confirm access to your account by entering one of your emergency recovery codes.',
-                toggleText: 'login using an authentication code',
+                    'Masukkan salah satu kode pemulihan daruratmu untuk mengakses akun.',
+                toggleText: 'masuk dengan kode autentikasi',
             };
         }
 
         return {
-            title: 'Authentication code',
-            description:
-                'Enter the authentication code provided by your authenticator application.',
-            toggleText: 'login using a recovery code',
+            title: 'Kode autentikasi',
+            description: 'Masukkan kode dari aplikasi autentikator di HP-mu.',
+            toggleText: 'masuk dengan kode pemulihan',
         };
     }, [showRecoveryInput]);
 
@@ -51,72 +60,99 @@ export default function TwoFactorChallenge() {
 
     return (
         <>
-            <Head title="Two-factor authentication" />
+            <Head title="Verifikasi dua langkah" />
 
-            <div className="space-y-6">
+            <div className="flex flex-col gap-4">
+                <div className="mx-auto grid size-11 place-items-center rounded-2xl bg-[#EFF8FF] ring-1 ring-[#BCE0FF]">
+                    <ShieldCheck className="size-5 text-[#0080FF]" />
+                </div>
+
                 <Form
                     {...store.form()}
-                    className="space-y-4"
+                    className="flex flex-col gap-4"
                     resetOnError
                     resetOnSuccess={!showRecoveryInput}
                 >
                     {({ errors, processing, clearErrors }) => (
                         <>
                             {showRecoveryInput ? (
-                                <>
+                                <div className={authFieldClassName}>
+                                    <Label
+                                        htmlFor="recovery_code"
+                                        className={authLabelClassName}
+                                    >
+                                        Kode pemulihan
+                                    </Label>
                                     <Input
+                                        id="recovery_code"
                                         name="recovery_code"
                                         type="text"
-                                        placeholder="Enter recovery code"
+                                        placeholder="cth: abcd-1234-efgh"
                                         autoFocus={showRecoveryInput}
                                         required
+                                        autoComplete="one-time-code"
+                                        className="h-11 rounded-[10px] border-slate-200 bg-white px-4 text-[15px] shadow-none placeholder:text-slate-400 focus-visible:border-[#0080FF] focus-visible:ring-2 focus-visible:ring-[#0080FF]/20"
                                     />
                                     <InputError
                                         message={errors.recovery_code}
+                                        className={authErrorClassName}
                                     />
-                                </>
+                                </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center space-y-3 text-center">
-                                    <div className="flex w-full items-center justify-center">
-                                        <InputOTP
-                                            name="code"
-                                            maxLength={OTP_MAX_LENGTH}
-                                            value={code}
-                                            onChange={(value) => setCode(value)}
-                                            disabled={processing}
-                                            pattern={REGEXP_ONLY_DIGITS}
-                                            autoFocus
-                                        >
-                                            <InputOTPGroup>
-                                                {Array.from(
-                                                    { length: OTP_MAX_LENGTH },
-                                                    (_, index) => (
-                                                        <InputOTPSlot
-                                                            key={index}
-                                                            index={index}
-                                                        />
-                                                    ),
-                                                )}
-                                            </InputOTPGroup>
-                                        </InputOTP>
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className={authFieldClassName}>
+                                        <span className={authLabelClassName}>
+                                            Kode 6 digit
+                                        </span>
+                                        <div className="flex w-full items-center justify-center pt-1">
+                                            <InputOTP
+                                                name="code"
+                                                maxLength={OTP_MAX_LENGTH}
+                                                value={code}
+                                                onChange={(value) =>
+                                                    setCode(value)
+                                                }
+                                                disabled={processing}
+                                                pattern={REGEXP_ONLY_DIGITS}
+                                                autoFocus
+                                            >
+                                                <InputOTPGroup>
+                                                    {Array.from(
+                                                        {
+                                                            length: OTP_MAX_LENGTH,
+                                                        },
+                                                        (_, index) => (
+                                                            <InputOTPSlot
+                                                                key={index}
+                                                                index={index}
+                                                            />
+                                                        ),
+                                                    )}
+                                                </InputOTPGroup>
+                                            </InputOTP>
+                                        </div>
+                                        <InputError
+                                            message={errors.code}
+                                            className={`${authErrorClassName} text-center`}
+                                        />
                                     </div>
-                                    <InputError message={errors.code} />
                                 </div>
                             )}
 
                             <Button
                                 type="submit"
-                                className="w-full"
+                                className={authPrimaryButtonClassName}
                                 disabled={processing}
                             >
-                                Continue
+                                {processing && <Spinner />}
+                                Lanjut verifikasi
                             </Button>
 
-                            <div className="text-center text-sm text-muted-foreground">
-                                <span>or you can </span>
+                            <div className="border-t border-slate-100 pt-4 text-center text-sm text-slate-500">
+                                <span>atau kamu bisa </span>
                                 <button
                                     type="button"
-                                    className="cursor-pointer text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current!"
+                                    className={`cursor-pointer ${authMutedLinkClassName}`}
                                     onClick={() =>
                                         toggleRecoveryMode(clearErrors)
                                     }

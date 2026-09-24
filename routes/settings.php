@@ -23,10 +23,3 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('throttle:6,1')
         ->name('user-password.update');
 });
-
-Route::get('.well-known/passkey-endpoints', function () {
-    return response()->json([
-        'enroll' => route('security.edit'),
-        'manage' => route('security.edit'),
-    ]);
-})->name('well-known.passkeys');
