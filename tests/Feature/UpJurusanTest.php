@@ -16,7 +16,9 @@ use App\Models\UpJurusanDailyReport;
 use App\Models\UpJurusanPosSale;
 use App\Models\UpJurusanStockMovement;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('admin jurusan can create an up jurusan', function () {
@@ -144,6 +146,8 @@ test('admin jurusan can create only one picket officer for own up jurusan', func
 });
 
 test('admin jurusan can create product owned by own up jurusan', function () {
+    Storage::fake('r2');
+
     $adminJurusan = User::factory()->create(['role' => UserRole::AdminJurusan]);
     $upJurusan = UpJurusan::factory()->create(['admin_jurusan_id' => $adminJurusan->id]);
     $category = Category::factory()->create();
@@ -156,8 +160,14 @@ test('admin jurusan can create product owned by own up jurusan', function () {
             'description' => 'Produk resmi milik UP jurusan RPL.',
             'price' => 10000,
             'stock' => 5,
+            'image' => UploadedFile::fake()->image('produk.jpg'),
         ])
         ->assertRedirect(route('admin-jurusan.up-jurusan.index'));
+
+    $product = Product::query()->where('up_jurusan_id', $upJurusan->id)->firstOrFail();
+
+    expect($product->image)->not->toBeNull();
+    Storage::disk('r2')->assertExists($product->image);
 
     $this->assertDatabaseHas('products', [
         'seller_id' => null,
@@ -169,7 +179,58 @@ test('admin jurusan can create product owned by own up jurusan', function () {
     ]);
 });
 
+test('admin jurusan product image is required', function () {
+    $adminJurusan = User::factory()->create(['role' => UserRole::AdminJurusan]);
+    $upJurusan = UpJurusan::factory()->create(['admin_jurusan_id' => $adminJurusan->id]);
+    $category = Category::factory()->create();
+
+    $this->actingAs($adminJurusan)
+        ->from(route('admin-jurusan.up-jurusan.index'))
+        ->post(route('admin-jurusan.products.store'), [
+            'up_jurusan_id' => $upJurusan->id,
+            'category_id' => $category->id,
+            'name' => 'Produk Tanpa Gambar',
+            'description' => 'Produk resmi milik UP jurusan tanpa gambar.',
+            'price' => 10000,
+            'stock' => 5,
+        ])
+        ->assertRedirect(route('admin-jurusan.up-jurusan.index'))
+        ->assertSessionHasErrors('image');
+
+    $this->assertDatabaseMissing('products', [
+        'name' => 'Produk Tanpa Gambar',
+    ]);
+});
+
+test('admin jurusan product rejects an invalid image', function () {
+    Storage::fake('r2');
+
+    $adminJurusan = User::factory()->create(['role' => UserRole::AdminJurusan]);
+    $upJurusan = UpJurusan::factory()->create(['admin_jurusan_id' => $adminJurusan->id]);
+    $category = Category::factory()->create();
+
+    $this->actingAs($adminJurusan)
+        ->from(route('admin-jurusan.up-jurusan.index'))
+        ->post(route('admin-jurusan.products.store'), [
+            'up_jurusan_id' => $upJurusan->id,
+            'category_id' => $category->id,
+            'name' => 'Produk Gambar Invalid',
+            'description' => 'Produk resmi milik UP jurusan dengan gambar invalid.',
+            'price' => 10000,
+            'stock' => 5,
+            'image' => UploadedFile::fake()->create('dokumen.pdf', 100, 'application/pdf'),
+        ])
+        ->assertRedirect(route('admin-jurusan.up-jurusan.index'))
+        ->assertSessionHasErrors('image');
+
+    $this->assertDatabaseMissing('products', [
+        'name' => 'Produk Gambar Invalid',
+    ]);
+});
+
 test('admin jurusan product accepts discount original price with validation', function () {
+    Storage::fake('r2');
+
     $adminJurusan = User::factory()->create(['role' => UserRole::AdminJurusan]);
     $upJurusan = UpJurusan::factory()->create(['admin_jurusan_id' => $adminJurusan->id]);
     $category = Category::factory()->create();
@@ -184,6 +245,7 @@ test('admin jurusan product accepts discount original price with validation', fu
             'price' => 8000,
             'original_price' => 12000,
             'stock' => 10,
+            'image' => UploadedFile::fake()->image('gantungan.jpg'),
         ])
         ->assertRedirect(route('admin-jurusan.up-jurusan.index'));
 
@@ -204,6 +266,7 @@ test('admin jurusan product accepts discount original price with validation', fu
             'price' => 5000,
             'original_price' => 5000,
             'stock' => 10,
+            'image' => UploadedFile::fake()->image('stiker.jpg'),
         ])
         ->assertRedirect(route('admin-jurusan.up-jurusan.index'))
         ->assertSessionHasErrors('original_price');
@@ -276,6 +339,7 @@ test('admin jurusan cannot create product for another up jurusan', function () {
             'description' => 'Produk resmi milik UP jurusan RPL.',
             'price' => 10000,
             'stock' => 5,
+            'image' => UploadedFile::fake()->image('produk.jpg'),
         ])
         ->assertForbidden();
 });

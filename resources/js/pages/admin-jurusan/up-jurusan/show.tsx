@@ -3,6 +3,7 @@ import {
     ArrowLeft,
     Boxes,
     FileText,
+    ImagePlus,
     PackagePlus,
     Search,
     Tag,
@@ -10,7 +11,8 @@ import {
     Wallet,
     Warehouse,
 } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ChangeEvent } from 'react';
 import { PageHeader } from '@/components/admin-jurusan/page-header';
 import { UpJurusanRevenueChart } from '@/components/admin-jurusan/up-jurusan/revenue-chart';
 import { UpJurusanSummary } from '@/components/admin-jurusan/up-jurusan/summary';
@@ -93,12 +95,51 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
     const [previewPrice, setPreviewPrice] = useState('');
     const [previewStock, setPreviewStock] = useState('');
     const [previewCategoryId, setPreviewCategoryId] = useState('');
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [imageInputKey, setImageInputKey] = useState(0);
+    const previewImageUrlRef = useRef<string | null>(null);
     const [, setIsCategoryOpen] = useState(false);
     const selectOpenRef = useRef(false);
     const handleCategoryOpen = (open: boolean) => {
         selectOpenRef.current = open;
         setIsCategoryOpen(open);
     };
+
+    const resetPreviewImage = () => {
+        if (previewImageUrlRef.current) {
+            URL.revokeObjectURL(previewImageUrlRef.current);
+            previewImageUrlRef.current = null;
+        }
+
+        setPreviewImage(null);
+        setImageInputKey((key) => key + 1);
+    };
+
+    const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] ?? null;
+
+        if (previewImageUrlRef.current) {
+            URL.revokeObjectURL(previewImageUrlRef.current);
+            previewImageUrlRef.current = null;
+        }
+
+        if (file) {
+            const url = URL.createObjectURL(file);
+            previewImageUrlRef.current = url;
+            setPreviewImage(url);
+        } else {
+            setPreviewImage(null);
+        }
+    };
+
+    useEffect(
+        () => () => {
+            if (previewImageUrlRef.current) {
+                URL.revokeObjectURL(previewImageUrlRef.current);
+            }
+        },
+        [],
+    );
 
     const filteredProducts = useMemo(() => {
         if (!productSearch) {
@@ -289,6 +330,8 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
                                                 setPreviewPrice('');
                                                 setPreviewStock('');
                                                 setPreviewCategoryId('');
+                                                resetPreviewImage();
+                                                setPreviewCategoryId('');
                                                 setIsCategoryOpen(false);
                                                 selectOpenRef.current = false;
                                             }
@@ -366,6 +409,7 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
                                                     setPreviewPrice('');
                                                     setPreviewStock('');
                                                     setPreviewCategoryId('');
+                                                    resetPreviewImage();
                                                     setIsCategoryOpen(false);
                                                     selectOpenRef.current = false;
                                                 }}
@@ -627,6 +671,76 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
                                                                     </div>
                                                                 </div>
 
+                                                                <div className="space-y-3">
+                                                                    <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                                                                        <ImagePlus className="size-4 text-slate-400" />
+                                                                        <h4 className="text-sm font-semibold text-slate-900">
+                                                                            Gambar
+                                                                            Produk
+                                                                        </h4>
+                                                                        <span className="ml-auto text-xs text-slate-400">
+                                                                            *
+                                                                            wajib
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="grid gap-2">
+                                                                        <Label
+                                                                            htmlFor={`product-image-${up.id}`}
+                                                                            className="text-sm font-medium text-slate-700"
+                                                                        >
+                                                                            Foto
+                                                                            produk
+                                                                            *
+                                                                        </Label>
+                                                                        <div className="flex items-start gap-3">
+                                                                            <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-[10px] bg-slate-50 text-slate-400 ring-1 ring-slate-100">
+                                                                                {previewImage ? (
+                                                                                    <img
+                                                                                        src={
+                                                                                            previewImage
+                                                                                        }
+                                                                                        alt="Preview gambar produk"
+                                                                                        className="size-full object-cover"
+                                                                                    />
+                                                                                ) : (
+                                                                                    <ImagePlus className="size-6" />
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="min-w-0 flex-1">
+                                                                                <Input
+                                                                                    key={`product-image-${up.id}-${imageInputKey}`}
+                                                                                    id={`product-image-${up.id}`}
+                                                                                    name="image"
+                                                                                    type="file"
+                                                                                    accept="image/jpeg,image/png,image/webp"
+                                                                                    required
+                                                                                    onChange={
+                                                                                        handleImageChange
+                                                                                    }
+                                                                                    aria-invalid={Boolean(
+                                                                                        errors.image,
+                                                                                    )}
+                                                                                    className="h-11 rounded-[10px] border-slate-200 bg-white text-sm file:mr-3 file:rounded-[6px] file:border-0 file:bg-slate-100 file:px-2 file:text-sm file:font-medium file:text-slate-700"
+                                                                                />
+                                                                                <p className="mt-1 text-xs text-slate-500">
+                                                                                    JPG,
+                                                                                    PNG,
+                                                                                    atau
+                                                                                    WEBP.
+                                                                                    Maks
+                                                                                    2
+                                                                                    MB.
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.image
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                </div>
+
                                                                 <div className="space-y-4">
                                                                     <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
                                                                         <Wallet className="size-4 text-slate-400" />
@@ -799,8 +913,18 @@ export default function UpJurusanShow({ upJurusan: up, categories }: Props) {
                                                                         & POS
                                                                     </p>
                                                                     <div className="mt-3 flex gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-                                                                        <div className="grid size-16 shrink-0 place-items-center rounded-[10px] bg-slate-50 text-slate-400 ring-1 ring-slate-100">
-                                                                            <PackagePlus className="size-6" />
+                                                                        <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-[10px] bg-slate-50 text-slate-400 ring-1 ring-slate-100">
+                                                                            {previewImage ? (
+                                                                                <img
+                                                                                    src={
+                                                                                        previewImage
+                                                                                    }
+                                                                                    alt="Preview gambar produk"
+                                                                                    className="size-full object-cover"
+                                                                                />
+                                                                            ) : (
+                                                                                <PackagePlus className="size-6" />
+                                                                            )}
                                                                         </div>
                                                                         <div className="min-w-0 flex-1">
                                                                             <p className="truncate text-sm font-semibold text-slate-900">

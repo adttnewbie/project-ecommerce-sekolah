@@ -16,7 +16,9 @@ use App\Support\ReportAggregationService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -355,6 +357,7 @@ class AdminJurusanUpJurusanController extends Controller
                 'gt:price',
             ],
             'stock' => ['required', 'integer', 'min:0', 'max:100000'],
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
         $upJurusan = UpJurusan::query()
@@ -362,19 +365,39 @@ class AdminJurusanUpJurusanController extends Controller
             ->firstOrFail();
         abort_unless($upJurusan->admin_jurusan_id === $adminJurusan->id, 403);
 
-        Product::query()->create([
-            'seller_id' => null,
-            'up_jurusan_id' => $upJurusan->id,
-            'category_id' => $validated['category_id'],
-            'name' => $validated['name'],
-            'slug' => $this->uniqueSlug($validated['name']),
-            'description' => $validated['description'],
-            'price' => $validated['price'],
-            'original_price' => $validated['original_price'] ?? null,
-            'stock' => $validated['stock'],
-            'sales_method' => ProductSalesMethod::UpJurusan,
-            'status' => ProductStatus::Approved,
-        ]);
+        $image = $request->file('image');
+        $imagePath = null;
+        $newImagePath = null;
+
+        if ($image instanceof UploadedFile) {
+            $storedImage = $image->store('products', 'r2');
+            $imagePath = $storedImage === false ? null : $storedImage;
+            $newImagePath = $imagePath;
+        }
+
+        try {
+            Product::query()->create([
+                'seller_id' => null,
+                'up_jurusan_id' => $upJurusan->id,
+                'category_id' => $validated['category_id'],
+                'name' => $validated['name'],
+                'slug' => $this->uniqueSlug($validated['name']),
+                'description' => $validated['description'],
+                'price' => $validated['price'],
+                'original_price' => $validated['original_price'] ?? null,
+                'stock' => $validated['stock'],
+                'sales_method' => ProductSalesMethod::UpJurusan,
+                'status' => ProductStatus::Approved,
+                'image' => $imagePath,
+            ]);
+        } catch (\Throwable $exception) {
+            // File sudah tersimpan sebelum insert; hapus agar tidak yatim.
+            if ($newImagePath !== null) {
+                Storage::disk('r2')->delete($newImagePath);
+            }
+
+            throw $exception;
+        }
 
         return to_route('admin-jurusan.up-jurusan.index')
             ->with('success', 'Produk UP Jurusan berhasil dibuat.');
