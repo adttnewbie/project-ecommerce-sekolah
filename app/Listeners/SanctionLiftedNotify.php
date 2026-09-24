@@ -5,6 +5,7 @@ namespace App\Listeners;
 use App\Enums\UserRole;
 use App\Events\SanctionLifted;
 use App\Models\User;
+use App\Support\EmailDispatch;
 use App\Support\NotificationDispatch;
 
 class SanctionLiftedNotify
@@ -14,20 +15,31 @@ class SanctionLiftedNotify
      */
     public function handle(SanctionLifted $event): void
     {
+        $key = $event->notificationKey();
+
+        $attributes = [
+            'href' => self::href($event->userId),
+            'title' => $event->notificationTitle(),
+            'description' => $event->notificationDescription(),
+            'data' => [
+                'sanction_id' => $event->sanctionId,
+                'sanction_type' => $event->type->value,
+                'source' => 'sanction_lifted',
+            ],
+        ];
+
         NotificationDispatch::toUser(
             $event->userId,
             'system',
-            $event->notificationKey(),
-            [
-                'href' => self::href($event->userId),
-                'title' => $event->notificationTitle(),
-                'description' => $event->notificationDescription(),
-                'data' => [
-                    'sanction_id' => $event->sanctionId,
-                    'sanction_type' => $event->type->value,
-                    'source' => 'sanction_lifted',
-                ],
-            ],
+            $key,
+            $attributes,
+        );
+
+        EmailDispatch::toUser(
+            $event->userId,
+            'system',
+            $key,
+            $attributes,
         );
     }
 

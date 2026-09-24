@@ -5,6 +5,7 @@ namespace App\Listeners;
 use App\Enums\NotificationType;
 use App\Events\OrderPaymentApproved;
 use App\Models\OrderItem;
+use App\Support\EmailDispatch;
 use App\Support\NotificationDispatch;
 use Illuminate\Support\Facades\Log;
 
@@ -49,20 +50,29 @@ class SellerPaymentPaidNotify
                 return;
             }
 
+            $attributes = [
+                'href' => route('seller.orders.show', $event->orderItemId, false),
+                'title' => "Pembayaran {$event->orderNumber} ditolak",
+                'description' => 'Pembayaran sebesar Rp '.number_format($event->amount, 0, ',', '.').' ditolak picket. Alasan: '.($event->rejectionReason ?? 'tidak valid.'),
+                'data' => [
+                    'order_item_id' => $event->orderItemId,
+                    'amount' => $event->amount,
+                    'source' => 'payment_rejected',
+                ],
+            ];
+
             NotificationDispatch::toUser(
                 $sellerId,
                 NotificationType::Payment->value,
                 "seller-payment-rejected:{$event->orderItemId}",
-                [
-                    'href' => route('seller.orders.show', $event->orderItemId, false),
-                    'title' => "Pembayaran {$event->orderNumber} ditolak",
-                    'description' => 'Pembayaran sebesar Rp '.number_format($event->amount, 0, ',', '.').' ditolak picket. Alasan: '.($event->rejectionReason ?? 'tidak valid.'),
-                    'data' => [
-                        'order_item_id' => $event->orderItemId,
-                        'amount' => $event->amount,
-                        'source' => 'payment_rejected',
-                    ],
-                ],
+                $attributes,
+            );
+
+            EmailDispatch::toUser(
+                $sellerId,
+                NotificationType::Payment->value,
+                "seller-payment-rejected:{$event->orderItemId}",
+                $attributes,
             );
 
             return;
@@ -72,20 +82,29 @@ class SellerPaymentPaidNotify
             return; // Seller confirmed their own cash payment.
         }
 
+        $attributes = [
+            'href' => route('seller.orders.show', $event->orderItemId, false),
+            'title' => "Pembayaran {$event->orderNumber} lunas",
+            'description' => 'Pembayaran sebesar Rp '.number_format($event->amount, 0, ',', '.').' telah dikonfirmasi picket.',
+            'data' => [
+                'order_item_id' => $event->orderItemId,
+                'amount' => $event->amount,
+                'source' => 'payment_paid',
+            ],
+        ];
+
         NotificationDispatch::toUser(
             $sellerId,
             NotificationType::Payment->value,
             "seller-payment-paid:{$event->orderItemId}",
-            [
-                'href' => route('seller.orders.show', $event->orderItemId, false),
-                'title' => "Pembayaran {$event->orderNumber} lunas",
-                'description' => 'Pembayaran sebesar Rp '.number_format($event->amount, 0, ',', '.').' telah dikonfirmasi picket.',
-                'data' => [
-                    'order_item_id' => $event->orderItemId,
-                    'amount' => $event->amount,
-                    'source' => 'payment_paid',
-                ],
-            ],
+            $attributes,
+        );
+
+        EmailDispatch::toUser(
+            $sellerId,
+            NotificationType::Payment->value,
+            "seller-payment-paid:{$event->orderItemId}",
+            $attributes,
         );
     }
 }

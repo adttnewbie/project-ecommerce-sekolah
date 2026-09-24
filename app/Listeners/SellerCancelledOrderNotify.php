@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Enums\UserRole;
 use App\Events\OrderItemCancelled;
+use App\Support\EmailDispatch;
 use App\Support\NotificationDispatch;
 
 class SellerCancelledOrderNotify
@@ -19,21 +20,30 @@ class SellerCancelledOrderNotify
             return;
         }
 
+        $attributes = [
+            'href' => route('seller.orders.show', $event->orderItemId, false),
+            'title' => "Pesanan {$event->productName} dibatalkan",
+            'description' => "{$this->actorLabel($event)} membatalkan pesanan. Alasan: ".($event->reason ?? 'tidak disebutkan'),
+            'data' => [
+                'order_id' => $event->orderId,
+                'order_item_id' => $event->orderItemId,
+                'is_expiry' => $event->isExpiry,
+                'source' => 'order_item_cancelled',
+            ],
+        ];
+
         NotificationDispatch::toUser(
             $event->sellerId,
             'order',
             "seller-item-cancelled:{$event->orderItemId}",
-            [
-                'href' => route('seller.orders.show', $event->orderItemId, false),
-                'title' => "Pesanan {$event->productName} dibatalkan",
-                'description' => "{$this->actorLabel($event)} membatalkan pesanan. Alasan: ".($event->reason ?? 'tidak disebutkan'),
-                'data' => [
-                    'order_id' => $event->orderId,
-                    'order_item_id' => $event->orderItemId,
-                    'is_expiry' => $event->isExpiry,
-                    'source' => 'order_item_cancelled',
-                ],
-            ],
+            $attributes,
+        );
+
+        EmailDispatch::toUser(
+            $event->sellerId,
+            'order',
+            "seller-item-cancelled:{$event->orderItemId}",
+            $attributes,
         );
     }
 

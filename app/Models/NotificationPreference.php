@@ -39,4 +39,17 @@ class NotificationPreference extends Model
             ->where('in_app_enabled', false)
             ->exists();
     }
+
+    /**
+     * Whether email notifications of a type may be delivered to the user.
+     * Absence of a preference row means opted-in (default enabled).
+     */
+    public static function allowsEmail(int $userId, string $type): bool
+    {
+        return ! static::query()
+            ->where('user_id', $userId)
+            ->where('type', $type)
+            ->where('email_enabled', false)
+            ->exists();
+    }
 }

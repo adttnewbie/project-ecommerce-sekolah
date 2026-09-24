@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\OrderPaymentApproved;
 use App\Models\OrderItem;
+use App\Support\EmailDispatch;
 use App\Support\NotificationDispatch;
 use Illuminate\Support\Facades\Log;
 
@@ -32,25 +33,34 @@ class BuyerPaymentDecidedNotify
 
         $approved = $event->status === 'approved';
 
+        $attributes = [
+            'href' => route('orders.show', $item->order_id, false),
+            'title' => $approved
+                ? "Pembayaran {$event->orderNumber} dikonfirmasi"
+                : "Pembayaran {$event->orderNumber} ditolak",
+            'description' => $approved
+                ? 'Pembayaran sebesar Rp '.number_format($event->amount, 0, ',', '.').' telah dikonfirmasi.'
+                : 'Alasan: '.($event->rejectionReason ?? 'tidak valid.'),
+            'data' => [
+                'order_item_id' => $event->orderItemId,
+                'status' => $event->status,
+                'amount' => $event->amount,
+                'source' => 'payment_decided',
+            ],
+        ];
+
         NotificationDispatch::toUser(
             $buyerId,
             'payment',
             "buyer-payment:{$event->orderItemId}:{$event->status}",
-            [
-                'href' => route('orders.show', $item->order_id, false),
-                'title' => $approved
-                    ? "Pembayaran {$event->orderNumber} dikonfirmasi"
-                    : "Pembayaran {$event->orderNumber} ditolak",
-                'description' => $approved
-                    ? 'Pembayaran sebesar Rp '.number_format($event->amount, 0, ',', '.').' telah dikonfirmasi.'
-                    : 'Alasan: '.($event->rejectionReason ?? 'tidak valid.'),
-                'data' => [
-                    'order_item_id' => $event->orderItemId,
-                    'status' => $event->status,
-                    'amount' => $event->amount,
-                    'source' => 'payment_decided',
-                ],
-            ],
+            $attributes,
+        );
+
+        EmailDispatch::toUser(
+            $buyerId,
+            'payment',
+            "buyer-payment:{$event->orderItemId}:{$event->status}",
+            $attributes,
         );
     }
 }

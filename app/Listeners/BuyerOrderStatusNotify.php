@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\OrderItemStatusChanged;
 use App\Models\OrderItem;
+use App\Support\EmailDispatch;
 use App\Support\NotificationDispatch;
 use Illuminate\Support\Facades\Log;
 
@@ -33,21 +34,30 @@ class BuyerOrderStatusNotify
             return;
         }
 
+        $attributes = [
+            'href' => route('orders.show', $event->orderId, false),
+            'title' => "Pesanan {$event->productName} {$event->action}",
+            'description' => "Diproses oleh {$event->sellerName}.",
+            'data' => [
+                'order_id' => $event->orderId,
+                'order_item_id' => $event->orderItemId,
+                'status' => $event->itemStatus,
+                'source' => 'order_item_status_changed',
+            ],
+        ];
+
         NotificationDispatch::toUser(
             (int) $buyerId,
             'order',
             "buyer-order-item:{$event->orderItemId}:{$event->itemStatus}",
-            [
-                'href' => route('orders.show', $event->orderId, false),
-                'title' => "Pesanan {$event->productName} {$event->action}",
-                'description' => "Diproses oleh {$event->sellerName}.",
-                'data' => [
-                    'order_id' => $event->orderId,
-                    'order_item_id' => $event->orderItemId,
-                    'status' => $event->itemStatus,
-                    'source' => 'order_item_status_changed',
-                ],
-            ],
+            $attributes,
+        );
+
+        EmailDispatch::toUser(
+            (int) $buyerId,
+            'order',
+            "buyer-order-item:{$event->orderItemId}:{$event->itemStatus}",
+            $attributes,
         );
     }
 }
