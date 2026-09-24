@@ -24,12 +24,15 @@ class ConsignmentTransitionService
         self::assertCanTransition($current, UpJurusanConsignmentStatus::Approved);
         self::assertCommissionRate($commissionRate);
 
-        // Two-stage moderation: the product itself must already be published
-        // through the admin product-moderation gate before a jurusan approval
-        // may run. Approving here would otherwise bypass that review.
-        if ($current->product()->value('status') !== ProductStatus::Approved) {
+        // Single-gate moderation (opsi A): admin jurusan menyetujui titipan
+        // sekaligus menerbitkan produk ke katalog. Produk titipan tidak masuk
+        // antrean moderasi admin pusat, jadi approval di sini harus bisa
+        // mempublish produk Pending secara atomik.
+        $product = $current->product()->lockForUpdate()->firstOrFail();
+
+        if (! in_array($product->status, [ProductStatus::Pending, ProductStatus::Approved], true)) {
             throw ValidationException::withMessages([
-                'status' => 'Produk belum disetujui moderator. Setujui produk melalui moderasi terlebih dahulu, lalu setujui konsinyasanya.',
+                'status' => 'Produk titipan tidak dalam status yang dapat disetujui.',
             ]);
         }
 

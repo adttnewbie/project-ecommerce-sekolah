@@ -2,7 +2,9 @@
 
 namespace App\Listeners;
 
+use App\Enums\ProductSalesMethod;
 use App\Events\ProductPendingModeration;
+use App\Models\Product;
 use App\Support\NotificationDispatch;
 
 class AdminProductModerationNotify
@@ -12,6 +14,19 @@ class AdminProductModerationNotify
      */
     public function handle(ProductPendingModeration $event): void
     {
+        // Single-gate moderation (opsi A): produk titipan UP Jurusan dimoderasi
+        // admin jurusan lewat persetujuan konsinyasi, bukan admin pusat.
+        // Notif seller tetap jalan via CreateProductModerationNotification.
+        $salesMethod = Product::query()->whereKey($event->productId)->value('sales_method');
+
+        if ($salesMethod instanceof ProductSalesMethod) {
+            $salesMethod = $salesMethod->value;
+        }
+
+        if ($salesMethod === ProductSalesMethod::UpJurusan->value) {
+            return;
+        }
+
         NotificationDispatch::toRole(
             'admin',
             'product',

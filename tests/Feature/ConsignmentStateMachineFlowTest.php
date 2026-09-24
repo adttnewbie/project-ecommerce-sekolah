@@ -38,19 +38,16 @@ test('seller create then admin approve then picket receive and complete flow', f
 
     expect($consignment->status)->toBe(UpJurusanConsignmentStatus::PendingApproval);
 
-    // Stage 1 of the two-stage moderation: product moderation publishes
-    // the item before the jurusan may approve the consignment.
-    Product::query()
-        ->whereKey($consignment->product_id)
-        ->update(['status' => ProductStatus::Approved]);
-
+    // Single-gate moderation (opsi A): admin jurusan menyetujui titipan
+    // sekaligus menerbitkan produk Pending ke katalog.
     $this->actingAs($admin)
         ->post(route('admin-jurusan.consignments.approve', $consignment), [
             'commission_rate' => 10,
         ])
         ->assertRedirect(route('admin-jurusan.consignments.index'));
 
-    expect($consignment->fresh()->status)->toBe(UpJurusanConsignmentStatus::Approved);
+    expect($consignment->fresh()->status)->toBe(UpJurusanConsignmentStatus::Approved)
+        ->and(Product::query()->find($consignment->product_id)->status)->toBe(ProductStatus::Approved);
 
     $this->actingAs($picket)
         ->post(route('picket.up-jurusan.consignments.receive', $consignment), [

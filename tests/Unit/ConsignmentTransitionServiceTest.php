@@ -20,7 +20,8 @@ function makeConsignment(array $overrides = []): UpJurusanConsignment
 {
     $seller = User::factory()->create(['role' => UserRole::Seller]);
     $product = Product::factory()->for($seller, 'seller')->create([
-        // Two-stage moderation: jurusan approval requires a published product.
+        // Single-gate moderation (opsi A): fixture default published, test
+        // pending-publish ada di kasus approve di bawah.
         'status' => ProductStatus::Approved,
         'stock' => 0,
     ]);
@@ -316,7 +317,7 @@ test('illegal transitions from terminal states are rejected', function (UpJurusa
     [UpJurusanConsignmentStatus::Received, UpJurusanConsignmentStatus::Cancelled],
 ])->throws(ValidationException::class);
 
-test('approve refuses to publish when product moderation has not approved the product', function () {
+test('approve publishes a pending product atomically (single-gate admin jurusan)', function () {
     $consignment = makeConsignment([
         'status' => UpJurusanConsignmentStatus::PendingApproval,
     ]);
@@ -324,12 +325,30 @@ test('approve refuses to publish when product moderation has not approved the pr
     // Fixture product is published; force it back to the pre-moderation state.
     Product::query()->whereKey($consignment->product_id)->update([
         'status' => ProductStatus::Pending->value,
+        'rejection_reason' => 'Perlu foto lebih jelas',
+    ]);
+
+    ConsignmentTransitionService::approve($consignment, 10);
+
+    expect($consignment->fresh()->status)->toBe(UpJurusanConsignmentStatus::Approved)
+        ->and($consignment->fresh()->commission_rate)->toBe(10)
+        ->and(Product::query()->find($consignment->product_id)->status)
+        ->toBe(ProductStatus::Approved)
+        ->and(Product::query()->find($consignment->product_id)->rejection_reason)
+        ->toBeNull();
+});
+
+test('approve rejects a product in a non-approvable status', function () {
+    $consignment = makeConsignment([
+        'status' => UpJurusanConsignmentStatus::PendingApproval,
+    ]);
+
+    Product::query()->whereKey($consignment->product_id)->update([
+        'status' => ProductStatus::Rejected->value,
     ]);
 
     expect(fn () => ConsignmentTransitionService::approve($consignment, 10))
         ->toThrow(ValidationException::class);
 
-    expect($consignment->fresh()->status)->toBe(UpJurusanConsignmentStatus::PendingApproval)
-        ->and(Product::query()->find($consignment->product_id)->status)
-        ->toBe(ProductStatus::Pending);
+    expect($consignment->fresh()->status)->toBe(UpJurusanConsignmentStatus::PendingApproval);
 });

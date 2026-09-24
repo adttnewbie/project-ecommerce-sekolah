@@ -3,6 +3,8 @@
 use App\Enums\OrderItemStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\ProductFulfillmentType;
+use App\Enums\ProductSalesMethod;
+use App\Enums\ProductStatus;
 use App\Enums\UpJurusanConsignmentStatus;
 use App\Enums\UserRole;
 use App\Events\DailyReportSubmitted;
@@ -10,7 +12,9 @@ use App\Events\OrderItemStatusChanged;
 use App\Events\OrderPaymentApproved;
 use App\Events\PendingOrderCreated;
 use App\Events\ProductModerationDecided;
+use App\Events\ProductPendingModeration;
 use App\Listeners\AdminOrderNotify;
+use App\Listeners\AdminProductModerationNotify;
 use App\Listeners\CreatePendingOrderNotification;
 use App\Models\Notification;
 use App\Models\NotificationPreference;
@@ -262,4 +266,36 @@ it('respects the in-app preference gate per user and type', function () {
     (new CreatePendingOrderNotification)->handle($eventAgain);
 
     expect(Notification::query()->where('user_id', $seller->id)->where('key', 'order-pending:603:'.$seller->id)->exists())->toBeTrue();
+});
+
+it('skips central admin moderation notification for up jurusan consignment products', function () {
+    $admin = roleUser(UserRole::Admin);
+    $seller = roleUser(UserRole::Seller);
+
+    $titip = Product::factory()->for($seller, 'seller')->create([
+        'status' => ProductStatus::Pending,
+        'sales_method' => ProductSalesMethod::UpJurusan,
+    ]);
+    $mandiri = Product::factory()->for($seller, 'seller')->create([
+        'status' => ProductStatus::Pending,
+        'sales_method' => ProductSalesMethod::SelfManaged,
+    ]);
+
+    (new AdminProductModerationNotify)->handle(new ProductPendingModeration(
+        productId: $titip->id,
+        productName: $titip->name,
+        sellerId: $seller->id,
+        sellerName: $seller->name,
+    ));
+
+    expect(Notification::query()->where('key', "admin-product-moderation:{$titip->id}")->exists())->toBeFalse();
+
+    (new AdminProductModerationNotify)->handle(new ProductPendingModeration(
+        productId: $mandiri->id,
+        productName: $mandiri->name,
+        sellerId: $seller->id,
+        sellerName: $seller->name,
+    ));
+
+    expect(Notification::query()->where('key', "admin-product-moderation:{$mandiri->id}")->where('user_id', $admin->id)->exists())->toBeTrue();
 });
