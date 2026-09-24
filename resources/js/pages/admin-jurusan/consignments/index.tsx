@@ -269,20 +269,35 @@ export default function AdminJurusanConsignments({ consignments }: Props) {
                                                                     >
                                                                         {({
                                                                             processing,
+                                                                            errors,
                                                                         }) => (
-                                                                            <Button
-                                                                                type="submit"
-                                                                                size="sm"
-                                                                                className="rounded-lg"
-                                                                                disabled={
-                                                                                    processing
-                                                                                }
-                                                                            >
-                                                                                <Check className="size-4" />
-                                                                                {processing
-                                                                                    ? '...'
-                                                                                    : 'Approve'}
-                                                                            </Button>
+                                                                            <>
+                                                                                <input
+                                                                                    type="hidden"
+                                                                                    name="commission_rate"
+                                                                                    value="10"
+                                                                                />
+                                                                                <Button
+                                                                                    type="submit"
+                                                                                    size="sm"
+                                                                                    className="rounded-lg"
+                                                                                    disabled={
+                                                                                        processing
+                                                                                    }
+                                                                                    title={
+                                                                                        errors.commission_rate
+                                                                                            ? String(
+                                                                                                  errors.commission_rate,
+                                                                                              )
+                                                                                            : 'Setujui dengan komisi standar 10%. Ubah via Detail bila perlu.'
+                                                                                    }
+                                                                                >
+                                                                                    <Check className="size-4" />
+                                                                                    {processing
+                                                                                        ? '...'
+                                                                                        : 'Approve'}
+                                                                                </Button>
+                                                                            </>
                                                                         )}
                                                                     </Form>
                                                                     <RejectConsignmentDialog
@@ -353,18 +368,33 @@ export default function AdminJurusanConsignments({ consignments }: Props) {
                                                         >
                                                             {({
                                                                 processing,
+                                                                errors,
                                                             }) => (
-                                                                <Button
-                                                                    type="submit"
-                                                                    size="sm"
-                                                                    className="w-full rounded-lg"
-                                                                    disabled={
-                                                                        processing
-                                                                    }
-                                                                >
-                                                                    <Check className="size-4" />
-                                                                    Approve
-                                                                </Button>
+                                                                <>
+                                                                    <input
+                                                                        type="hidden"
+                                                                        name="commission_rate"
+                                                                        value="10"
+                                                                    />
+                                                                    <Button
+                                                                        type="submit"
+                                                                        size="sm"
+                                                                        className="w-full rounded-lg"
+                                                                        disabled={
+                                                                            processing
+                                                                        }
+                                                                        title={
+                                                                            errors.commission_rate
+                                                                                ? String(
+                                                                                      errors.commission_rate,
+                                                                                  )
+                                                                                : 'Setujui dengan komisi standar 10%. Ubah via Detail bila perlu.'
+                                                                        }
+                                                                    >
+                                                                        <Check className="size-4" />
+                                                                        Approve
+                                                                    </Button>
+                                                                </>
                                                             )}
                                                         </Form>
                                                     </>
