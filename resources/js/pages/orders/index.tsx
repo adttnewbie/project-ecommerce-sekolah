@@ -23,8 +23,17 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { formatRupiah } from '@/lib/format';
 import { home } from '@/routes';
 import { index as ordersIndex, show as orderShow } from '@/routes/orders';
+
+const formatDate = (value: string | null) =>
+    value
+        ? new Intl.DateTimeFormat('id-ID', {
+              dateStyle: 'medium',
+              timeStyle: 'short',
+          }).format(new Date(value))
+        : '-';
 
 type BuyerOrder = {
     id: number;
@@ -70,21 +79,6 @@ type Props = {
     };
     active_sanction: ActiveSanction | null;
 };
-
-const formatRupiah = (value: number) =>
-    new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 0,
-    }).format(value);
-
-const formatDate = (value: string | null) =>
-    value
-        ? new Intl.DateTimeFormat('id-ID', {
-              dateStyle: 'medium',
-              timeStyle: 'short',
-          }).format(new Date(value))
-        : '-';
 
 export default function BuyerOrdersIndex({ orders, active_sanction }: Props) {
     return (

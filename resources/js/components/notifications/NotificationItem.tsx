@@ -1,6 +1,8 @@
 import { router } from '@inertiajs/react';
+import { useState } from 'react';
 import { formatNotificationTimestamp } from '@/lib/formatNotificationTimestamp';
 import { cn } from '@/lib/utils';
+import { destroy as destroyNotification } from '@/routes/notifications';
 import { NOTIFICATION_TYPE_CONFIG } from '@/types/notification';
 import type { Notification } from '@/types/notifications';
 
@@ -26,6 +28,7 @@ export function NotificationItem({
         notification.type as keyof typeof NOTIFICATION_TYPE_CONFIG;
     const config = NOTIFICATION_TYPE_CONFIG[configType];
     const accentColor = config.accentColor;
+    const [navigating, setNavigating] = useState(false);
 
     const handleDismissClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -36,29 +39,36 @@ export function NotificationItem({
         }
     };
 
-    const handleClick = async (e: React.MouseEvent) => {
-        if (!notification.is_read && onMarkAsRead) {
-            e.preventDefault();
-
-            try {
-                router.post(
-                    `/notifications/${encodeURIComponent(notification.key)}/read`,
-                    {},
-                    {
-                        preserveScroll: true,
-                    },
-                );
-
-                if (typeof onMarkAsRead === 'function') {
-                    onMarkAsRead(notification.key);
-                }
-
-                window.location.href = notification.href;
-            } catch (error) {
-                console.error('Failed to mark notification as read:', error);
-                window.location.href = notification.href;
-            }
+    const handleClick = (e: React.MouseEvent) => {
+        if (notification.is_read || !onMarkAsRead || navigating) {
+            return;
         }
+
+        e.preventDefault();
+        setNavigating(true);
+
+        // Route POST /notifications/{key}/read tidak bernama sehingga tidak
+        // punya helper Wayfinder — turunkan dari helper destroy agar prefix
+        // path tetap mengikuti definisi route terpusat.
+        const readUrl = `${destroyNotification(notification.key).url}/read`;
+
+        router.post(
+            readUrl,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    onMarkAsRead(notification.key);
+                    router.visit(notification.href);
+                },
+                onError: () => {
+                    router.visit(notification.href);
+                },
+                onFinish: () => {
+                    setNavigating(false);
+                },
+            },
+        );
     };
 
     return (

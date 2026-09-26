@@ -40,6 +40,7 @@ class SellerOrderController extends Controller
 
         $search = $validated['q'] ?? null;
         $status = $validated['status'] ?? null;
+        $statusValue = $status instanceof OrderItemStatus ? $status->value : $status;
         $perPage = 10;
 
         $onlineKeys = OrderItem::query()
@@ -56,22 +57,25 @@ class SellerOrderController extends Controller
             ->whereHas('consignment', fn ($q) => $q->where('seller_id', $seller->id));
 
         if ($search !== null) {
-            $onlineKeys->where(function ($q) use ($search) {
-                $q->orWhere('product_name', 'like', "%{$search}%")
-                    ->orWhereHas('order.user', fn ($uq) => $uq->where('name', 'like', "%{$search}%"))
+            $escaped = addcslashes($search, '%_\\');
+            $onlineKeys->where(function ($q) use ($escaped, $search) {
+                $q->orWhere('product_name', 'like', "%{$escaped}%")
+                    ->orWhereHas('order.user', fn ($uq) => $uq->where('name', 'like', "%{$escaped}%"))
                     ->when(is_numeric($search), fn ($query) => $query->orWhere('order_id', (int) $search))
-                    ->when(str_contains($search, '-'), fn ($query) => $query->orWhereHas('order', fn ($oq) => $oq->where('code', 'like', "%{$search}%")));
+                    ->when(str_contains($search, '-'), fn ($query) => $query->orWhereHas('order', fn ($oq) => $oq->where('code', 'like', "%{$escaped}%")));
             });
 
-            $offlineKeys->where(function ($q) use ($search) {
-                $q->whereHas('consignment.product', fn ($pq) => $pq->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('posSale', fn ($sq) => $sq->where('code', 'like', "%{$search}%"))
-                    ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$search}%"));
+            $offlineKeys->where(function ($q) use ($escaped) {
+                $q->whereHas('consignment.product', fn ($pq) => $pq->where('name', 'like', "%{$escaped}%"))
+                    ->orWhereHas('posSale', fn ($sq) => $sq->where('code', 'like', "%{$escaped}%"))
+                    ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$escaped}%"));
             });
         }
 
-        if ($status !== null && $status !== OrderItemStatus::Completed->value) {
-            $onlineKeys->where('status', $status);
+        // Offline rows carry a synthetic "Terjual offline" status, so any
+        // explicit status filter applies to online items only.
+        if ($statusValue !== null) {
+            $onlineKeys->where('status', $statusValue);
             $offlineKeys->whereRaw('0 = 1');
         }
 
@@ -141,9 +145,11 @@ class SellerOrderController extends Controller
         /** @var User $seller */
         $seller = $request->user();
 
-        if ($orderItem->product->seller_id !== $seller->id) {
-            abort(403);
-        }
+        // Ownership-scoped lookup so foreign items 404 instead of 403.
+        $orderItem = OrderItem::query()
+            ->whereKey($orderItem->id)
+            ->whereHas('product', fn ($query) => $query->where('seller_id', $seller->id))
+            ->firstOrFail();
 
         $orderItem->load([
             'order:id,code,user_id,created_at,cancelled_at,cancel_reason',
@@ -200,6 +206,13 @@ class SellerOrderController extends Controller
         /** @var User $seller */
         $seller = $request->user();
 
+        // Ownership-scoped lookup so foreign movements 404 instead of 403.
+        $movement = UpJurusanStockMovement::query()
+            ->whereKey($movement->id)
+            ->where('type', 'out')
+            ->whereHas('consignment', fn ($query) => $query->where('seller_id', $seller->id))
+            ->firstOrFail();
+
         $movement->load([
             'user:id,name',
             'posSale:id,code,created_at',
@@ -207,8 +220,6 @@ class SellerOrderController extends Controller
             'consignment.product:id,name,slug,seller_id,category_id',
             'consignment.product.category:id,name,slug',
         ]);
-
-        abort_unless($movement->type === 'out' && $movement->consignment->seller_id === $seller->id, 403);
 
         return Inertia::render('seller/orders/show', [
             'orderItem' => $this->offlineOrderDetailPayload($movement),
@@ -220,9 +231,13 @@ class SellerOrderController extends Controller
         /** @var User $seller */
         $seller = $request->user();
 
-        if ($orderItem->product->seller_id !== $seller->id) {
-            abort(403);
-        }
+        // Ownership-scoped lookup so foreign items 404 instead of 403.
+        $orderItem = OrderItem::query()
+            ->whereKey($orderItem->id)
+            ->whereHas('product', fn ($query) => $query->where('seller_id', $seller->id))
+            ->firstOrFail();
+
+        $orderItem->loadMissing('product:id,seller_id,sales_method');
 
         if ($orderItem->product->usesConsignmentStock()) {
             throw ValidationException::withMessages([
@@ -268,11 +283,13 @@ class SellerOrderController extends Controller
         /** @var User $seller */
         $seller = $request->user();
 
-        $orderItem->load(['product:id,seller_id,up_jurusan_id,sales_method']);
+        // Ownership-scoped lookup so foreign items 404 instead of 403.
+        $orderItem = OrderItem::query()
+            ->whereKey($orderItem->id)
+            ->whereHas('product', fn ($query) => $query->where('seller_id', $seller->id))
+            ->firstOrFail();
 
-        if ($orderItem->product->seller_id !== $seller->id) {
-            abort(403);
-        }
+        $orderItem->load(['product:id,seller_id,up_jurusan_id,sales_method']);
 
         if ($orderItem->product->usesConsignmentStock()) {
             throw ValidationException::withMessages([
@@ -304,11 +321,13 @@ class SellerOrderController extends Controller
             'payment_rejection_reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $orderItem->load(['product:id,seller_id,up_jurusan_id,sales_method']);
+        // Ownership-scoped lookup so foreign items 404 instead of 403.
+        $orderItem = OrderItem::query()
+            ->whereKey($orderItem->id)
+            ->whereHas('product', fn ($query) => $query->where('seller_id', $seller->id))
+            ->firstOrFail();
 
-        if ($orderItem->product->seller_id !== $seller->id) {
-            abort(403);
-        }
+        $orderItem->load(['product:id,seller_id,up_jurusan_id,sales_method']);
 
         if ($orderItem->product->usesConsignmentStock()) {
             throw ValidationException::withMessages([
@@ -345,9 +364,11 @@ class SellerOrderController extends Controller
             'cancel_reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        if ($orderItem->product->seller_id !== $seller->id) {
-            abort(403);
-        }
+        // Ownership-scoped lookup so foreign items 404 instead of 403.
+        $orderItem = OrderItem::query()
+            ->whereKey($orderItem->id)
+            ->whereHas('product', fn ($query) => $query->where('seller_id', $seller->id))
+            ->firstOrFail();
 
         OrderItemCancellation::cancelItem(
             $orderItem,

@@ -62,15 +62,18 @@ class CreateNewUser implements CreatesNewUsers
             ->where('code', Position::STUDENT)
             ->exists();
 
-        $user = User::create([
+        $user = new User([
             'name' => $input['name'],
             'email' => $input['email'],
             'phone' => $input['phone'],
-            'role' => UserRole::Buyer,
             'password' => $input['password'],
-            'position_id' => $positionId,
-            'class_id' => $isStudent ? (int) $input['class_id'] : null,
         ]);
+        // Role and ownership FKs are not mass-assignable (see User::$guarded);
+        // registration always hardcodes the Buyer role explicitly.
+        $user->role = UserRole::Buyer;
+        $user->position_id = $positionId;
+        $user->class_id = $isStudent ? (int) $input['class_id'] : null;
+        $user->save();
 
         return $user;
     }

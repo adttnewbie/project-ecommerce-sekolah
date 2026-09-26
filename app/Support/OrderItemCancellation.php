@@ -416,6 +416,7 @@ class OrderItemCancellation
     {
         return UpJurusanStockMovement::query()
             ->where('reverses_movement_id', $movement->id)
+            ->lockForUpdate()
             ->exists();
     }
 }

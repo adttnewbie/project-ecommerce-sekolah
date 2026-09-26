@@ -30,12 +30,24 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'phone', 'role', 'password', 'position_id', 'class_id', 'up_jurusan_id'])]
+#[Fillable(['name', 'email', 'phone', 'password', 'position_id', 'class_id', 'up_jurusan_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
+
+    /**
+     * Role is intentionally NOT mass-assignable: every flow sets it
+     * explicitly (see CreateNewUser, AdminUserController::store,
+     * AdminJurusanUpJurusanController::storePicket) so a crafted request
+     * can never escalate privilege via fill(). Ownership FKs
+     * (position_id, class_id, up_jurusan_id) remain fillable for
+     * admin/picket assignment flows and test fixtures.
+     *
+     * @var list<string>
+     */
+    protected $guarded = ['id', 'role'];
 
     /**
      * Get the attributes that should be cast.

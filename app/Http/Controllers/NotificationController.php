@@ -91,12 +91,13 @@ class NotificationController extends Controller
      */
     public function batchMarkAsRead(Request $request): RedirectResponse
     {
-        /** @var list<string> $keys */
-        $keys = (array) $request->input('keys', []);
+        $validated = $request->validate([
+            'keys' => ['required', 'array', 'max:50'],
+            'keys.*' => ['string', 'max:255'],
+        ]);
 
-        if ($keys === []) {
-            return back();
-        }
+        /** @var list<string> $keys */
+        $keys = $validated['keys'];
 
         Notification::where('user_id', $request->user()?->id)
             ->whereIn('key', $keys)
@@ -110,8 +111,9 @@ class NotificationController extends Controller
     /**
      * Dismiss (archive) a specific notification.
      *
-     * Records the dismissal per user so derived action items stay hidden and,
-     * when the key matches a persisted notification, marks it dismissed too.
+     * The response is always a success redirect, whether or not an owned
+     * persisted notification existed: distinguishing the two would leak
+     * other users' notification keys through status codes.
      */
     public function dismiss(Request $request, string $key): RedirectResponse
     {
@@ -120,30 +122,12 @@ class NotificationController extends Controller
             ->active()
             ->first();
 
-        if ($notification === null) {
-            // Not an owned persisted notification. If the key belongs to any
-            // other user's notification we must not leak its existence;
-            // otherwise treat it as a derived action-item key.
-            $existsForOtherUser = Notification::where('key', $key)
-                ->where('user_id', '!=', $request->user()?->id)
-                ->exists();
-
-            abort_if($existsForOtherUser, 404);
-
-            NotificationDismissal::firstOrCreate([
-                'user_id' => (int) $request->user()?->id,
-                'key' => $key,
-            ]);
-
-            return back()->with('toast', ['message' => 'Notifikasi dihapus']);
-        }
-
         NotificationDismissal::firstOrCreate([
             'user_id' => (int) $request->user()?->id,
             'key' => $key,
         ]);
 
-        $notification->markAsDismissed();
+        $notification?->markAsDismissed();
 
         return back()->with('toast', ['message' => 'Notifikasi dihapus']);
     }

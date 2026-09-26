@@ -26,8 +26,7 @@ class SellerInventoryController extends Controller
         ]);
 
         $query = Product::query()
-            ->select('products.*')
-            ->selectRaw(Product::REAL_STOCK_SQL.' as real_stock')
+            ->withRealStock()
             ->with('category:id,name,slug')
             ->where('seller_id', $seller->id);
 
@@ -40,10 +39,10 @@ class SellerInventoryController extends Controller
 
         if ($stock = $validated['stock'] ?? null) {
             match ($stock) {
-                'out' => $query->whereRaw(Product::REAL_STOCK_SQL.' = 0'),
+                'out' => $query->whereRaw(Product::REAL_STOCK_EXPRESSION.' = 0'),
                 'low' => $query
-                    ->whereRaw(Product::REAL_STOCK_SQL.' > 0')
-                    ->whereRaw(Product::REAL_STOCK_SQL.' <= ?', [Product::LOW_STOCK_THRESHOLD]),
+                    ->whereRaw(Product::REAL_STOCK_EXPRESSION.' > 0')
+                    ->whereRaw(Product::REAL_STOCK_EXPRESSION.' <= ?', [Product::LOW_STOCK_THRESHOLD]),
                 default => null,
             };
         }
@@ -54,13 +53,15 @@ class SellerInventoryController extends Controller
 
         $totalProducts = Product::query()->where('seller_id', $seller->id)->count();
         $lowStockCount = Product::query()
+            ->withRealStock()
             ->where('seller_id', $seller->id)
-            ->whereRaw(Product::REAL_STOCK_SQL.' > 0')
-            ->whereRaw(Product::REAL_STOCK_SQL.' <= ?', [Product::LOW_STOCK_THRESHOLD])
+            ->whereRaw(Product::REAL_STOCK_EXPRESSION.' > 0')
+            ->whereRaw(Product::REAL_STOCK_EXPRESSION.' <= ?', [Product::LOW_STOCK_THRESHOLD])
             ->count();
         $outOfStockCount = Product::query()
+            ->withRealStock()
             ->where('seller_id', $seller->id)
-            ->whereRaw(Product::REAL_STOCK_SQL.' = 0')
+            ->whereRaw(Product::REAL_STOCK_EXPRESSION.' = 0')
             ->count();
 
         return Inertia::render('seller/inventory/index', [

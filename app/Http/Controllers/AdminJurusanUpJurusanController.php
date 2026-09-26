@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ProductFulfillmentType;
 use App\Enums\ProductSalesMethod;
 use App\Enums\ProductStatus;
 use App\Enums\UpJurusanConsignmentStatus;
@@ -12,14 +13,15 @@ use App\Models\UpJurusan;
 use App\Models\UpJurusanConsignment;
 use App\Models\User;
 use App\Support\ActorLifecycle;
+use App\Support\ProductSlug;
 use App\Support\ReportAggregationService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
@@ -211,8 +213,23 @@ class AdminJurusanUpJurusanController extends Controller
         abort_unless($upJurusan->admin_jurusan_id === $adminJurusan->id, 403);
 
         $validated = $request->validate([
-            'picket_id' => ['required', 'integer'],
+            'picket_id' => [
+                'required',
+                'integer',
+                Rule::exists('users', 'id')->where(fn ($query) => $query->where('role', UserRole::PicketOfficer->value)),
+            ],
         ]);
+
+        // Scope check before taking row locks: only an unassigned picket or
+        // one already serving this UP may be assigned. Anything else is a
+        // consistent 422 instead of a 404 from the locked lookup below.
+        $candidate = User::query()->whereKey($validated['picket_id'])->firstOrFail();
+
+        if ($candidate->up_jurusan_id !== null && (int) $candidate->up_jurusan_id !== (int) $upJurusan->id) {
+            throw ValidationException::withMessages([
+                'picket_id' => 'Picket officer sudah ditugaskan ke UP Jurusan lain.',
+            ])->redirectTo(route('admin-jurusan.up-jurusan.index'));
+        }
 
         DB::transaction(function () use ($upJurusan, $validated) {
             UpJurusan::query()
@@ -243,11 +260,15 @@ class AdminJurusanUpJurusanController extends Controller
             if ($currentPicket !== null) {
                 ActorLifecycle::assertCanReassignPicket($upJurusan);
                 $this->authorize('reassignPicket', $upJurusan);
-                $currentPicket->update(['up_jurusan_id' => null]);
+                // up_jurusan_id is not mass-assignable; assign explicitly.
+                $currentPicket->up_jurusan_id = null;
+                $currentPicket->save();
             }
 
             try {
-                $picket->update(['up_jurusan_id' => $upJurusan->id]);
+                // up_jurusan_id is not mass-assignable; assign explicitly.
+                $picket->up_jurusan_id = $upJurusan->id;
+                $picket->save();
             } catch (UniqueConstraintViolationException) {
                 throw ValidationException::withMessages([
                     'picket_id' => 'UP Jurusan ini sudah memiliki picket officer.',
@@ -280,7 +301,9 @@ class AdminJurusanUpJurusanController extends Controller
             ])->redirectTo(route('admin-jurusan.up-jurusan.index'));
         }
 
-        $picket->update(['up_jurusan_id' => null]);
+        // up_jurusan_id is not mass-assignable; assign explicitly.
+        $picket->up_jurusan_id = null;
+        $picket->save();
 
         return to_route('admin-jurusan.up-jurusan.index')
             ->with('success', 'Picket officer berhasil dilepas.');
@@ -322,13 +345,15 @@ class AdminJurusanUpJurusanController extends Controller
         ]);
 
         try {
-            User::query()->create([
+            // Role and up_jurusan_id are not mass-assignable; set explicitly.
+            $picket = new User([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'role' => UserRole::PicketOfficer,
                 'password' => $validated['password'],
-                'up_jurusan_id' => $upJurusan->id,
             ]);
+            $picket->role = UserRole::PicketOfficer;
+            $picket->up_jurusan_id = $upJurusan->id;
+            $picket->save();
         } catch (UniqueConstraintViolationException) {
             throw ValidationException::withMessages([
                 'email' => 'UP Jurusan ini sudah memiliki satu picket officer.',
@@ -381,7 +406,7 @@ class AdminJurusanUpJurusanController extends Controller
                 'up_jurusan_id' => $upJurusan->id,
                 'category_id' => $validated['category_id'],
                 'name' => $validated['name'],
-                'slug' => $this->uniqueSlug($validated['name']),
+                'slug' => ProductSlug::unique($validated['name']),
                 'description' => $validated['description'],
                 'price' => $validated['price'],
                 'original_price' => $validated['original_price'] ?? null,
@@ -392,8 +417,10 @@ class AdminJurusanUpJurusanController extends Controller
             ]);
         } catch (\Throwable $exception) {
             // File sudah tersimpan sebelum insert; hapus agar tidak yatim.
-            if ($newImagePath !== null) {
-                Storage::disk('r2')->delete($newImagePath);
+            if ($newImagePath !== null && Storage::disk('r2')->delete($newImagePath) === false) {
+                Log::warning('Failed to delete orphaned UP product image after failed store', [
+                    'path' => $newImagePath,
+                ]);
             }
 
             throw $exception;
@@ -401,20 +428,6 @@ class AdminJurusanUpJurusanController extends Controller
 
         return to_route('admin-jurusan.up-jurusan.index')
             ->with('success', 'Produk UP Jurusan berhasil dibuat.');
-    }
-
-    private function uniqueSlug(string $name): string
-    {
-        $base = Str::slug($name);
-        $slug = $base;
-        $counter = 2;
-
-        while (Product::query()->where('slug', $slug)->exists()) {
-            $slug = "{$base}-{$counter}";
-            $counter++;
-        }
-
-        return $slug;
     }
 
     private function hasPicketOfficer(UpJurusan $upJurusan): bool
@@ -448,11 +461,19 @@ class AdminJurusanUpJurusanController extends Controller
             ])
             ->get(['received_quantity', 'sold_quantity']);
 
+        // Same visibility rule as the buyer catalog: only Approved +
+        // ReadyStock UP products count toward the summary.
+        $catalogProducts = Product::query()
+            ->where('up_jurusan_id', $upJurusan->id)
+            ->whereNull('seller_id')
+            ->where('status', ProductStatus::Approved)
+            ->where('fulfillment_type', ProductFulfillmentType::ReadyStock);
+
         return [
             'revenue_7_days' => (int) collect($revenueChart)->sum('revenue'),
-            'up_product_count' => $upJurusan->products->count(),
+            'up_product_count' => (clone $catalogProducts)->count(),
             'active_consignment_count' => $activeConsignments->count(),
-            'available_stock' => (int) $upJurusan->products->sum('stock')
+            'available_stock' => (int) (clone $catalogProducts)->sum('stock')
                 + (int) $activeConsignments->sum(fn (UpJurusanConsignment $consignment) => max(0, $consignment->received_quantity - $consignment->sold_quantity)),
             'picket_names' => $upJurusan->picketOfficers
                 ->pluck('name')

@@ -59,6 +59,7 @@ export default function WishlistIndex() {
             return;
         }
 
+        const previous = items;
         setItems((current) => current.filter((item) => item.id !== product.id));
         router.post(
             wishlistToggle(product.slug).url,
@@ -66,9 +67,12 @@ export default function WishlistIndex() {
             {
                 preserveScroll: true,
                 preserveUrl: true,
+                onSuccess: () => {
+                    toast.success('Dihapus dari wishlist');
+                },
                 onError: () => {
+                    setItems(previous);
                     toast.error('Gagal menghapus dari wishlist');
-                    router.reload({ only: ['products'] });
                 },
             },
         );

@@ -30,7 +30,7 @@ class CartController extends Controller
                 'product.category:id,name,slug',
                 'product.seller:id,name',
                 'product.upJurusan:id,name',
-                'product.upJurusanConsignments:id,product_id,received_quantity,sold_quantity',
+                'product.upJurusanConsignments:id,product_id,status,received_quantity,sold_quantity',
             ])
             ->where('user_id', $user->id)
             ->latest()
@@ -160,7 +160,7 @@ class CartController extends Controller
     private function validatedQuantity(Request $request): int
     {
         $validated = $request->validate([
-            'quantity' => ['required', 'integer', 'min:1'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:1000'],
         ]);
 
         return (int) $validated['quantity'];

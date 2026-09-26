@@ -242,7 +242,7 @@ test('seller can view offline up jurusan consignment sale detail', function () {
 
     $this->actingAs($otherSeller)
         ->get(route('seller.orders.offline.show', $movementId))
-        ->assertForbidden();
+        ->assertNotFound();
 });
 
 test('seller only sees their own order items', function () {
@@ -410,7 +410,7 @@ test('seller cannot view another sellers order item detail', function () {
 
     $this->actingAs($seller);
 
-    $this->get(route('seller.orders.show', $orderItem))->assertForbidden();
+    $this->get(route('seller.orders.show', $orderItem))->assertNotFound();
 });
 
 test('seller can update status from pending to packed', function () {
@@ -737,7 +737,7 @@ test('seller cannot update another sellers order item status', function () {
 
     $this->put(route('seller.orders.update-status', $orderItem), [
         'status' => OrderItemStatus::Packed->value,
-    ])->assertForbidden();
+    ])->assertNotFound();
 });
 
 test('seller cannot update status for product consigned to up jurusan', function () {

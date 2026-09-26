@@ -6,6 +6,7 @@ use App\Enums\PreOrderStatus;
 use App\Enums\ProductFulfillmentType;
 use App\Enums\ProductSalesMethod;
 use App\Enums\ProductStatus;
+use App\Enums\UpJurusanConsignmentStatus;
 use App\Events\LowStockDetected;
 use App\Support\PreOrderRules;
 use Database\Factories\ProductFactory;
@@ -47,7 +48,7 @@ class Product extends Model
 {
     public const int LOW_STOCK_THRESHOLD = 5;
 
-    public const string REAL_STOCK_SQL = "(CASE WHEN products.sales_method = 'up_jurusan' AND products.seller_id IS NOT NULL THEN (SELECT COALESCE(SUM(received_quantity - sold_quantity), 0) FROM up_jurusan_consignments WHERE up_jurusan_consignments.product_id = products.id) ELSE products.stock END)";
+    public const string REAL_STOCK_SQL = "(CASE WHEN products.sales_method = 'up_jurusan' AND products.seller_id IS NOT NULL THEN (SELECT COALESCE(SUM(received_quantity - sold_quantity), 0) FROM up_jurusan_consignments WHERE up_jurusan_consignments.product_id = products.id AND up_jurusan_consignments.status IN ('received', 'completed')) ELSE products.stock END)";
 
     public const string REAL_STOCK_EXPRESSION = "(CASE WHEN products.sales_method = 'up_jurusan' AND products.seller_id IS NOT NULL THEN COALESCE(consignment_stock.available, 0) ELSE products.stock END)";
 
@@ -197,14 +198,31 @@ class Product extends Model
             return $this->stock;
         }
 
+        // Hanya konsinyasi Received/Completed yang menyumbang stok jual.
+        // Pending/Approved/Rejected/Cancelled belum ada barang fisik di UP.
         if ($this->relationLoaded('upJurusanConsignments')) {
-            return (int) $this->upJurusanConsignments->reduce(
-                fn (int $carry, UpJurusanConsignment $consignment): int => $carry + $consignment->received_quantity - $consignment->sold_quantity,
-                0,
-            );
+            $loaded = $this->upJurusanConsignments;
+            // Eager load tanpa kolom status (mis. select lama) -> fallback query.
+            $statusComplete = ! $loaded->contains(fn (UpJurusanConsignment $c) => $c->getAttribute('status') === null);
+
+            if ($statusComplete) {
+                return (int) $loaded
+                    ->filter(fn (UpJurusanConsignment $c) => in_array($c->status, [
+                        UpJurusanConsignmentStatus::Received,
+                        UpJurusanConsignmentStatus::Completed,
+                    ], true))
+                    ->reduce(
+                        fn (int $carry, UpJurusanConsignment $consignment): int => $carry + $consignment->received_quantity - $consignment->sold_quantity,
+                        0,
+                    );
+            }
         }
 
         return (int) $this->upJurusanConsignments()
+            ->whereIn('status', [
+                UpJurusanConsignmentStatus::Received,
+                UpJurusanConsignmentStatus::Completed,
+            ])
             ->selectRaw('COALESCE(SUM(received_quantity - sold_quantity), 0) as available')
             ->value('available');
     }
@@ -277,7 +295,7 @@ class Product extends Model
             ->select('products.*')
             ->selectRaw(self::REAL_STOCK_EXPRESSION.' as real_stock')
             ->leftJoin(
-                DB::raw('(SELECT product_id, SUM(received_quantity - sold_quantity) AS available FROM up_jurusan_consignments GROUP BY product_id) AS consignment_stock'),
+                DB::raw("(SELECT product_id, SUM(received_quantity - sold_quantity) AS available FROM up_jurusan_consignments WHERE status IN ('received', 'completed') GROUP BY product_id) AS consignment_stock"),
                 'consignment_stock.product_id',
                 '=',
                 'products.id',

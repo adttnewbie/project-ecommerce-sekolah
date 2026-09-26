@@ -26,9 +26,10 @@ class AdminUserController extends Controller
         $query = User::query()->withCount(['products', 'orders']);
 
         if ($search = $validated['q'] ?? null) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+            $escaped = addcslashes($search, '%_\\');
+            $query->where(function ($q) use ($escaped) {
+                $q->where('name', 'like', "%{$escaped}%")
+                    ->orWhere('email', 'like', "%{$escaped}%");
             });
         }
 
@@ -70,16 +71,20 @@ class AdminUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)],
             'password' => ['required', 'confirmed', Password::defaults()],
-            'role' => [Rule::enum(UserRole::class), 'in:'.UserRole::AdminJurusan->value],
+            'role' => ['required', Rule::enum(UserRole::class), 'in:'.UserRole::AdminJurusan->value],
         ]);
 
         try {
-            User::query()->create([
+            // Role is not mass-assignable; set it explicitly after validation.
+            $user = new User([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'role' => $validated['role'],
                 'password' => $validated['password'],
             ]);
+            $user->role = $validated['role'] instanceof UserRole
+                ? $validated['role']
+                : UserRole::from($validated['role']);
+            $user->save();
         } catch (UniqueConstraintViolationException) {
             Validator::make($validated, [
                 'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)],

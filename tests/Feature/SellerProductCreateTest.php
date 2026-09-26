@@ -119,7 +119,7 @@ test('seller can create a pre-order product without ready stock', function () {
     ]);
 });
 
-test('seller can create an up jurusan pre-order product without requested quantity', function () {
+test('seller cannot create an up jurusan pre-order product', function () {
     $seller = User::factory()->create(['role' => UserRole::Seller]);
     $category = Category::factory()->create();
     $upJurusan = UpJurusan::factory()->create();
@@ -136,17 +136,13 @@ test('seller can create an up jurusan pre-order product without requested quanti
             'pre_order_estimate_days' => 3,
             'up_jurusan_id' => $upJurusan->id,
         ])
-        ->assertRedirect(route('seller.products.index'));
+        ->assertRedirect(route('seller.products.create'))
+        ->assertSessionHasErrors('fulfillment_type');
 
-    $this->assertDatabaseHas('products', [
+    $this->assertDatabaseMissing('products', [
         'seller_id' => $seller->id,
         'category_id' => $category->id,
         'name' => 'Risol PO UP',
-        'stock' => 0,
-        'sales_method' => 'up_jurusan',
-        'fulfillment_type' => ProductFulfillmentType::PreOrder->value,
-        'pre_order_estimate_days' => 3,
-        'status' => ProductStatus::Pending->value,
     ]);
     $this->assertDatabaseMissing('up_jurusan_consignments', [
         'seller_id' => $seller->id,

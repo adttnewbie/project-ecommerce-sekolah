@@ -14,7 +14,7 @@ import {
     User,
     UserRound,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import {
     authErrorClassName,
@@ -104,6 +104,11 @@ export default function Register({ passwordRules, positions, classes }: Props) {
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
+    const focusRafRef = useRef<number>(0);
+
+    useEffect(() => {
+        return () => cancelAnimationFrame(focusRafRef.current);
+    }, []);
 
     const selectedPosition = positions.find(
         (position) => String(position.id) === positionId,
@@ -192,7 +197,8 @@ export default function Register({ passwordRules, positions, classes }: Props) {
     const goTo = (nextStep: number) => {
         setDirection(nextStep > step ? 1 : -1);
         setStep(nextStep);
-        requestAnimationFrame(() => {
+        cancelAnimationFrame(focusRafRef.current);
+        focusRafRef.current = requestAnimationFrame(() => {
             const firstField = document.querySelector<HTMLElement>(
                 `[data-step-panel="${nextStep}"] input, [data-step-panel="${nextStep}"] button[role="combobox"]`,
             );
@@ -358,6 +364,12 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                             <div
                                 key={`${step}-${direction}`}
                                 data-step-panel={step}
+                                style={
+                                    {
+                                        '--register-step-offset':
+                                            direction >= 0 ? '12px' : '-12px',
+                                    } as CSSProperties
+                                }
                                 className="flex flex-col gap-4 motion-safe:animate-[register-step-in_240ms_ease-out]"
                             >
                                 {/* Langkah 1 — tetap di DOM saat pindah langkah supaya nilainya ikut terkirim */}
@@ -926,8 +938,6 @@ export default function Register({ passwordRules, positions, classes }: Props) {
                     );
                 }}
             </Form>
-
-            <style>{`@keyframes register-step-in { from { opacity: 0; transform: translateX(${direction >= 0 ? '12px' : '-12px'}); } to { opacity: 1; transform: none; } }`}</style>
         </>
     );
 }

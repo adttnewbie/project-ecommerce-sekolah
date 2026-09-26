@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Enums\StockMovementSource;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\UpJurusan;
 use App\Models\UpJurusanStockMovement;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -167,7 +168,12 @@ class DeliveryFeeService
         $weightsByUpJurusan = array_filter($weightsByUpJurusan, fn (int $weight): bool => $weight > 0);
 
         if ($weightsByUpJurusan === []) {
-            return [];
+            // Tidak ada item yang terasosiasi ke UP (mis. semua self-managed):
+            // kreditkan fee ke UP default pertama agar fee tidak hilang.
+            // Tanpa fallback, recordForOrder tidak mencatat apa-apa.
+            $defaultUpId = UpJurusan::query()->orderBy('id')->value('id');
+
+            return $defaultUpId === null ? [] : [(int) $defaultUpId => $fee];
         }
 
         arsort($weightsByUpJurusan);
@@ -195,7 +201,8 @@ class DeliveryFeeService
         return UpJurusanStockMovement::query()
             ->where('order_id', $orderId)
             ->where('source', StockMovementSource::DeliveryFee->value)
-            ->whereNull('reverses_movement_id')
+            ->where('type', 'out')
+            ->whereDoesntHave('reversedBy')
             ->exists();
     }
 

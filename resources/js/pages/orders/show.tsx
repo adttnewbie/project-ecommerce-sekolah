@@ -36,8 +36,13 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { formatRupiah } from '@/lib/format';
 import { formatDateID } from '@/lib/pre-order';
-import { index as ordersIndex } from '@/routes/orders';
+import {
+    cancel as cancelOrder,
+    complete as completeOrder,
+    index as ordersIndex,
+} from '@/routes/orders';
 
 type BuyerOrder = {
     id: number;
@@ -87,13 +92,6 @@ type BuyerOrder = {
 type Props = {
     order: BuyerOrder;
 };
-
-const formatRupiah = (value: number) =>
-    new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 0,
-    }).format(value);
 
 const formatDate = (value: string | null) =>
     value
@@ -254,8 +252,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                         {order.can_complete && (
                             <div className="border-t border-slate-100 px-6 pb-6">
                                 <Form
-                                    action={`/orders/${order.id}/complete`}
-                                    method="post"
+                                    {...completeOrder.form(order.id)}
                                     className="mt-5"
                                 >
                                     {({ processing }) => (
@@ -301,8 +298,7 @@ export default function BuyerOrdersShow({ order }: Props) {
                                         </DialogHeader>
 
                                         <Form
-                                            action={`/orders/${order.id}/cancel`}
-                                            method="post"
+                                            {...cancelOrder.form(order.id)}
                                             className="space-y-4"
                                         >
                                             <div className="space-y-2">

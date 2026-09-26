@@ -22,6 +22,10 @@ export function formatNotificationTimestamp(
     const now = new Date();
     const date = new Date(dateString);
 
+    if (Number.isNaN(date.getTime())) {
+        return '-';
+    }
+
     const diffMs = now.getTime() - date.getTime();
     const diffSeconds = Math.floor(diffMs / 1000);
     const diffMinutes = Math.floor(diffSeconds / 60);
@@ -81,25 +85,16 @@ export function groupNotificationsByDate<T extends { created_at: string }>(
         const date = new Date(notification.created_at);
         let label: string;
 
-        // Today
-        if (date.toDateString() === today.toDateString()) {
+        if (Number.isNaN(date.getTime())) {
+            label = 'Lainnya';
+        } else if (date.toDateString() === today.toDateString()) {
+            // Today
             label = 'Hari ini';
         } else if (date.toDateString() === yesterday.toDateString()) {
             // Yesterday
             label = 'Kemarin';
         } else {
             // Older: Use formatted date as label
-            const dateOnly = new Date(
-                date.getFullYear(),
-                date.getMonth(),
-                date.getDate(),
-            );
-            const key = dateOnly.toDateString();
-
-            if (!groups[key]) {
-                groups[key] = [];
-            }
-
             // Format for older dates: "Agu 2025" or "17 Agu 2025"
             label = date.toLocaleDateString('id-ID', {
                 day: 'numeric',

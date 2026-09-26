@@ -17,6 +17,7 @@ use App\Support\SellerSanctionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -136,7 +137,7 @@ class AdminSanctionController extends Controller
     {
         $validated = $request->validate([
             'user_id' => ['required', 'integer', 'exists:users,id'],
-            'type' => ['required', 'string'],
+            'type' => ['required', 'string', Rule::enum(SanctionType::class)],
             'reason' => ['nullable', 'string', 'max:1000'],
             'ends_at' => ['nullable', 'date', 'after:now'],
         ]);

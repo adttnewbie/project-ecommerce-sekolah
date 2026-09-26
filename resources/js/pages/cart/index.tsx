@@ -31,6 +31,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { formatRupiah } from '@/lib/format';
 import type { PreOrderStatus } from '@/lib/pre-order';
 import { productImageUrl } from '@/lib/product-image';
 import { home } from '@/routes';
@@ -40,6 +41,7 @@ import {
     update as updateCartItem,
 } from '@/routes/cart/items';
 import { show as catalogShow } from '@/routes/catalog';
+import { confirm as checkoutConfirm } from '@/routes/checkout';
 
 type CartItemProduct = {
     id: number;
@@ -142,26 +144,29 @@ function StockBadge({
     );
 }
 
-const formatRupiah = (value: number) =>
-    new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 0,
-    }).format(value);
-
-const imageSource = (image: string | null) => {
-    if (!image) {
-        return null;
-    }
-
-    return productImageUrl(image);
-};
-
 export default function CartIndex({ items, summary }: CartIndexProps) {
     const { flash } = usePage().props;
-    const [selectedIds, setSelectedIds] = useState<number[]>(
+    const [selectedIds, setSelectedIds] = useState<number[]>(() =>
         items.map((item) => item.id),
     );
+    const [syncedItems, setSyncedItems] = useState(items);
+
+    // Sinkron saat items berubah (pola sync-during-render seperti
+    // wishlist): pertahankan pilihan user untuk item yang masih ada,
+    // otomatis pilih item yang baru masuk cart.
+    if (syncedItems !== items) {
+        const prevIds = new Set(syncedItems.map((item) => item.id));
+        const nextIds = new Set(items.map((item) => item.id));
+        const addedIds = items
+            .filter((item) => !prevIds.has(item.id))
+            .map((item) => item.id);
+        setSyncedItems(items);
+        setSelectedIds((current) => [
+            ...current.filter((id) => nextIds.has(id)),
+            ...addedIds.filter((id) => !current.includes(id)),
+        ]);
+    }
+
     const selectedItems = items.filter((item) => selectedIds.includes(item.id));
     const selectedSummary = {
         total_items: selectedItems.reduce(
@@ -182,7 +187,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
         (item) => preOrderIssue(item) !== null,
     );
     const hasBlockingIssue = hasInvalidStock || hasInvalidPreOrder;
-    const checkoutHref = `/checkout/confirm?items=${selectedIds.join(',')}`;
+    const checkoutHref = checkoutConfirm({ query: { items: selectedIds } });
 
     const toggleItem = (id: number, checked: boolean) => {
         setSelectedIds((current) =>
@@ -285,7 +290,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                     )}
 
                                     {items.map((item) => {
-                                        const src = imageSource(
+                                        const src = productImageUrl(
                                             item.product.image,
                                         );
                                         const poIssue = preOrderIssue(item);
@@ -486,7 +491,7 @@ export default function CartIndex({ items, summary }: CartIndexProps) {
                                             )}
 
                                             {items.map((item) => {
-                                                const src = imageSource(
+                                                const src = productImageUrl(
                                                     item.product.image,
                                                 );
                                                 const poIssue =

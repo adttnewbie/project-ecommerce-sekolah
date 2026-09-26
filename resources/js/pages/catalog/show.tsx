@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { formatRupiah } from '@/lib/format';
 import {
     preOrderDeadlineSummary,
     preOrderStatusMeta,
@@ -18,6 +19,7 @@ import { productImageUrl } from '@/lib/product-image';
 import { cn } from '@/lib/utils';
 import { home, login } from '@/routes';
 import { store as storeCartItem } from '@/routes/cart/items';
+import { store as storeReview, update as updateReview } from '@/routes/catalog/reviews';
 import { confirm as checkoutConfirm } from '@/routes/checkout';
 import type { Auth } from '@/types';
 
@@ -98,21 +100,6 @@ type PageProps = {
     };
 } & SharedPageProps;
 
-const formatRupiah = (value: number) =>
-    new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 0,
-    }).format(value);
-
-const imageSource = (image: string | null) => {
-    if (!image) {
-        return null;
-    }
-
-    return productImageUrl(image);
-};
-
 const formatDate = (value: string | null) =>
     value
         ? new Intl.DateTimeFormat('id-ID', {
@@ -122,7 +109,7 @@ const formatDate = (value: string | null) =>
 
 export default function CatalogShow({ product }: CatalogShowProps) {
     const { auth, flash } = usePage<PageProps>().props;
-    const src = imageSource(product.image);
+    const src = productImageUrl(product.image);
     const isOutOfStock = !product.is_pre_order && product.stock <= 0;
     const preOrderStatus = resolvePreOrderStatus(product);
     const preOrderMeta =
@@ -392,6 +379,9 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                                             query: {
                                                                 product:
                                                                     product.slug,
+                                                                quantity:
+                                                                    product.pre_order_min_quantity ??
+                                                                    1,
                                                             },
                                                         })}
                                                         aria-label="Beli Sekarang — primary"
@@ -542,8 +532,9 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                     </p>
                                 )}
                                 <Form
-                                    action={`/catalog/${product.slug}/reviews`}
-                                    method={product.my_review ? 'put' : 'post'}
+                                    {...(product.my_review
+                                        ? updateReview.form(product.slug)
+                                        : storeReview.form(product.slug))}
                                     disableWhileProcessing
                                     className="mt-3 space-y-3"
                                 >
@@ -767,6 +758,9 @@ export default function CatalogShow({ product }: CatalogShowProps) {
                                                 href={checkoutConfirm({
                                                     query: {
                                                         product: product.slug,
+                                                        quantity:
+                                                            product.pre_order_min_quantity ??
+                                                            1,
                                                     },
                                                 })}
                                                 aria-label="Beli Sekarang"

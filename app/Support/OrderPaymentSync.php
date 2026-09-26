@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\OrderItemStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -14,6 +15,7 @@ class OrderPaymentSync
             ->select([
                 'id',
                 'order_id',
+                'status',
                 'payment_status',
                 'payment_confirmed_at',
                 'payment_confirmed_by',
@@ -32,7 +34,11 @@ class OrderPaymentSync
             return;
         }
 
-        if ($items->contains(fn (OrderItem $item) => $item->payment_status === PaymentStatus::Rejected)) {
+        // Order ditandai Rejected hanya bila SEMUA item sudah terminal gagal:
+        // payment Rejected atau status Cancelled. Satu item Rejected di tengah
+        // order multi-item tidak boleh menenggelamkan item lain yang masih aktif.
+        if ($items->every(fn (OrderItem $item) => $item->payment_status === PaymentStatus::Rejected
+            || $item->status === OrderItemStatus::Cancelled)) {
             $rejectedItem = $items->first(fn (OrderItem $item) => $item->payment_status === PaymentStatus::Rejected);
 
             $order->update([

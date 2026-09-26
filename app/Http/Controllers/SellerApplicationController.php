@@ -106,7 +106,9 @@ class SellerApplicationController extends Controller
                 ->first();
 
             if ($claimed === null) {
-                abort(403);
+                throw ValidationException::withMessages([
+                    'application' => 'Pengajuan ini sudah diputuskan atau tidak lagi menunggu review.',
+                ]);
             }
 
             /** @var User $applicant */
@@ -125,7 +127,9 @@ class SellerApplicationController extends Controller
                 ]);
 
             if ($updated !== 1) {
-                abort(403);
+                throw ValidationException::withMessages([
+                    'application' => 'Pengajuan ini sudah diputuskan atau tidak lagi menunggu review.',
+                ]);
             }
 
             $claimed->user()->update([
@@ -179,7 +183,9 @@ class SellerApplicationController extends Controller
                 ->first();
 
             if ($claimed === null) {
-                abort(403);
+                throw ValidationException::withMessages([
+                    'application' => 'Pengajuan ini sudah diputuskan atau tidak lagi menunggu review.',
+                ]);
             }
 
             $updated = SellerApplication::query()
@@ -193,7 +199,9 @@ class SellerApplicationController extends Controller
                 ]);
 
             if ($updated !== 1) {
-                abort(403);
+                throw ValidationException::withMessages([
+                    'application' => 'Pengajuan ini sudah diputuskan atau tidak lagi menunggu review.',
+                ]);
             }
 
             $decided = [

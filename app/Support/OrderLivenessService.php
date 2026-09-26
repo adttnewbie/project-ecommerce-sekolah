@@ -543,7 +543,15 @@ class OrderLivenessService
                 ->lockForUpdate()
                 ->findOrFail($order->id);
 
-            $completable = $current->items->filter(
+            // Kunci baris item agar filter Sent+Paid dan update berikutnya atomik;
+            // tanpa lock, item bisa berubah status di antara baca dan tulis.
+            $lockedItems = OrderItem::query()
+                ->with('product:id,seller_id,up_jurusan_id')
+                ->where('order_id', $current->id)
+                ->lockForUpdate()
+                ->get();
+
+            $completable = $lockedItems->filter(
                 fn (OrderItem $item) => $item->status === OrderItemStatus::Sent
                     && $item->payment_status === PaymentStatus::Paid
             );
@@ -555,10 +563,22 @@ class OrderLivenessService
             }
 
             foreach ($completable as $item) {
-                $item->update([
-                    'status' => OrderItemStatus::Completed,
-                    'status_changed_at' => now(),
-                ]);
+                // Update kondisional: hanya baris yang masih Sent+Paid yang
+                // berubah, menutup race bila lock dilepas lebih awal.
+                $affected = OrderItem::query()
+                    ->whereKey($item->id)
+                    ->where('status', OrderItemStatus::Sent)
+                    ->where('payment_status', PaymentStatus::Paid)
+                    ->update([
+                        'status' => OrderItemStatus::Completed,
+                        'status_changed_at' => now(),
+                    ]);
+
+                if ($affected === 0) {
+                    throw ValidationException::withMessages([
+                        'order' => 'Item berubah status saat diproses, coba lagi.',
+                    ]);
+                }
             }
 
             $completedItems = $completable->values();

@@ -1,28 +1,14 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
+// Reuse skeleton kartu produk tunggal agar tidak ada duplikat visual.
+export { ProductCardSkeleton } from '@/components/product/product-card-skeleton';
+
 export function StatSkeleton() {
     return (
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <Skeleton className="h-4 w-28" />
             <Skeleton className="mt-3 h-8 w-24" />
             <Skeleton className="mt-2 h-3 w-36" />
-        </div>
-    );
-}
-
-export function ProductCardSkeleton() {
-    return (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <Skeleton className="aspect-square w-full rounded-none" />
-            <div className="space-y-3 p-4">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-3 w-2/3" />
-                <div className="flex items-center justify-between gap-3">
-                    <Skeleton className="h-5 w-20" />
-                    <Skeleton className="h-11 w-28 rounded-xl" />
-                </div>
-                <Skeleton className="h-11 w-full rounded-xl" />
-            </div>
         </div>
     );
 }

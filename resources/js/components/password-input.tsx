@@ -32,7 +32,6 @@ export default function PasswordInput({
                         ? 'Sembunyikan kata sandi'
                         : 'Tampilkan kata sandi'
                 }
-                tabIndex={-1}
             >
                 {showPassword ? (
                     <EyeOff className="size-4" />

@@ -36,12 +36,18 @@ const userMenuClassName =
 export function AppHeader() {
     const { auth, buyerHeader, notificationBadge, shoppingMode } =
         usePage().props;
+    const { url } = usePage();
     const { isCurrentUrl } = useCurrentUrl();
-    const [search, setSearch] = useState(() =>
-        typeof window === 'undefined'
-            ? ''
-            : (new URL(window.location.href).searchParams.get('search') ?? ''),
-    );
+    const [search, setSearch] = useState(() => getSearchParam(url));
+    const [syncedUrl, setSyncedUrl] = useState(url);
+
+    // Sinkronkan input search saat navigasi Inertia mengubah URL
+    // (mis. setelah submit, tombol back, atau link berkunci search).
+    if (url !== syncedUrl) {
+        setSyncedUrl(url);
+        setSearch(getSearchParam(url));
+    }
+
     const getInitials = useInitials();
     const canShop =
         auth.user?.role === 'buyer' ||
@@ -73,31 +79,15 @@ export function AppHeader() {
                     </Link>
                 </div>
 
-                <form
+                <SearchForm
+                    search={search}
+                    onSearchChange={setSearch}
                     onSubmit={submitSearch}
-                    className="relative hidden w-full max-w-2xl md:block"
-                >
-                    <Search className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 text-slate-400" />
-                    <Input
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                        className="h-11 rounded-[10px] border-slate-200 bg-white pr-11 pl-10 text-sm text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.05)] focus-visible:border-[#0080FF] focus-visible:ring-[#0080FF]/20"
-                        placeholder="Cari produk, kategori, atau brand..."
-                        type="search"
-                        aria-label="Cari produk, kategori, atau brand"
-                    />
-                    {search && (
-                        <button
-                            type="button"
-                            onClick={clearSearch}
-                            className="absolute top-1/2 right-2 flex size-9 -translate-y-1/2 items-center justify-center rounded-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 focus-visible:outline-none"
-                            aria-label="Hapus pencarian"
-                            title="Hapus pencarian"
-                        >
-                            <X className="size-4" />
-                        </button>
-                    )}
-                </form>
+                    onClear={clearSearch}
+                    formClassName="relative hidden w-full max-w-2xl md:block"
+                    iconClassName="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 text-slate-400"
+                    clearButtonClassName="absolute top-1/2 right-2 flex size-9 -translate-y-1/2 items-center justify-center rounded-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-[#0080FF]/20 focus-visible:outline-none"
+                />
 
                 <nav className="hidden items-center gap-1 lg:flex">
                     {navItems.map((item) => (
@@ -210,32 +200,72 @@ export function AppHeader() {
                 </div>
             </div>
 
-            <form
+            <SearchForm
+                search={search}
+                onSearchChange={setSearch}
                 onSubmit={submitSearch}
-                className="relative px-4 pb-3 sm:px-6 md:hidden"
-            >
-                <Search className="pointer-events-none absolute top-[14px] left-7 size-4 text-slate-400 sm:left-9" />
-                <Input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    className="h-11 rounded-[10px] border-slate-200 bg-white pr-11 pl-10 text-sm text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.05)] focus-visible:border-[#0080FF] focus-visible:ring-[#0080FF]/20"
-                    placeholder="Cari produk, kategori, atau brand..."
-                    type="search"
-                    aria-label="Cari produk, kategori, atau brand"
-                />
-                {search && (
-                    <button
-                        type="button"
-                        onClick={clearSearch}
-                        className="absolute top-[8px] right-7 flex size-9 items-center justify-center rounded-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 sm:right-9"
-                        aria-label="Hapus pencarian"
-                        title="Hapus pencarian"
-                    >
-                        <X className="size-4" />
-                    </button>
-                )}
-            </form>
+                onClear={clearSearch}
+                formClassName="relative px-4 pb-3 sm:px-6 md:hidden"
+                iconClassName="pointer-events-none absolute top-[14px] left-7 size-4 text-slate-400 sm:left-9"
+                clearButtonClassName="absolute top-[8px] right-7 flex size-9 items-center justify-center rounded-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 sm:right-9"
+            />
         </header>
+    );
+}
+
+function getSearchParam(pageUrl: string): string {
+    try {
+        return (
+            new URL(pageUrl, 'http://localhost').searchParams.get('search') ??
+            ''
+        );
+    } catch {
+        return '';
+    }
+}
+
+type SearchFormProps = {
+    search: string;
+    onSearchChange: (value: string) => void;
+    onSubmit: (event: React.FormEvent) => void;
+    onClear: () => void;
+    formClassName: string;
+    iconClassName: string;
+    clearButtonClassName: string;
+};
+
+function SearchForm({
+    search,
+    onSearchChange,
+    onSubmit,
+    onClear,
+    formClassName,
+    iconClassName,
+    clearButtonClassName,
+}: SearchFormProps) {
+    return (
+        <form onSubmit={onSubmit} className={formClassName}>
+            <Search className={iconClassName} />
+            <Input
+                value={search}
+                onChange={(event) => onSearchChange(event.target.value)}
+                className="h-11 rounded-[10px] border-slate-200 bg-white pr-11 pl-10 text-sm text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.05)] focus-visible:border-[#0080FF] focus-visible:ring-[#0080FF]/20"
+                placeholder="Cari produk, kategori, atau brand..."
+                type="search"
+                aria-label="Cari produk, kategori, atau brand"
+            />
+            {search && (
+                <button
+                    type="button"
+                    onClick={onClear}
+                    className={clearButtonClassName}
+                    aria-label="Hapus pencarian"
+                    title="Hapus pencarian"
+                >
+                    <X className="size-4" />
+                </button>
+            )}
+        </form>
     );
 }
 

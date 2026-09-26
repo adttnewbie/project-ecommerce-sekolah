@@ -174,7 +174,8 @@ test('approve fails when the application is not pending', function (string $init
 
     $this->actingAs($admin)
         ->post(route('admin.seller-applications.approve', $application))
-        ->assertForbidden();
+        ->assertRedirect()
+        ->assertSessionHasErrors('application');
 
     $this->assertDatabaseHas('seller_applications', [
         'id' => $application->id,
@@ -201,7 +202,8 @@ test('reject fails when the application is not pending', function (string $initi
         ->post(route('admin.seller-applications.reject', $application), [
             'rejection_reason' => 'Data belum lengkap.',
         ])
-        ->assertForbidden();
+        ->assertRedirect()
+        ->assertSessionHasErrors('application');
 
     $this->assertDatabaseHas('seller_applications', [
         'id' => $application->id,

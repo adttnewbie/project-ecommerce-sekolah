@@ -134,9 +134,5 @@ class FortifyServiceProvider extends ServiceProvider
                 'checkout|'.(string) ($request->user()->id ?? $request->ip()),
             );
         });
-
-        RateLimiter::for('registration', function (Request $request) {
-            return Limit::perMinute(3)->by($request->ip());
-        });
     }
 }

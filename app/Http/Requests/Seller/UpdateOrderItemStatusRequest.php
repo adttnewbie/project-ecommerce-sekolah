@@ -19,8 +19,15 @@ class UpdateOrderItemStatusRequest extends FormRequest
         /** @var OrderItem|null $orderItem */
         $orderItem = $this->route('orderItem');
 
-        return $orderItem instanceof OrderItem
-            && $orderItem->product->seller_id === $seller->id;
+        // Item milik seller lain disamarkan sebagai 404 agar tidak membocorkan
+        // keberadaan order item asing (IDOR hardening).
+        abort_unless(
+            $orderItem instanceof OrderItem
+                && $orderItem->product->seller_id === $seller->id,
+            404,
+        );
+
+        return true;
     }
 
     /**

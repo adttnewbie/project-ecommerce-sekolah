@@ -159,6 +159,12 @@ class PicketUpJurusanConsignmentController extends Controller
                 ...ReportAggregationService::dailyReportSnapshotPayload($dailyReport),
                 'submitted_at' => $dailyReport->submitted_at,
             ];
+        // Strict per-UP scope via stock movements for THIS order (order_id),
+        // not loose catalog association. A line belongs to this UP only if a
+        // movement for its order points at this UP (consignment UP, UP-owned
+        // product, or delivery-fee UP). Orders without any movement yet
+        // (e.g. pre-orders) fall back to catalog association so they stay visible.
+        $upId = (int) $picket->up_jurusan_id;
         $orderItems = OrderItem::query()
             ->with([
                 'order:id,code,user_id,created_at',
@@ -167,10 +173,34 @@ class PicketUpJurusanConsignmentController extends Controller
                 'product.seller:id,name',
                 'product.upJurusan:id,name',
             ])
-            ->whereHas('product', function ($query) use ($picket) {
+            ->where(function ($query) use ($upId) {
                 $query
-                    ->where('up_jurusan_id', $picket->up_jurusan_id)
-                    ->orWhereHas('upJurusanConsignments', fn ($query) => $query->where('up_jurusan_id', $picket->up_jurusan_id));
+                    ->whereExists(function ($exists) use ($upId) {
+                        $exists->select(DB::raw(1))
+                            ->from('up_jurusan_stock_movements as m')
+                            ->whereColumn('m.order_id', 'order_items.order_id')
+                            ->where(function ($mm) use ($upId) {
+                                $mm->whereIn('m.up_jurusan_consignment_id', function ($sq) use ($upId) {
+                                    $sq->select('id')->from('up_jurusan_consignments')->where('up_jurusan_id', $upId);
+                                })
+                                    ->orWhereIn('m.product_id', function ($sq) use ($upId) {
+                                        $sq->select('id')->from('products')->where('up_jurusan_id', $upId)->whereNull('seller_id');
+                                    })
+                                    ->orWhere('m.up_jurusan_id', $upId);
+                            });
+                    })
+                    ->orWhere(function ($fallback) use ($upId) {
+                        $fallback
+                            ->whereNotExists(function ($exists) {
+                                $exists->select(DB::raw(1))
+                                    ->from('up_jurusan_stock_movements as m2')
+                                    ->whereColumn('m2.order_id', 'order_items.order_id');
+                            })
+                            ->whereHas('product', function ($pq) use ($upId) {
+                                $pq->where('up_jurusan_id', $upId)
+                                    ->orWhereHas('upJurusanConsignments', fn ($qq) => $qq->where('up_jurusan_id', $upId));
+                            });
+                    });
             })
             ->latest()
             ->limit(30)
@@ -273,7 +303,7 @@ class PicketUpJurusanConsignmentController extends Controller
         $this->authorizePicket($picket, $consignment);
 
         $validated = $request->validate([
-            'quantity' => ['required', 'integer', 'min:1'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:1000'],
         ]);
 
         DB::transaction(function () use ($consignment, $picket, $validated) {
@@ -316,44 +346,46 @@ class PicketUpJurusanConsignmentController extends Controller
         $saleCode = null;
         $saleId = 0;
 
-        DB::transaction(function () use ($consignment, $picket, $quantity, &$saleCode, &$saleId) {
-            $saleCode = $this->posSaleCode();
-            $sale = UpJurusanPosSale::query()->create([
-                'up_jurusan_id' => $picket->up_jurusan_id,
-                'user_id' => $picket->id,
-                'code' => $saleCode,
-                'total_quantity' => $quantity,
-                'total_amount' => 0,
-            ]);
-            $saleId = $sale->id;
+        UniqueViolationRetry::run(function () use ($consignment, $picket, $quantity, &$saleCode, &$saleId) {
+            DB::transaction(function () use ($consignment, $picket, $quantity, &$saleCode, &$saleId) {
+                $saleCode = $this->posSaleCode();
+                $sale = UpJurusanPosSale::query()->create([
+                    'up_jurusan_id' => $picket->up_jurusan_id,
+                    'user_id' => $picket->id,
+                    'code' => $saleCode,
+                    'total_quantity' => $quantity,
+                    'total_amount' => 0,
+                ]);
+                $saleId = $sale->id;
 
-            /** @var UpJurusanConsignment $locked */
-            $locked = UpJurusanConsignment::query()
-                ->with('product:id,price')
-                ->whereKey($consignment->id)
-                ->lockForUpdate()
-                ->firstOrFail();
+                /** @var UpJurusanConsignment $locked */
+                $locked = UpJurusanConsignment::query()
+                    ->with('product:id,price')
+                    ->whereKey($consignment->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-            $this->authorizePicket($picket, $locked);
-            $totalAmount = $this->recordSale($picket, $locked, $quantity, $sale);
+                $this->authorizePicket($picket, $locked);
+                $totalAmount = $this->recordSale($picket, $locked, $quantity, $sale);
 
-            $sale->update(['total_amount' => $totalAmount]);
+                $sale->update(['total_amount' => $totalAmount]);
 
-            $locked->refresh();
-            $locked->load(['product:id,name', 'seller:id,name']);
+                $locked->refresh();
+                $locked->load(['product:id,name', 'seller:id,name']);
 
-            OrderItemStatusChanged::dispatch(
-                orderItemId: null,
-                orderId: null,
-                productId: $locked->product_id,
-                consignmentId: $locked->id,
-                productName: $locked->product->name,
-                sellerName: $locked->seller->name,
-                buyerName: $picket->name,
-                action: "terjual {$quantity} pcs via POS ({$saleCode})",
-                picketId: null,
-                consignmentStatus: $locked->status->value,
-            );
+                OrderItemStatusChanged::dispatch(
+                    orderItemId: null,
+                    orderId: null,
+                    productId: $locked->product_id,
+                    consignmentId: $locked->id,
+                    productName: $locked->product->name,
+                    sellerName: $locked->seller->name,
+                    buyerName: $picket->name,
+                    action: "terjual {$quantity} pcs via POS ({$saleCode})",
+                    picketId: null,
+                    consignmentStatus: $locked->status->value,
+                );
+            });
         });
 
         return to_route('picket.pos')
@@ -368,10 +400,10 @@ class PicketUpJurusanConsignmentController extends Controller
         $this->ensureDailyReportIsOpen($picket);
 
         $validated = $request->validate([
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.id' => ['required', 'integer'],
+            'items' => ['required', 'array', 'min:1', 'max:50'],
+            'items.*.id' => ['required', 'integer', 'min:1'],
             'items.*.source' => ['required', 'string', 'in:consignment,product'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:1000'],
         ]);
 
         [$saleCode, $saleId] = UniqueViolationRetry::run(
@@ -622,7 +654,7 @@ class PicketUpJurusanConsignmentController extends Controller
     private function quantity(Request $request): int
     {
         $validated = $request->validate([
-            'quantity' => ['required', 'integer', 'min:1'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:1000'],
         ]);
 
         return (int) $validated['quantity'];
@@ -646,20 +678,49 @@ class PicketUpJurusanConsignmentController extends Controller
 
     private function authorizeOrderItemPicket(User $picket, OrderItem $orderItem): void
     {
+        abort_unless($picket->up_jurusan_id !== null, 403);
+
+        $upId = (int) $picket->up_jurusan_id;
+
+        // Strict: bila order sudah punya movement, kepemilikan ditentukan dari
+        // movement order_id itu (bukan contains longgar di katalog produk yang
+        // bisa milik banyak UP). Fallback katalog hanya untuk order tanpa
+        // movement (pre-order / fixture lama).
+        $hasMovement = UpJurusanStockMovement::query()
+            ->where('order_id', $orderItem->order_id)
+            ->exists();
+
+        if ($hasMovement) {
+            $belongs = UpJurusanStockMovement::query()
+                ->where('order_id', $orderItem->order_id)
+                ->where(function ($query) use ($upId) {
+                    $query
+                        ->whereHas('consignment', fn ($q) => $q->where('up_jurusan_id', $upId))
+                        ->orWhereHas('product', fn ($q) => $q->where('up_jurusan_id', $upId))
+                        ->orWhere('up_jurusan_id', $upId);
+                })
+                ->exists();
+
+            abort_unless($belongs, 403);
+
+            return;
+        }
+
         abort_unless(
-            $picket->up_jurusan_id !== null
-            && (
-                $orderItem->product->up_jurusan_id === $picket->up_jurusan_id
-                || $orderItem->product->upJurusanConsignments->contains('up_jurusan_id', $picket->up_jurusan_id)
-            ),
+            $orderItem->product->up_jurusan_id === $picket->up_jurusan_id
+                || $orderItem->product->upJurusanConsignments->contains('up_jurusan_id', $picket->up_jurusan_id),
             403,
         );
     }
 
     private function ensureDailyReportIsOpen(User $picket): void
     {
+        // Laporan harian bersifat per picket per UP (unique up,user,date);
+        // scope harus menyertakan user_id agar laporan picket lain tidak
+        // memblokir POS picket ini.
         $reportSubmitted = UpJurusanDailyReport::query()
             ->where('up_jurusan_id', $picket->up_jurusan_id)
+            ->where('user_id', $picket->id)
             ->whereDate('report_date', now()->toDateString())
             ->whereNotNull('submitted_at')
             ->exists();
@@ -696,6 +757,13 @@ class PicketUpJurusanConsignmentController extends Controller
 
     private function recordProductSale(User $picket, Product $product, int $quantity, ?UpJurusanPosSale $sale = null): int
     {
+        // Produk pre-order tidak punya stok fisik siap jual; POS hanya untuk ready stock.
+        if ($product->isPreOrder()) {
+            throw ValidationException::withMessages([
+                'items' => "Produk {$product->name} adalah pre-order dan tidak dapat dijual via POS.",
+            ]);
+        }
+
         if ($quantity > $product->stock) {
             throw ValidationException::withMessages([
                 'quantity' => 'Jumlah keluar tidak boleh melebihi stok produk tersedia.',

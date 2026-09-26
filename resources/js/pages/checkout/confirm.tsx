@@ -28,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { formatRupiah } from '@/lib/format';
 import type { PreOrderStatus } from '@/lib/pre-order';
 import { productImageUrl } from '@/lib/product-image';
 import { cn } from '@/lib/utils';
@@ -90,26 +91,12 @@ type PageProps = {
     auth: Auth;
 } & SharedPageProps;
 
-const formatRupiah = (value: number) =>
-    new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 0,
-    }).format(value);
-
-const imageSource = (image: string | null) => {
-    if (!image) {
-        return null;
-    }
-
-    return productImageUrl(image);
-};
-
 export default function CheckoutConfirm({ items, summary }: Props) {
     const { auth } = usePage<PageProps>().props;
     const [pickupMethod, setPickupMethod] = useState<'pickup' | 'delivery'>(
         'pickup',
     );
+    const [pickupLocation, setPickupLocation] = useState('');
     const matchedTier =
         pickupMethod === 'delivery'
             ? ([...summary.delivery_fee_tiers]
@@ -135,6 +122,11 @@ export default function CheckoutConfirm({ items, summary }: Props) {
     const hasInvalidPreOrder = invalidPreOrderItems.length > 0;
     const hasBlockingIssue = hasInvalidStock || hasInvalidPreOrder;
     const hasPendingCheckout = items.length > 0;
+    // Satu sumber hidden input: mode buy_now mengirim satu pasang
+    // buy_now_product_id/buy_now_quantity, selain itu kirim
+    // selected_cart_item_ids[] per item cart.
+    const buyNowItem =
+        items.find((item) => item.source === 'buy_now') ?? null;
 
     useEffect(() => {
         if (!hasPendingCheckout) {
@@ -147,6 +139,7 @@ export default function CheckoutConfirm({ items, summary }: Props) {
             }
 
             event.preventDefault();
+            event.returnValue = '';
         };
 
         window.addEventListener('beforeunload', warnBeforeLeave);
@@ -280,7 +273,9 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                         ) : (
                             <div className="space-y-3">
                                 {items.map((item) => {
-                                    const src = imageSource(item.product.image);
+                                    const src = productImageUrl(
+                                        item.product.image,
+                                    );
                                     const stockIssue =
                                         !item.product.is_pre_order &&
                                         (item.product.stock <= 0 ||
@@ -418,37 +413,34 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                             >
                                 {({ processing, errors }) => (
                                     <div className="space-y-5">
-                                        {items.map((item) => (
-                                            <div key={item.id}>
-                                                {item.source === 'buy_now' ? (
-                                                    <>
-                                                        <input
-                                                            type="hidden"
-                                                            name="buy_now_product_id"
-                                                            value={
-                                                                item.product.id
-                                                            }
-                                                            readOnly
-                                                        />
-                                                        <input
-                                                            type="hidden"
-                                                            name="buy_now_quantity"
-                                                            value={
-                                                                item.quantity
-                                                            }
-                                                            readOnly
-                                                        />
-                                                    </>
-                                                ) : (
-                                                    <input
-                                                        type="hidden"
-                                                        name="selected_cart_item_ids[]"
-                                                        value={item.id}
-                                                        readOnly
-                                                    />
-                                                )}
-                                            </div>
-                                        ))}
+                                        {buyNowItem ? (
+                                            <>
+                                                <input
+                                                    type="hidden"
+                                                    name="buy_now_product_id"
+                                                    value={
+                                                        buyNowItem.product.id
+                                                    }
+                                                    readOnly
+                                                />
+                                                <input
+                                                    type="hidden"
+                                                    name="buy_now_quantity"
+                                                    value={buyNowItem.quantity}
+                                                    readOnly
+                                                />
+                                            </>
+                                        ) : (
+                                            items.map((item) => (
+                                                <input
+                                                    key={item.id}
+                                                    type="hidden"
+                                                    name="selected_cart_item_ids[]"
+                                                    value={item.id}
+                                                    readOnly
+                                                />
+                                            ))
+                                        )}
                                         <fieldset className="space-y-3">
                                             <legend className="text-sm font-semibold text-slate-800">
                                                 Metode pengambilan
@@ -531,6 +523,13 @@ export default function CheckoutConfirm({ items, summary }: Props) {
                                                     <Textarea
                                                         id="pickup_location"
                                                         name="pickup_location"
+                                                        value={pickupLocation}
+                                                        onChange={(event) =>
+                                                            setPickupLocation(
+                                                                event.target
+                                                                    .value,
+                                                            )
+                                                        }
                                                         className="min-h-24 rounded-[10px] border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
                                                         placeholder="Contoh: titip di meja piket, depan kelas XI RPL 1, atau dekat koperasi."
                                                         required

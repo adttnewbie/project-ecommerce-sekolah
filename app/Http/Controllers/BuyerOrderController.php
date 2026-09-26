@@ -16,6 +16,7 @@ use App\Traits\OwnerPayloadHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -115,14 +116,22 @@ class BuyerOrderController extends Controller
 
         $hadInProduction = $result['had_in_production'];
 
-        BuyerSanctionService::recordViolation(
-            (int) $buyer->id,
-            $hadInProduction ? BuyerViolationType::CancelInProduction : BuyerViolationType::ExcessiveCancel,
-            order: $order,
-            description: $hadInProduction
-                ? 'Membatalkan pesanan setelah produksi dimulai'
-                : 'Membatalkan pesanan',
-        );
+        try {
+            BuyerSanctionService::recordViolation(
+                (int) $buyer->id,
+                $hadInProduction ? BuyerViolationType::CancelInProduction : BuyerViolationType::ExcessiveCancel,
+                order: $order,
+                description: $hadInProduction
+                    ? 'Membatalkan pesanan setelah produksi dimulai'
+                    : 'Membatalkan pesanan',
+            );
+        } catch (\Throwable $exception) {
+            Log::warning('Gagal mencatat pelanggaran buyer saat cancel pesanan', [
+                'buyer_id' => (int) $buyer->id,
+                'order_id' => (int) $order->id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
 
         return to_route('orders.show', $order)
             ->with('success', 'Pesanan berhasil dibatalkan.');

@@ -78,7 +78,11 @@ class ReportAggregationService
 
     /**
      * Open picket daily report (live) from stock movements for that picket + day.
-     * Includes POS and online sales attributed to the UP; POS lines filtered by picket actor.
+     * POS lines are filtered by picket actor (each picket reports own cashier sales).
+     * Online lines are scoped per UP, NOT per picket: online_order movements are
+     * buyer-initiated (user_id = buyer), so filtering by picket would hide them.
+     * All online sales attributed to this UP appear in every picket's open view
+     * for visibility, but the submitted snapshot is per picket per UP per day.
      *
      * @return array{total_sold: int, total_revenue: int, submitted_at: null, items: array<int, array<string, mixed>>}
      */

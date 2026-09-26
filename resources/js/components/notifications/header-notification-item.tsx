@@ -9,11 +9,12 @@ import {
     ShoppingCart,
     X,
 } from 'lucide-react';
-import { createElement } from 'react';
+import { createElement, useState } from 'react';
 import { toast } from 'sonner';
 
 import { formatNotificationTimestamp } from '@/lib/formatNotificationTimestamp';
 import { cn } from '@/lib/utils';
+import { destroy as destroyNotification } from '@/routes/notifications';
 import {
     NOTIFICATION_TYPE_CONFIG,
     NOTIFICATION_TYPE_STYLE,
@@ -56,39 +57,43 @@ export function HeaderNotificationItem({
     const label = config?.label ?? 'Notifikasi';
     const iconBg = style?.iconBg ?? '#F1F5F9';
     const iconColor = style?.iconColor ?? accent;
+    const [navigating, setNavigating] = useState(false);
 
     const dismiss = (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
         event.stopPropagation();
 
-        router.delete(
-            `/notifications/${encodeURIComponent(notification.key)}`,
-            {
-                preserveScroll: true,
-                onError: () => toast.error('Notifikasi gagal dihapus.'),
-            },
-        );
+        router.delete(destroyNotification(notification.key).url, {
+            preserveScroll: true,
+            onError: () => toast.error('Notifikasi gagal dihapus.'),
+        });
     };
 
     const handleClick = (event: React.MouseEvent) => {
-        if (notification.is_read) {
+        if (notification.is_read || navigating) {
             return; // plain anchor navigation
         }
 
         event.preventDefault();
+        setNavigating(true);
 
-        // Navigation always continues; a failed read-request never blocks
-        // the user from opening the notification target.
-        try {
-            router.post(
-                `/notifications/${encodeURIComponent(notification.key)}/read`,
-                {},
-                { preserveScroll: true },
-            );
-            window.location.href = notification.href;
-        } catch {
-            window.location.href = notification.href;
-        }
+        // Route POST /notifications/{key}/read tidak bernama sehingga tidak
+        // punya helper Wayfinder — turunkan dari helper destroy agar prefix
+        // path tetap mengikuti definisi route terpusat. Navigasi selalu
+        // dilanjutkan via onFinish walau request tandai-dibaca gagal.
+        const readUrl = `${destroyNotification(notification.key).url}/read`;
+
+        router.post(
+            readUrl,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setNavigating(false);
+                    router.visit(notification.href);
+                },
+            },
+        );
     };
 
     return (

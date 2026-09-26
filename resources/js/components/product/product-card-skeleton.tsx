@@ -1,3 +1,4 @@
+import { ProductGrid } from '@/components/product/product-grid';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -32,10 +33,10 @@ export function ProductCardSkeleton() {
 
 export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
     return (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
+        <ProductGrid>
             {Array.from({ length: count }).map((_, i) => (
                 <ProductCardSkeleton key={i} />
             ))}
-        </div>
+        </ProductGrid>
     );
 }

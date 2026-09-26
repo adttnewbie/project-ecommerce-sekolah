@@ -39,11 +39,16 @@ class SystemActor
 
     private static function bootstrap(): User
     {
-        return User::query()->create([
+        // User::$guarded blocks mass-assignment of `role` (anti privilege
+        // escalation), so a plain create() would silently drop the Admin role
+        // and bootstrap a Buyer. forceFill bypasses the guard explicitly.
+        $user = new User([
             'name' => 'Sistem (Otomatis)',
             'email' => self::email(),
-            'role' => UserRole::Admin,
             'password' => Str::password(64),
         ]);
+        $user->forceFill(['role' => UserRole::Admin])->save();
+
+        return $user;
     }
 }

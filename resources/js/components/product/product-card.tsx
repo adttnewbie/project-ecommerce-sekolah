@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatRupiah } from '@/lib/format';
 import { resolvePreOrderStatus } from '@/lib/pre-order';
 import type { PreOrderStatus } from '@/lib/pre-order';
 import { productImageUrl } from '@/lib/product-image';
@@ -69,26 +70,11 @@ type ProductCardProps = {
     onWishlistToggle?: (product: ProductCardProduct, next: boolean) => void;
     onAddToCart?: (product: ProductCardProduct) => void;
     /**
-     * Buy-now: extension point. If not provided, defaults to
-     * router.visit(checkoutConfirm({ product: slug }).url) — keep <ProductCard product={p} /> simple.
+     * Buy-now: extension point. If not provided, defaults to visiting
+     * checkout confirm with product slug + quantity — keep <ProductCard product={p} /> simple.
      */
     onBuyNow?: (product: ProductCardProduct) => void;
     className?: string;
-};
-
-const formatRupiah = (value: number) =>
-    new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 0,
-    }).format(value);
-
-const imageSource = (image: string | null) => {
-    if (!image) {
-        return null;
-    }
-
-    return productImageUrl(image);
 };
 
 export function ProductCard({
@@ -108,7 +94,7 @@ export function ProductCard({
     const isOutOfStock = !product.is_pre_order && product.stock <= 0;
     const notPurchasable = isOutOfStock || isPreOrderClosed;
 
-    const src = imageSource(product.image);
+    const src = productImageUrl(product.image);
     const [imgError, setImgError] = useState(false);
     const [wishlisted, setWishlisted] = useState<boolean>(
         product.is_wishlisted,
@@ -263,7 +249,14 @@ export function ProductCard({
             return;
         }
 
-        router.visit(checkoutConfirm({ query: { product: product.slug } }).url);
+        router.visit(
+            checkoutConfirm({
+                query: {
+                    product: product.slug,
+                    quantity: product.pre_order_min_quantity ?? 1,
+                },
+            }).url,
+        );
     };
 
     return (

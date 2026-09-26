@@ -47,34 +47,26 @@ class ProfileController extends Controller
      */
     private function accountSummary(User $user): array
     {
-        try {
-            return [
-                'cart_count' => CartItem::query()->where('user_id', $user->id)->count(),
-                'wishlist_count' => Wishlist::query()->where('user_id', $user->id)->count(),
-                'orders_total' => (int) Order::query()->where('user_id', $user->id)->count(),
-                'orders_by_status' => [
-                    'unpaid' => (int) Order::query()->where('user_id', $user->id)
-                        ->where('payment_status', PaymentStatus::Unpaid->value)->count(),
-                    'packing' => (int) OrderItem::query()
-                        ->whereHas('order', fn ($q) => $q->where('user_id', $user->id))
-                        ->where('status', OrderItemStatus::Packed->value)->count(),
-                    'shipping' => (int) OrderItem::query()
-                        ->whereHas('order', fn ($q) => $q->where('user_id', $user->id))
-                        ->where('status', OrderItemStatus::Sent->value)->count(),
-                    'done' => (int) Order::query()->where('user_id', $user->id)
-                        ->where('status', OrderStatus::Completed->value)->count(),
-                ],
-            ];
-        } catch (\Throwable $e) {
-            report($e);
-
-            return [
-                'cart_count' => 0,
-                'wishlist_count' => 0,
-                'orders_total' => 0,
-                'orders_by_status' => ['unpaid' => 0, 'packing' => 0, 'shipping' => 0, 'done' => 0],
-            ];
-        }
+        // No try/catch here by design: query failures must surface to the
+        // centralized exception handler instead of being silently replaced
+        // with zeroes that mislead the account page.
+        return [
+            'cart_count' => CartItem::query()->where('user_id', $user->id)->count(),
+            'wishlist_count' => Wishlist::query()->where('user_id', $user->id)->count(),
+            'orders_total' => (int) Order::query()->where('user_id', $user->id)->count(),
+            'orders_by_status' => [
+                'unpaid' => (int) Order::query()->where('user_id', $user->id)
+                    ->where('payment_status', PaymentStatus::Unpaid->value)->count(),
+                'packing' => (int) OrderItem::query()
+                    ->whereHas('order', fn ($q) => $q->where('user_id', $user->id))
+                    ->where('status', OrderItemStatus::Packed->value)->count(),
+                'shipping' => (int) OrderItem::query()
+                    ->whereHas('order', fn ($q) => $q->where('user_id', $user->id))
+                    ->where('status', OrderItemStatus::Sent->value)->count(),
+                'done' => (int) Order::query()->where('user_id', $user->id)
+                    ->where('status', OrderStatus::Completed->value)->count(),
+            ],
+        ];
     }
 
     /**

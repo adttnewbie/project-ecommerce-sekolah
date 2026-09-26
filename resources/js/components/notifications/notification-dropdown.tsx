@@ -1,6 +1,6 @@
 import { Link, router } from '@inertiajs/react';
 import { Bell, X } from 'lucide-react';
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { HeaderNotificationItem } from '@/components/notifications/header-notification-item';
 import { NotificationEmptyState } from '@/components/notifications/NotificationEmptyState';
@@ -17,34 +17,9 @@ import {
     SheetTitle,
     SheetTrigger,
 } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { index as notificationsIndex } from '@/routes/notifications';
 import type { NotificationForDropdown } from '@/types/notifications';
-
-const NOTIF_MOBILE_BREAKPOINT = 640;
-const notifMediaQuery = `(max-width: ${NOTIF_MOBILE_BREAKPOINT - 1}px)`;
-
-function subscribeNotif(callback: () => void) {
-    const mql = window.matchMedia(notifMediaQuery);
-
-    mql.addEventListener('change', callback);
-
-    return () => mql.removeEventListener('change', callback);
-}
-
-function getSnapshotNotif() {
-    return window.matchMedia(notifMediaQuery).matches;
-}
-
-function getServerSnapshotNotif() {
-    return false;
-}
-
-function useIsNotifMobile() {
-    return useSyncExternalStore(
-        subscribeNotif,
-        getSnapshotNotif,
-        getServerSnapshotNotif,
-    );
-}
 
 const desktopMenuClassName =
     'flex w-[24rem] max-w-[calc(100vw-1.5rem)] max-h-[28rem] flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white p-0 shadow-[0_8px_24px_rgba(15,23,42,0.08)] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]';
@@ -80,7 +55,7 @@ export function NotificationDropdown({
     emptyText = 'Kabar terbaru akan muncul di sini',
 }: NotificationDropdownProps) {
     const items = useMemo(() => notifications ?? [], [notifications]);
-    const isMobile = useIsNotifMobile();
+    const isMobile = useIsMobile();
     const [mounted, setMounted] = useState(false);
     const [filter, setFilter] = useState<FilterTab>('all');
     const [open, setOpen] = useState(false);
@@ -102,13 +77,14 @@ export function NotificationDropdown({
     const hasAnyItems = items.length > 0;
     const displayUnread = unreadCount > 99 ? '99+' : String(unreadCount);
 
+    // Route POST /notifications/mark-all-as-read tidak bernama sehingga tidak
+    // punya helper Wayfinder — turunkan dari helper index agar prefix path
+    // tetap mengikuti definisi route terpusat.
+    const markAllAsReadUrl = `${notificationsIndex().url}/mark-all-as-read`;
+
     const markAllAsRead = (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
-        router.post(
-            '/notifications/mark-all-as-read',
-            {},
-            { preserveScroll: true },
-        );
+        router.post(markAllAsReadUrl, {}, { preserveScroll: true });
     };
 
     const header = (
@@ -241,7 +217,10 @@ export function NotificationDropdown({
                 size="sm"
                 className="h-9 w-full rounded-xl text-sm font-semibold text-[#0080FF] hover:bg-[#EFF8FF] hover:text-[#006FE0]"
             >
-                <Link href="/notifications" onClick={() => setOpen(false)}>
+                <Link
+                    href={notificationsIndex()}
+                    onClick={() => setOpen(false)}
+                >
                     Lihat semua notifikasi
                 </Link>
             </Button>

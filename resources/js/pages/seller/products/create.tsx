@@ -10,7 +10,7 @@ import {
     Tags,
     Wallet,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -33,10 +33,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import {
+    create as sellerProductsCreate,
     index as sellerProductsIndex,
     store as sellerProductsStore,
 } from '@/routes/seller/products';
@@ -73,6 +73,11 @@ const selectTriggerClassName =
 const cardClassName =
     'gap-0 rounded-[14px] border border-slate-100 bg-white py-0 shadow-sm transition-all duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-md motion-reduce:transition-none motion-reduce:hover:shadow-sm';
 
+// Batas upload gambar mengikuti validasi backend (StoreProductRequest:
+// image, mimes jpg/jpeg/png/webp, max 2048 KB).
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
 export default function SellerProductCreate({
     categories,
     upJurusans,
@@ -82,6 +87,47 @@ export default function SellerProductCreate({
     const [fulfillmentType, setFulfillmentType] = useState('ready_stock');
     const [status, setStatus] = useState('pending');
     const [upJurusanId, setUpJurusanId] = useState('');
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageError, setImageError] = useState('');
+
+    useEffect(() => {
+        return () => {
+            if (imagePreview) {
+                URL.revokeObjectURL(imagePreview);
+            }
+        };
+    }, [imagePreview]);
+
+    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+
+        setImageError('');
+
+        if (imagePreview) {
+            URL.revokeObjectURL(imagePreview);
+            setImagePreview(null);
+        }
+
+        if (!file) {
+            return;
+        }
+
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+            setImageError('Format gambar harus JPG, JPEG, PNG, atau WEBP.');
+            event.target.value = '';
+
+            return;
+        }
+
+        if (file.size > MAX_IMAGE_SIZE) {
+            setImageError('Ukuran gambar maksimal 2 MB.');
+            event.target.value = '';
+
+            return;
+        }
+
+        setImagePreview(URL.createObjectURL(file));
+    };
 
     return (
         <>
@@ -127,32 +173,6 @@ export default function SellerProductCreate({
                     >
                         {({ processing, errors }) => (
                             <>
-                                {/* Skeleton fallback for form loading (hidden when not loading) */}
-                                {processing && (
-                                    <div
-                                        className="space-y-8"
-                                        aria-hidden="true"
-                                    >
-                                        {Array.from({ length: 3 }).map(
-                                            (_, idx) => (
-                                                <Card
-                                                    key={`skeleton-${idx}`}
-                                                    className={cardClassName}
-                                                >
-                                                    <CardHeader className="p-6">
-                                                        <Skeleton className="h-5 w-40 rounded-[6px] motion-reduce:animate-none" />
-                                                        <Skeleton className="mt-1 h-4 w-64 rounded-[6px] motion-reduce:animate-none" />
-                                                    </CardHeader>
-                                                    <CardContent className="space-y-4 p-6">
-                                                        <Skeleton className="h-11 w-full rounded-[10px] motion-reduce:animate-none" />
-                                                        <Skeleton className="h-24 w-full rounded-[10px] motion-reduce:animate-none" />
-                                                    </CardContent>
-                                                </Card>
-                                            ),
-                                        )}
-                                    </div>
-                                )}
-
                                 {/* Informasi Dasar */}
                                 <Card className={cardClassName}>
                                     <CardHeader className="flex-row items-center border-b border-slate-100 p-6">
@@ -767,20 +787,31 @@ export default function SellerProductCreate({
                                                     name="image"
                                                     type="file"
                                                     accept="image/jpeg,image/png,image/webp"
+                                                    onChange={handleImageChange}
                                                     className={`${inputClassName} h-11 pl-9 file:mr-3 file:rounded-[6px] file:border-0 file:bg-slate-100 file:px-2 file:text-sm file:font-medium file:text-slate-700`}
                                                     aria-invalid={Boolean(
+                                                        imageError ||
                                                         errors.image,
                                                     )}
-                                                    aria-describedby={
-                                                        errors.image
-                                                            ? 'image-error'
-                                                            : undefined
-                                                    }
+                                                    aria-describedby="image-error"
                                                 />
                                             </div>
+                                            <p className="text-xs text-slate-500">
+                                                Maks. 2 MB • JPG, JPEG, PNG,
+                                                atau WEBP.
+                                            </p>
+                                            {imagePreview && (
+                                                <img
+                                                    src={imagePreview}
+                                                    alt="Pratinjau gambar produk"
+                                                    className="h-32 w-32 rounded-[10px] border border-slate-200 object-cover"
+                                                />
+                                            )}
                                             <InputError
                                                 id="image-error"
-                                                message={errors.image}
+                                                message={
+                                                    imageError || errors.image
+                                                }
                                             />
                                         </div>
 
@@ -1054,7 +1085,7 @@ SellerProductCreate.layout = {
         },
         {
             title: 'Tambah Produk',
-            href: '/seller/products/create',
+            href: sellerProductsCreate(),
         },
     ],
 };

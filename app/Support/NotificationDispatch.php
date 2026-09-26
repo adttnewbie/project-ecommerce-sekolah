@@ -6,6 +6,8 @@ use App\Models\Notification;
 use App\Models\NotificationPreference;
 use App\Models\OrderItem;
 use App\Models\User;
+use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -30,10 +32,30 @@ class NotificationDispatch
             return false;
         }
 
-        Notification::firstOrCreate(
-            ['user_id' => $userId, 'key' => $key],
-            ['type' => $type] + $attributes + ['created_at' => now()],
-        );
+        try {
+            Notification::firstOrCreate(
+                ['user_id' => $userId, 'key' => $key],
+                ['type' => $type] + $attributes + ['created_at' => now()],
+            );
+        } catch (UniqueConstraintViolationException $exception) {
+            // A concurrent dispatch already persisted this user + key pair;
+            // delivery stays idempotent.
+            Log::debug('Notification already dispatched by concurrent request', [
+                'user_id' => $userId,
+                'type' => $type,
+                'key' => $key,
+            ]);
+        } catch (QueryException $exception) {
+            if (! self::isUniqueViolation($exception)) {
+                throw $exception;
+            }
+
+            Log::debug('Notification already dispatched by concurrent request', [
+                'user_id' => $userId,
+                'type' => $type,
+                'key' => $key,
+            ]);
+        }
 
         return true;
     }
@@ -93,5 +115,12 @@ class NotificationDispatch
         }
 
         return $delivered;
+    }
+
+    private static function isUniqueViolation(QueryException $exception): bool
+    {
+        $sqlState = $exception->errorInfo[0] ?? null;
+
+        return $sqlState === '23000' || $sqlState === '23505';
     }
 }

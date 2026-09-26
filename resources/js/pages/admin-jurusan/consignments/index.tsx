@@ -28,6 +28,12 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import {
+    approve as approveConsignment,
+    index as consignmentsIndex,
+    reject as rejectConsignment,
+    show as consignmentShow,
+} from '@/routes/admin-jurusan/consignments';
 
 type Props = {
     consignments: {
@@ -52,6 +58,16 @@ const filters = [
     { value: 'completed', label: 'Selesai' },
     { value: 'rejected', label: 'Ditolak' },
 ] as const;
+
+// Label paginator dikirim Laravel sebagai HTML ("&laquo; Previous",
+// "&raquo; Next", "…") — render sebagai teks polos, bukan HTML.
+function decodePaginatorLabel(label: string): string {
+    return label
+        .replace(/&laquo;/g, '«')
+        .replace(/&raquo;/g, '»')
+        .replace(/&hellip;/g, '…')
+        .replace(/&amp;/g, '&');
+}
 
 export default function AdminJurusanConsignments({ consignments }: Props) {
     const { flash } = usePage().props as unknown as {
@@ -252,7 +268,9 @@ export default function AdminJurusanConsignments({ consignments }: Props) {
                                                                 className="rounded-lg"
                                                             >
                                                                 <Link
-                                                                    href={`/admin-jurusan/consignments/${item.id}`}
+                                                                    href={consignmentShow(
+                                                                        item.id,
+                                                                    )}
                                                                 >
                                                                     <Eye className="size-4" />
                                                                     Detail
@@ -263,8 +281,9 @@ export default function AdminJurusanConsignments({ consignments }: Props) {
                                                                 'pending_approval' && (
                                                                 <>
                                                                     <Form
-                                                                        action={`/admin-jurusan/consignments/${item.id}/approve`}
-                                                                        method="post"
+                                                                        {...approveConsignment.form(
+                                                                            item.id,
+                                                                        )}
                                                                         disableWhileProcessing
                                                                     >
                                                                         {({
@@ -351,7 +370,9 @@ export default function AdminJurusanConsignments({ consignments }: Props) {
                                                     className="flex-1 rounded-lg"
                                                 >
                                                     <Link
-                                                        href={`/admin-jurusan/consignments/${item.id}`}
+                                                        href={consignmentShow(
+                                                            item.id,
+                                                        )}
                                                     >
                                                         <Eye className="size-4" />
                                                         Detail
@@ -361,8 +382,9 @@ export default function AdminJurusanConsignments({ consignments }: Props) {
                                                     'pending_approval' && (
                                                     <>
                                                         <Form
-                                                            action={`/admin-jurusan/consignments/${item.id}/approve`}
-                                                            method="post"
+                                                            {...approveConsignment.form(
+                                                                item.id,
+                                                            )}
                                                             disableWhileProcessing
                                                             className="flex-1"
                                                         >
@@ -432,16 +454,17 @@ export default function AdminJurusanConsignments({ consignments }: Props) {
                                                         {link.url ? (
                                                             <Link
                                                                 href={link.url}
-                                                                dangerouslySetInnerHTML={{
-                                                                    __html: link.label,
-                                                                }}
-                                                            />
+                                                            >
+                                                                {decodePaginatorLabel(
+                                                                    link.label,
+                                                                )}
+                                                            </Link>
                                                         ) : (
-                                                            <span
-                                                                dangerouslySetInnerHTML={{
-                                                                    __html: link.label,
-                                                                }}
-                                                            />
+                                                            <span>
+                                                                {decodePaginatorLabel(
+                                                                    link.label,
+                                                                )}
+                                                            </span>
                                                         )}
                                                     </Button>
                                                 ),
@@ -490,8 +513,7 @@ function RejectConsignmentDialog({
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <Form
-                    action={`/admin-jurusan/consignments/${item.id}/reject`}
-                    method="post"
+                    {...rejectConsignment.form(item.id)}
                     disableWhileProcessing
                     className="space-y-4"
                 >
@@ -550,5 +572,5 @@ function RejectConsignmentDialog({
 }
 
 AdminJurusanConsignments.layout = {
-    breadcrumbs: [{ title: 'Titipan', href: '/admin-jurusan/consignments' }],
+    breadcrumbs: [{ title: 'Titipan', href: consignmentsIndex() }],
 };

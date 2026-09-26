@@ -14,13 +14,17 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\UpJurusan;
 use App\Models\UpJurusanConsignment;
+use App\Models\UpJurusanPayout;
+use App\Models\UpJurusanStockMovement;
 use App\Models\User;
+use App\Support\ProductSlug;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -48,9 +52,10 @@ class SellerProductController extends Controller
             ->where('seller_id', $seller->id);
 
         if ($search = $validated['q'] ?? null) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%");
+            $escaped = addcslashes($search, '%_\\');
+            $query->where(function ($q) use ($escaped) {
+                $q->where('name', 'like', "%{$escaped}%")
+                    ->orWhere('slug', 'like', "%{$escaped}%");
             });
         }
 
@@ -123,6 +128,7 @@ class SellerProductController extends Controller
     {
         /** @var User $seller */
         $seller = $request->user();
+        $validated = $request->validated();
         $imagePath = null;
         $newImagePath = null;
         $image = $request->file('image');
@@ -134,44 +140,73 @@ class SellerProductController extends Controller
         }
 
         $salesMethod = ProductSalesMethod::from(
-            $request->input('sales_method', ProductSalesMethod::SelfManaged->value),
+            $validated['sales_method'] ?? ProductSalesMethod::SelfManaged->value,
         );
         $fulfillmentType = ProductFulfillmentType::from(
-            $request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value),
+            $validated['fulfillment_type'] ?? ProductFulfillmentType::ReadyStock->value,
         );
+
+        if ($salesMethod === ProductSalesMethod::UpJurusan && $fulfillmentType === ProductFulfillmentType::PreOrder) {
+            throw ValidationException::withMessages([
+                'fulfillment_type' => 'Produk titipan UP Jurusan tidak mendukung pre-order.',
+            ]);
+        }
+
         $requestedStatus = $salesMethod === ProductSalesMethod::UpJurusan
             ? ProductStatus::Pending
-            : ProductStatus::from($request->input('status', ProductStatus::Pending->value));
+            : ProductStatus::from($validated['status'] ?? ProductStatus::Pending->value);
+
+        $productName = (string) ($validated['name'] ?? '');
+        $categoryId = (int) ($validated['category_id'] ?? 0);
+        $description = (string) ($validated['description'] ?? '');
+        $price = (int) ($validated['price'] ?? 0);
+        $originalPrice = isset($validated['original_price'])
+            ? (int) $validated['original_price']
+            : null;
+        $stock = (int) ($validated['stock'] ?? 0);
+        $upJurusanId = isset($validated['up_jurusan_id']) ? (int) $validated['up_jurusan_id'] : 0;
+        $requestedQuantity = (int) ($validated['requested_quantity'] ?? 0);
+        $preOrderEstimateDays = isset($validated['pre_order_estimate_days']) ? (int) $validated['pre_order_estimate_days'] : 0;
+        $preOrderDeadline = ! empty($validated['pre_order_deadline'])
+            ? Carbon::parse($validated['pre_order_deadline'])->toDateString()
+            : null;
+        $preOrderMinQuantity = isset($validated['pre_order_min_quantity'])
+            ? (int) $validated['pre_order_min_quantity']
+            : null;
+        $preOrderNote = isset($validated['pre_order_note']) && trim((string) $validated['pre_order_note']) !== ''
+            ? trim((string) $validated['pre_order_note'])
+            : null;
 
         $createdProductId = null;
         $moderationDispatched = false;
+        // UpJurusan+PreOrder ditolak di atas, jadi alur titipan selalu ReadyStock.
+        $createsConsignment = $salesMethod === ProductSalesMethod::UpJurusan
+            && $requestedStatus === ProductStatus::Pending;
 
         try {
-            DB::transaction(function () use ($request, $seller, $imagePath, $salesMethod, $fulfillmentType, $requestedStatus, &$createdProductId, &$moderationDispatched) {
+            DB::transaction(function () use ($seller, $imagePath, $salesMethod, $fulfillmentType, $requestedStatus, $createsConsignment, $productName, $categoryId, $description, $price, $originalPrice, $stock, $upJurusanId, $requestedQuantity, $preOrderEstimateDays, $preOrderDeadline, $preOrderMinQuantity, $preOrderNote, &$createdProductId, &$moderationDispatched) {
                 $product = Product::query()->create([
                     'seller_id' => $seller->id,
-                    'category_id' => $request->integer('category_id'),
-                    'name' => $request->string('name')->toString(),
-                    'slug' => $this->uniqueSlug($request->string('name')->toString()),
-                    'description' => $request->string('description')->toString(),
-                    'price' => $request->integer('price'),
-                    'original_price' => $request->filled('original_price')
-                        ? $request->integer('original_price')
-                        : null,
-                    'stock' => $salesMethod === ProductSalesMethod::UpJurusan ? 0 : $request->integer('stock'),
+                    'category_id' => $categoryId,
+                    'name' => $productName,
+                    'slug' => ProductSlug::unique($productName),
+                    'description' => $description,
+                    'price' => $price,
+                    'original_price' => $originalPrice,
+                    'stock' => $salesMethod === ProductSalesMethod::UpJurusan ? 0 : $stock,
                     'sales_method' => $salesMethod,
                     'fulfillment_type' => $fulfillmentType,
                     'pre_order_estimate_days' => $fulfillmentType === ProductFulfillmentType::PreOrder
-                        ? $request->integer('pre_order_estimate_days')
+                        ? $preOrderEstimateDays
                         : null,
                     'pre_order_deadline' => $fulfillmentType === ProductFulfillmentType::PreOrder
-                        ? $request->date('pre_order_deadline')?->toDateString()
+                        ? $preOrderDeadline
                         : null,
                     'pre_order_min_quantity' => $fulfillmentType === ProductFulfillmentType::PreOrder
-                        ? $request->integer('pre_order_min_quantity') ?: null
+                        ? $preOrderMinQuantity
                         : null,
                     'pre_order_note' => $fulfillmentType === ProductFulfillmentType::PreOrder
-                        ? $request->string('pre_order_note')->trim()->toString() ?: null
+                        ? $preOrderNote
                         : null,
                     'status' => $requestedStatus,
                     'image' => $imagePath,
@@ -179,16 +214,12 @@ class SellerProductController extends Controller
 
                 $createdProductId = $product->id;
 
-                if (
-                    $salesMethod === ProductSalesMethod::UpJurusan
-                    && $fulfillmentType === ProductFulfillmentType::ReadyStock
-                    && $requestedStatus === ProductStatus::Pending
-                ) {
+                if ($createsConsignment) {
                     $consignment = UpJurusanConsignment::query()->create([
                         'seller_id' => $seller->id,
                         'product_id' => $product->id,
-                        'up_jurusan_id' => $request->integer('up_jurusan_id'),
-                        'requested_quantity' => $request->integer('requested_quantity'),
+                        'up_jurusan_id' => $upJurusanId,
+                        'requested_quantity' => $requestedQuantity,
                         'status' => UpJurusanConsignmentStatus::PendingApproval,
                     ]);
 
@@ -197,7 +228,7 @@ class SellerProductController extends Controller
                         orderId: null,
                         productId: $product->id,
                         consignmentId: $consignment->id,
-                        productName: $request->string('name')->toString(),
+                        productName: $productName,
                         sellerName: $seller->name,
                         buyerName: $seller->name,
                         action: 'pengajuan titip barang baru menunggu persetujuan',
@@ -206,10 +237,10 @@ class SellerProductController extends Controller
                     );
                 }
 
-                if ($salesMethod === ProductSalesMethod::UpJurusan && $fulfillmentType === ProductFulfillmentType::ReadyStock && $requestedStatus === ProductStatus::Pending) {
+                if ($createsConsignment) {
                     ProductPendingModeration::dispatch(
                         productId: $product->id,
-                        productName: $request->string('name')->toString(),
+                        productName: $productName,
                         sellerId: $seller->id,
                         sellerName: $seller->name
                     );
@@ -219,8 +250,10 @@ class SellerProductController extends Controller
         } catch (\Throwable $exception) {
             // The file was stored before the transaction; remove it so a
             // failed insert does not leave an orphaned upload behind.
-            if ($newImagePath !== null) {
-                Storage::disk('r2')->delete($newImagePath);
+            if ($newImagePath !== null && Storage::disk('r2')->delete($newImagePath) === false) {
+                Log::warning('Failed to delete orphaned product image after failed store', [
+                    'path' => $newImagePath,
+                ]);
             }
 
             throw $exception;
@@ -240,7 +273,7 @@ class SellerProductController extends Controller
         ) {
             ProductPendingModeration::dispatch(
                 productId: $createdProductId,
-                productName: $request->string('name')->toString(),
+                productName: $productName,
                 sellerId: $seller->id,
                 sellerName: $seller->name
             );
@@ -285,6 +318,7 @@ class SellerProductController extends Controller
     public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
         $this->authorizeOwner($request, $product);
+        $validated = $request->validated();
         $oldImagePath = $product->image;
         $imagePath = $product->image;
         $newImagePath = null;
@@ -298,42 +332,57 @@ class SellerProductController extends Controller
             }
         }
 
+        $fulfillmentType = ProductFulfillmentType::from(
+            $validated['fulfillment_type'] ?? ProductFulfillmentType::ReadyStock->value,
+        );
+
+        if ($product->sales_method === ProductSalesMethod::UpJurusan && $fulfillmentType === ProductFulfillmentType::PreOrder) {
+            throw ValidationException::withMessages([
+                'fulfillment_type' => 'Produk titipan UP Jurusan tidak mendukung pre-order.',
+            ]);
+        }
+
         $requestedStatus = ProductStatus::from(
-            $request->input('status', $product->status->value),
+            $validated['status'] ?? $product->status->value,
         );
         $oldStatus = $product->status;
         $newStatus = $this->nextStatusAfterSellerUpdate($product, $requestedStatus);
 
+        $productName = (string) ($validated['name'] ?? $product->name);
+        $isPreOrder = $fulfillmentType === ProductFulfillmentType::PreOrder;
+
         try {
             $product->update([
-                'category_id' => $request->integer('category_id'),
-                'name' => $request->string('name')->toString(),
-                'slug' => $this->uniqueSlug($request->string('name')->toString(), $product),
-                'description' => $request->string('description')->toString(),
-                'price' => $request->integer('price'),
-                'original_price' => $request->filled('original_price')
-                    ? $request->integer('original_price')
+                'category_id' => (int) ($validated['category_id'] ?? $product->category_id),
+                'name' => $productName,
+                'slug' => ProductSlug::unique($productName, $product),
+                'description' => (string) ($validated['description'] ?? $product->description),
+                'price' => (int) ($validated['price'] ?? $product->price),
+                'original_price' => isset($validated['original_price'])
+                    ? (int) $validated['original_price']
                     : null,
-                'fulfillment_type' => ProductFulfillmentType::from($request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value)),
-                'pre_order_estimate_days' => $request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value) === ProductFulfillmentType::PreOrder->value
-                    ? $request->integer('pre_order_estimate_days')
+                'fulfillment_type' => $fulfillmentType,
+                'pre_order_estimate_days' => $isPreOrder
+                    ? (int) ($validated['pre_order_estimate_days'] ?? 0)
                     : null,
-                'pre_order_deadline' => $request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value) === ProductFulfillmentType::PreOrder->value
-                    ? $request->date('pre_order_deadline')?->toDateString()
+                'pre_order_deadline' => $isPreOrder && ! empty($validated['pre_order_deadline'])
+                    ? Carbon::parse($validated['pre_order_deadline'])->toDateString()
                     : null,
-                'pre_order_min_quantity' => $request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value) === ProductFulfillmentType::PreOrder->value
-                    ? $request->integer('pre_order_min_quantity') ?: null
+                'pre_order_min_quantity' => $isPreOrder && isset($validated['pre_order_min_quantity'])
+                    ? (int) $validated['pre_order_min_quantity']
                     : null,
-                'pre_order_note' => $request->input('fulfillment_type', ProductFulfillmentType::ReadyStock->value) === ProductFulfillmentType::PreOrder->value
-                    ? $request->string('pre_order_note')->trim()->toString() ?: null
+                'pre_order_note' => $isPreOrder && isset($validated['pre_order_note']) && trim((string) $validated['pre_order_note']) !== ''
+                    ? trim((string) $validated['pre_order_note'])
                     : null,
                 'status' => $newStatus,
                 'image' => $imagePath,
             ]);
         } catch (\Throwable $exception) {
             // A newly stored replacement must not outlive a failed update.
-            if ($newImagePath !== null) {
-                Storage::disk('r2')->delete($newImagePath);
+            if ($newImagePath !== null && Storage::disk('r2')->delete($newImagePath) === false) {
+                Log::warning('Failed to delete replacement product image after failed update', [
+                    'path' => $newImagePath,
+                ]);
             }
 
             throw $exception;
@@ -384,6 +433,31 @@ class SellerProductController extends Controller
         if ($product->orderItems()->exists()) {
             throw ValidationException::withMessages([
                 'product' => 'Produk tidak dapat dihapus karena sudah memiliki riwayat pesanan.',
+            ])->redirectTo(route('seller.products.index'));
+        }
+
+        // Ledger guards first: consignments, stock movements, and payouts are
+        // ON DELETE RESTRICT, so refuse with a friendly 422 before the
+        // database raises a QueryException. (cart_items and wishlists are
+        // cascadeOnDelete, so they are removed automatically with the product
+        // and need no guard here.)
+        $consignmentIds = $product->upJurusanConsignments()->pluck('id');
+
+        if ($consignmentIds->isNotEmpty()) {
+            $hasPayout = UpJurusanPayout::query()
+                ->whereIn('up_jurusan_consignment_id', $consignmentIds)
+                ->exists();
+
+            throw ValidationException::withMessages([
+                'product' => $hasPayout
+                    ? 'Produk tidak dapat dihapus karena sudah memiliki riwayat payout UP Jurusan.'
+                    : 'Produk tidak dapat dihapus karena memiliki riwayat titipan UP Jurusan.',
+            ])->redirectTo(route('seller.products.index'));
+        }
+
+        if (UpJurusanStockMovement::query()->where('product_id', $product->id)->exists()) {
+            throw ValidationException::withMessages([
+                'product' => 'Produk tidak dapat dihapus karena memiliki riwayat pergerakan stok UP Jurusan.',
             ])->redirectTo(route('seller.products.index'));
         }
 
@@ -444,32 +518,9 @@ class SellerProductController extends Controller
      */
     private function deleteProductImage(string $path): void
     {
-        Storage::disk('r2')->delete($path);
-        Storage::disk('public')->delete($path);
-    }
-
-    private function uniqueSlug(string $name, ?Product $ignoredProduct = null): string
-    {
-        $baseSlug = Str::slug($name) ?: 'product';
-        $slug = $baseSlug;
-        $suffix = 2;
-
-        while ($this->slugExists($slug, $ignoredProduct)) {
-            $slug = $baseSlug.'-'.$suffix;
-            $suffix++;
+        if (Storage::disk('r2')->delete($path) === false) {
+            Log::warning('Failed to delete product image from r2', ['path' => $path]);
         }
-
-        return $slug;
-    }
-
-    private function slugExists(string $slug, ?Product $ignoredProduct = null): bool
-    {
-        return Product::query()
-            ->where('slug', $slug)
-            ->when(
-                $ignoredProduct,
-                fn ($query) => $query->whereKeyNot($ignoredProduct->getKey()),
-            )
-            ->exists();
+        Storage::disk('public')->delete($path);
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use App\Enums\SanctionType;
-use App\Enums\UserRole;
 use App\Models\Sanction;
 use App\Models\User;
 use App\Support\BuyerSanctionService;
@@ -22,7 +21,10 @@ class EnsureBuyerNotBanned
         /** @var User|null $user */
         $user = $request->user();
 
-        if ($user === null || $user->role !== UserRole::Buyer) {
+        // Enforcement is user-id based, never role based: sellers shopping
+        // through the buyer flow (cart/checkout/review) are blocked by the
+        // same active sanctions as buyers.
+        if ($user === null) {
             return $next($request);
         }
 

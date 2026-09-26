@@ -26,6 +26,7 @@ use App\Support\PreOrderRules;
 use App\Support\TransactionCode;
 use App\Traits\OwnerPayloadHelper;
 use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -98,9 +99,18 @@ class CheckoutController extends Controller
             'pickup_method' => ['required', 'string', 'in:pickup,delivery'],
             'pickup_location' => ['required_if:pickup_method,delivery', 'nullable', 'string', 'max:255'],
             'payment_method' => ['required', 'string', 'in:cash'],
+            'pickup_up_jurusan_id' => ['nullable', 'integer', 'exists:up_jurusans,id'],
+            'selected_cart_item_ids' => ['nullable', 'array', 'max:50'],
+            'selected_cart_item_ids.*' => ['integer', 'min:1'],
             'buy_now_product_id' => ['nullable', 'integer', 'exists:products,id'],
-            'buy_now_quantity' => ['required_with:buy_now_product_id', 'nullable', 'integer', 'min:1'],
+            'buy_now_quantity' => ['required_with:buy_now_product_id', 'nullable', 'integer', 'min:1', 'max:1000'],
         ]);
+
+        if (count($selectedIds) > 50) {
+            throw ValidationException::withMessages([
+                'selected_cart_item_ids' => 'Maksimal 50 item keranjang per checkout.',
+            ]);
+        }
 
         $order = $this->createOrderWithRetry($user, $validated, $selectedIds);
 
@@ -109,9 +119,10 @@ class CheckoutController extends Controller
 
     /**
      * Create the order inside a transaction, retrying when a concurrent
-     * request wins the transaction-code race and the orders.code unique
-     * index rejects the insert (SQLSTATE 23000). Each attempt runs in its own
-     * transaction, so any partial work rolls back before the retry.
+     * request wins the transaction-code race and a unique index rejects the
+     * insert (SQLSTATE 23000 on MySQL/SQLite, 23505 on PostgreSQL). Each
+     * attempt runs in its own transaction, so any partial work rolls back
+     * before the retry.
      *
      * @param  array<string, mixed>  $validated
      * @param  array<int, int>  $selectedIds
@@ -124,9 +135,10 @@ class CheckoutController extends Controller
             // Reset per attempt so a retried transaction never dispatches
             // notifications for work that was rolled back.
             $pendingBySeller = [];
+            $pendingUpItems = [];
 
             try {
-                $order = DB::transaction(function () use ($user, $validated, $selectedIds, &$pendingBySeller) {
+                $order = DB::transaction(function () use ($user, $validated, $selectedIds, &$pendingBySeller, &$pendingUpItems) {
                     // Serialize concurrent checkouts for the same buyer by
                     // locking their user row; the unpaid-order limit is then
                     // checked inside the same transaction so two parallel
@@ -164,7 +176,7 @@ class CheckoutController extends Controller
                         }
                         $quantity = (int) $validated['buy_now_quantity'];
 
-                        $totalPrice = $this->createOrderItem($order, $product, $quantity, $user, $pendingBySeller);
+                        $totalPrice = $this->createOrderItem($order, $product, $quantity, $user, $pendingBySeller, $pendingUpItems, $this->pickupUpJurusanId($validated));
 
                         $this->applyTotals($order, $totalPrice, $validated['pickup_method']);
 
@@ -193,7 +205,7 @@ class CheckoutController extends Controller
                             ]);
                         }
 
-                        $totalPrice += $this->createOrderItem($order, $product, $cartItem->quantity, $user, $pendingBySeller);
+                        $totalPrice += $this->createOrderItem($order, $product, $cartItem->quantity, $user, $pendingBySeller, $pendingUpItems, $this->pickupUpJurusanId($validated));
                         $processedIds[] = $cartItem->id;
                     }
 
@@ -209,7 +221,7 @@ class CheckoutController extends Controller
 
                 // Dispatch after commit so listeners never observe rolled-back
                 // orders and always receive the final buyer name/order total.
-                $this->dispatchPendingOrderNotifications($order, $user, $pendingBySeller);
+                $this->dispatchPendingOrderNotifications($order, $user, $pendingBySeller, $pendingUpItems);
 
                 return $order;
             } catch (QueryException $exception) {
@@ -226,7 +238,33 @@ class CheckoutController extends Controller
 
     private function isUniqueConstraintViolation(QueryException $exception): bool
     {
-        return (string) $exception->getCode() === '23000';
+        // Laravel 11+ surfaces code races as UniqueConstraintViolationException
+        // (still a QueryException); its code preserves the driver SQLSTATE.
+        if ($exception instanceof UniqueConstraintViolationException) {
+            return true;
+        }
+
+        // MySQL/SQLite report 23000, PostgreSQL reports 23505.
+        $codes = [(string) $exception->getCode()];
+        $previous = $exception->getPrevious();
+
+        if ($previous instanceof \PDOException && is_array($previous->errorInfo)) {
+            $codes[] = (string) ($previous->errorInfo[0] ?? '');
+        }
+
+        return in_array('23000', $codes, true) || in_array('23505', $codes, true);
+    }
+
+    /**
+     * UP Jurusan chosen by the buyer for consignment pickup, if any.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function pickupUpJurusanId(array $validated): ?int
+    {
+        $value = $validated['pickup_up_jurusan_id'] ?? null;
+
+        return $value === null ? null : (int) $value;
     }
 
     private function assertUnderUnpaidOrderLimit(User $user): void
@@ -365,9 +403,12 @@ class CheckoutController extends Controller
 
     /**
      * @param  array<int, list<array{id: int, product_id: int, name: string}>>  $pendingBySeller
+     * @param  array<int, list<array{id: int, product_id: int, name: string}>>  $pendingUpItems
      */
-    private function createOrderItem(Order $order, Product $product, int $quantity, User $actor, array &$pendingBySeller): int
+    private function createOrderItem(Order $order, Product $product, int $quantity, User $actor, array &$pendingBySeller, array &$pendingUpItems = [], ?int $upJurusanId = null): int
     {
+        // Self-purchase is intentionally allowed (see CheckoutTest multi-seller:
+        // own product creates an order item but dispatches no seller notification).
         if ($product->status !== ProductStatus::Approved) {
             throw ValidationException::withMessages([
                 'cart' => "Produk {$product->name} tidak tersedia untuk checkout.",
@@ -407,6 +448,14 @@ class CheckoutController extends Controller
                 'product_id' => $product->id,
                 'name' => $product->name,
             ];
+        } elseif ($product->seller_id === null && $product->up_jurusan_id !== null) {
+            // UP-owned items have no seller; track them per UP so pickets
+            // are still notified via up_jurusan_id.
+            $pendingUpItems[(int) $product->up_jurusan_id][] = [
+                'id' => $orderItem->id,
+                'product_id' => $product->id,
+                'name' => $product->name,
+            ];
         }
 
         if ($product->isPreOrder()) {
@@ -414,7 +463,7 @@ class CheckoutController extends Controller
         }
 
         if ($product->usesConsignmentStock()) {
-            $this->recordConsignmentSale($order, $product, $actor, $quantity);
+            $this->recordConsignmentSale($order, $product, $actor, $quantity, $upJurusanId);
         } else {
             $product->update([
                 'stock' => $product->stock - $quantity,
@@ -447,8 +496,9 @@ class CheckoutController extends Controller
      * total price always describe the final persisted order.
      *
      * @param  array<int, list<array{id: int, product_id: int, name: string}>>  $pendingBySeller
+     * @param  array<int, list<array{id: int, product_id: int, name: string}>>  $pendingUpItems
      */
-    private function dispatchPendingOrderNotifications(Order $order, User $buyer, array $pendingBySeller): void
+    private function dispatchPendingOrderNotifications(Order $order, User $buyer, array $pendingBySeller, array $pendingUpItems = []): void
     {
         foreach ($pendingBySeller as $sellerId => $items) {
             $first = $items[0];
@@ -465,7 +515,12 @@ class CheckoutController extends Controller
             );
         }
 
-        $this->notifyPicketsOfNewItems($order, collect($pendingBySeller)->flatten(1));
+        /** @var Collection<int, array{id: int, product_id: int, name: string}> $allItems */
+        $allItems = collect($pendingBySeller)->flatten(1)
+            ->concat(collect($pendingUpItems)->flatten(1))
+            ->values();
+
+        $this->notifyPicketsOfNewItems($order, $allItems);
     }
 
     /**
@@ -516,11 +571,18 @@ class CheckoutController extends Controller
         }
     }
 
-    private function recordConsignmentSale(Order $order, Product $product, User $actor, int $quantity): void
+    /**
+     * Consume consignment stock for a checkout line. When the buyer chose a
+     * specific UP ($upJurusanId), only that UP's consignments may be used:
+     * an empty UP fails instead of silently borrowing another UP's stock,
+     * keeping multi-UP isolation strict.
+     */
+    private function recordConsignmentSale(Order $order, Product $product, User $actor, int $quantity, ?int $upJurusanId = null): void
     {
         $remaining = $quantity;
         $consignments = UpJurusanConsignment::query()
             ->where('product_id', $product->id)
+            ->when($upJurusanId !== null, fn ($query) => $query->where('up_jurusan_id', $upJurusanId))
             ->whereColumn('received_quantity', '>', 'sold_quantity')
             ->orderBy('id')
             ->lockForUpdate()

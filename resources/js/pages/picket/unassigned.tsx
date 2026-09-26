@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { ClipboardList, LogOut, RefreshCw, ShieldAlert } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,8 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { logout } from '@/routes';
+import { unassigned as picketUnassigned } from '@/routes/picket';
 
 export default function PicketUnassigned() {
     return (
@@ -71,7 +73,7 @@ export default function PicketUnassigned() {
                             <div className="flex flex-wrap gap-3 pt-2">
                                 <Button
                                     type="button"
-                                    onClick={() => window.location.reload()}
+                                    onClick={() => router.reload()}
                                     className="h-11 rounded-xl font-semibold"
                                 >
                                     <RefreshCw className="size-4" />
@@ -83,7 +85,7 @@ export default function PicketUnassigned() {
                                     className="h-11 rounded-xl"
                                 >
                                     <Link
-                                        href="/logout"
+                                        href={logout()}
                                         method="post"
                                         as="button"
                                     >
@@ -124,5 +126,5 @@ export default function PicketUnassigned() {
 }
 
 PicketUnassigned.layout = {
-    breadcrumbs: [{ title: 'Unassigned', href: '/picket/unassigned' }],
+    breadcrumbs: [{ title: 'Unassigned', href: picketUnassigned() }],
 };

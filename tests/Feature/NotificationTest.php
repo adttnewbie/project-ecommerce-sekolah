@@ -210,7 +210,9 @@ class NotificationTest extends TestCase
         $response = $this->actingAs($this->user)
             ->delete("/notifications/{$notification->key}");
 
-        $response->assertStatus(404);
+        // Dismiss selalu redirect sukses (tidak membedakan milik sendiri vs
+        // orang lain agar tidak menjadi oracle enumerasi key).
+        $response->assertRedirect();
 
         $this->assertNull(Notification::find($notification->id)?->dismissed_at);
     }

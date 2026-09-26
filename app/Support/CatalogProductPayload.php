@@ -21,7 +21,7 @@ class CatalogProductPayload
     {
         $query
             ->with(['category:id,name,slug', 'seller:id,name', 'upJurusan:id,name'])
-            ->with('upJurusanConsignments:id,product_id,received_quantity,sold_quantity')
+            ->with('upJurusanConsignments:id,product_id,status,received_quantity,sold_quantity')
             ->withSum(['orderItems as sold_count' => fn (Builder $q) => $q->where('status', OrderItemStatus::Completed)], 'quantity')
             ->withCount(['reviews as review_count'])
             ->withAvg(['reviews as review_avg' => fn (Builder $q) => $q], 'rating')
